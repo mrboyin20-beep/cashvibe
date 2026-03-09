@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CashVibe — Join & Start Earning</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#060610;--s1:#0c0c1e;--s2:#13132a;
+  --border:rgba(255,255,255,0.07);
+  --g1:#00f5c4;--g2:#7b5ea7;
+  --text:#eef0ff;--dim:#6b7280;--mid:#9ca3af;--danger:#ef4444;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.bg-orb{position:fixed;pointer-events:none;}
+.orb1{top:-100px;left:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(0,245,196,0.07),transparent 70%);border-radius:50%;}
+.orb2{bottom:-100px;right:-100px;width:350px;height:350px;background:radial-gradient(circle,rgba(123,94,167,0.09),transparent 70%);border-radius:50%;}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+.auth-card{width:100%;max-width:440px;background:var(--s1);border:1px solid var(--border);border-radius:28px;padding:36px 32px;position:relative;z-index:1;box-shadow:0 40px 80px rgba(0,0,0,0.6);}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;background:linear-gradient(90deg,var(--g1),#7b5ea7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:4px;}
+.brand-sub{text-align:center;font-size:0.78rem;color:var(--dim);margin-bottom:28px;}
+.toggle{display:flex;background:var(--s2);border-radius:14px;padding:4px;margin-bottom:28px;position:relative;}
+.toggle-pill{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);background:linear-gradient(135deg,var(--g1),#00c49a);border-radius:10px;transition:.4s cubic-bezier(.7,0,.3,1);z-index:0;}
+.toggle.login .toggle-pill{left:calc(50%);}
+.t-btn{flex:1;padding:10px;font-weight:700;font-size:0.82rem;cursor:pointer;z-index:1;color:var(--dim);transition:.3s;border-radius:10px;text-align:center;}
+.t-btn.active{color:#000;}
+.slides{overflow:hidden;}
+.slide-track{display:flex;width:200%;transition:.5s cubic-bezier(.7,0,.3,1);}
+.slide-track.show-login{transform:translateX(-50%);}
+.slide{width:50%;padding:0 2px;}
+.inp-wrap{position:relative;margin-bottom:14px;}
+.inp-wrap i.icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:0.85rem;pointer-events:none;transition:.2s;}
+.inp-wrap:focus-within i.icon{color:var(--g1);}
+input{width:100%;background:var(--s2);border:1px solid var(--border);padding:14px 14px 14px 44px;border-radius:14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:.25s;}
+input:focus{border-color:var(--g1);background:rgba(0,245,196,0.03);box-shadow:0 0 0 3px rgba(0,245,196,0.07);}
+input::placeholder{color:var(--dim);}
+.inp-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--dim);cursor:pointer;font-size:0.85rem;transition:.2s;}
+.inp-eye:hover{color:var(--g1);}
+.auth-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g1),#00c49a);border:none;border-radius:14px;color:#000;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:.2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.auth-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,245,196,0.3);}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.google-btn{width:100%;padding:13px;background:var(--s2);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.88rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;}
+.google-btn:hover{border-color:rgba(255,255,255,0.15);}
+.g-icon{width:18px;height:18px;}
+.divider{display:flex;align-items:center;gap:12px;margin:14px 0;}
+.divider span{flex:1;height:1px;background:var(--border);}
+.divider p{font-size:0.72rem;color:var(--dim);font-weight:600;}
+.forgot{text-align:right;margin-bottom:16px;}
+.forgot a{font-size:0.75rem;color:var(--dim);text-decoration:none;font-weight:600;transition:.2s;}
+.forgot a:hover{color:var(--g1);}
+.refer-tag{display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--dim);margin-bottom:6px;font-weight:600;}
+.refer-tag i{color:var(--g1);}
+#loader{display:none;text-align:center;padding:12px;color:var(--g1);}
+#loader i{animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border);border-radius:99px;padding:12px 24px;font-size:0.82rem;font-weight:600;opacity:0;transition:.3s;z-index:9999;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{border-color:rgba(0,245,196,0.3);color:var(--g1);}
+#toast.err{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:5000;align-items:center;justify-content:center;padding:20px;}
+.modal.open{display:flex;}
+.modal-box{background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:380px;width:100%;text-align:center;}
+.modal-cancel{color:var(--danger);font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:14px;display:block;}
+/* DEVICE BLOCKED SCREEN */
+#dev-blocked{display:none;position:fixed;inset:0;background:var(--bg);z-index:99000;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;}
+.back-link{text-align:center;margin-top:20px;font-size:0.78rem;color:var(--dim);}
+.back-link a{color:var(--g1);text-decoration:none;font-weight:700;}
+@media(max-width:480px){.auth-card{padding:28px 20px;}}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="grid-bg"></div>
+<div id="toast"></div>
+
+<!-- DEVICE BLOCKED SCREEN -->
+<div id="dev-blocked">
+  <div style="font-size:3rem;margin-bottom:16px;">📵</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;color:var(--danger);margin-bottom:10px;">Device Blocked</div>
+  <p style="color:var(--mid);font-size:.85rem;max-width:340px;line-height:1.7;margin-bottom:20px;" id="dev-block-msg">Multiple accounts detected on this device. All accounts have been blocked. Contact support to resolve.</p>
+  <div id="dev-uid-list" style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;width:100%;max-width:360px;margin-bottom:18px;font-size:.75rem;color:var(--dim);line-height:1.9;text-align:left;"></div>
+  <a href="mailto:support@cashvibe.in" style="padding:13px 28px;background:var(--g2);border:none;border-radius:13px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;"><i class="fa-solid fa-envelope"></i> Contact Support</a>
+</div>
+
+<!-- RESET MODAL -->
+<div class="modal" id="resetModal">
+  <div class="modal-box">
+    <div style="width:64px;height:64px;background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.2);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;">🔑</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:6px;">Reset Password</div>
+    <p style="font-size:0.8rem;color:var(--dim);margin-bottom:8px;line-height:1.6;">Enter your registered email — we'll send a reset link instantly.</p>
+    <p style="font-size:0.72rem;color:var(--dim);margin-bottom:18px;line-height:1.5;background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:10px;padding:9px 12px;">
+      <i class="fa-solid fa-circle-info" style="color:#f5a623;"></i> Check your inbox + spam folder. Link expires in 1 hour.
+    </p>
+    <div class="inp-wrap">
+      <i class="fa-solid fa-envelope icon"></i>
+      <input type="email" id="resetEmail" placeholder="Your registered email">
+    </div>
+    <div id="reset-sent" style="display:none;background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.2);border-radius:12px;padding:12px;margin-bottom:12px;font-size:.8rem;color:var(--g1);text-align:center;">
+      ✅ Reset link sent! Check your email inbox.
+    </div>
+    <button class="auth-btn" id="reset-btn" onclick="sendReset()"><i class="fa-solid fa-paper-plane"></i> Send Reset Link</button>
+    <span class="modal-cancel" onclick="closeReset()">Cancel</span>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="auth-card">
+  <div class="brand">⚡ CASHVIBE</div>
+  <div class="brand-sub">India's #1 Micro-Earning Platform</div>
+
+  <div class="toggle" id="toggle">
+    <div class="toggle-pill"></div>
+    <div class="t-btn active" id="btnReg" onclick="setMode(false)">SIGN UP</div>
+    <div class="t-btn" id="btnLog" onclick="setMode(true)">LOG IN</div>
+  </div>
+
+  <div id="loader"><i class="fa-solid fa-circle-notch"></i> Please wait...</div>
+
+  <div class="slides">
+    <div class="slide-track" id="track">
+
+      <!-- SIGNUP -->
+      <div class="slide">
+        <div class="inp-wrap">
+          <i class="fa-solid fa-user icon"></i>
+          <input type="text" id="reg-name" placeholder="Full Name">
+        </div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-envelope icon"></i>
+          <input type="email" id="reg-email" placeholder="Email Address">
+        </div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-lock icon"></i>
+          <input type="password" id="reg-pass" placeholder="Password (min 6 chars)">
+          <span class="inp-eye" onclick="togglePass('reg-pass',this)"><i class="fa-solid fa-eye"></i></span>
+        </div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-phone icon"></i>
+          <input type="tel" id="reg-phone" placeholder="Mobile Number (10 digits)" maxlength="10">
+        </div>
+        <div class="refer-tag"><i class="fa-solid fa-gift"></i> Referral code? Get extra joining bonus!</div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-ticket icon"></i>
+          <input type="text" id="reg-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
+        </div>
+        <button class="auth-btn" id="signup-btn" onclick="doSignup()">
+          <i class="fa-solid fa-rocket"></i> CREATE FREE ACCOUNT
+        </button>
+        <div class="divider"><span></span><p>OR</p><span></span></div>
+        <button class="google-btn" onclick="doGoogle()">
+          <svg class="g-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="slide">
+        <div class="inp-wrap" style="margin-top:8px;">
+          <i class="fa-solid fa-envelope icon"></i>
+          <input type="email" id="log-email" placeholder="Email Address">
+        </div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-lock icon"></i>
+          <input type="password" id="log-pass" placeholder="Password">
+          <span class="inp-eye" onclick="togglePass('log-pass',this)"><i class="fa-solid fa-eye"></i></span>
+        </div>
+        <div class="forgot"><a href="#" onclick="openResetPrefill();return false;"><i class="fa-solid fa-key" style="font-size:.7rem;"></i> Forgot Password?</a></div>
+        <button class="auth-btn" id="login-btn" onclick="doLogin()">
+          <i class="fa-solid fa-bolt"></i> ACCESS DASHBOARD
+        </button>
+        <div class="divider"><span></span><p>OR</p><span></span></div>
+        <button class="google-btn" onclick="doGoogle()">
+          <svg class="g-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="back-link">← Back to <a href="index.html">Home</a></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script>
+// ── FIREBASE CONFIG ──
+if (!firebase.apps.length) firebase.initializeApp({
+  apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
+  authDomain: "cash-vibe.firebaseapp.com",
+  databaseURL: "https://cash-vibe-default-rtdb.firebaseio.com",
+  projectId: "cash-vibe",
+  storageBucket: "cash-vibe.appspot.com",
+  messagingSenderId: "547096717498",
+  appId: "1:547096717498:web:5d73026c5e743c2bf2ba83"
+});
+const auth = firebase.auth();
+const db = firebase.database();
+// ── DEVICE FINGERPRINT ──
+// Generates a stable device ID from browser properties
+function getDeviceId() {
+  const stored = localStorage.getItem('cv_device_id');
+  if (stored) return stored;
+  const nav = window.navigator;
+  const raw = [
+    nav.userAgent, nav.language, nav.platform,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    nav.hardwareConcurrency || '',
+    nav.deviceMemory || ''
+  ].join('|');
+  // Simple hash
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+    hash |= 0;
+  }
+  const deviceId = 'dev_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36).slice(-4);
+  localStorage.setItem('cv_device_id', deviceId);
+  return deviceId;
+}
+
+const DEVICE_ID = getDeviceId();
+
+// ── AUTH STATE ──
+// Persistence set karo PEHLE, phir auth state check karo
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+  .then(() => {
+    // Ab check karo — agar pehle se logged in hai
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        unsubscribe(); // ek baar hi fire karo
+        window.location.replace('dashboard.html');
+      }
+    });
+  })
+  .catch(err => {
+    // Fallback without persistence
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        unsubscribe();
+        window.location.replace('dashboard.html');
+      }
+    });
+  });
+
+// ── UI HELPERS ──
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3200);
+}
+function setLoading(on) {
+  document.getElementById('loader').style.display = on ? 'block' : 'none';
+  document.querySelectorAll('.auth-btn,.google-btn').forEach(b => b.disabled = on);
+}
+function setMode(isLogin) {
+  const tog = document.getElementById('toggle');
+  const track = document.getElementById('track');
+  const bR = document.getElementById('btnReg');
+  const bL = document.getElementById('btnLog');
+  if (isLogin) {
+    tog.classList.add('login'); track.classList.add('show-login');
+    bL.classList.add('active'); bR.classList.remove('active');
+  } else {
+    tog.classList.remove('login'); track.classList.remove('show-login');
+    bR.classList.add('active'); bL.classList.remove('active');
+  }
+}
+
+// ── DEVICE CHECK (multi-account fraud detection) ──
+async function checkDevice(newUid) {
+  try {
+    const snap = await db.ref('devices/' + DEVICE_ID).once('value');
+    const devData = snap.val() || {};
+    const uids = devData.uids ? Object.keys(devData.uids) : [];
+
+    // If this UID already registered on this device — allow
+    if (uids.includes(newUid)) return { allowed: true };
+
+    // Check how many UNIQUE accounts on this device
+    if (uids.length >= 2) {
+      const updates = {};
+      uids.forEach(uid => { updates['users/' + uid + '/status'] = 'blocked'; });
+      if (newUid) updates['users/' + newUid + '/status'] = 'blocked';
+      await db.ref().update(updates);
+      await db.ref('devices/' + DEVICE_ID).update({ blocked: true, blockedAt: Date.now() });
+      return { allowed: false, uids };
+    }
+    return { allowed: true };
+  } catch(e) {
+    // If permission error, allow signup and track later
+    console.warn('Device check skipped:', e.message);
+    return { allowed: true };
+  }
+}
+
+async function registerDevice(uid) {
+  try {
+    const updates = {};
+    updates['devices/' + DEVICE_ID + '/uids/' + uid] = true;
+    updates['devices/' + DEVICE_ID + '/lastSeen'] = Date.now();
+    updates['devices/' + DEVICE_ID + '/userAgent'] = navigator.userAgent.substring(0, 100);
+    updates['users/' + uid + '/deviceId'] = DEVICE_ID;
+    await db.ref().update(updates);
+  } catch(e) { /* device tracking silently fails - not critical */ }
+}
+
+// ── SIGNUP ──
+async function doSignup() {
+  const name    = document.getElementById('reg-name').value.trim();
+  const email   = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass    = document.getElementById('reg-pass').value;
+  const phone   = document.getElementById('reg-phone').value.trim().replace(/\D/g,'');
+  const refer   = document.getElementById('reg-refer').value.trim().toUpperCase();
+
+  // Validate
+  if (!name || name.length < 2) return toast('Name at least 2 characters!', 'err');
+  if (!email || !email.includes('@')) return toast('Valid email required!', 'err');
+  if (pass.length < 6) return toast('Password must be 6+ characters!', 'err');
+  if (phone.length !== 10) return toast('Enter valid 10-digit mobile number!', 'err');
+
+  setLoading(true);
+  try {
+    // Check phone duplicate + referrer (requires DB read before auth)
+    let phoneTaken = false, referrerUid = null;
+    try {
+      const usersSnap = await db.ref('users').once('value');
+      if (usersSnap.exists()) {
+        usersSnap.forEach(u => {
+          if ((u.val().mobile || '') === phone) phoneTaken = true;
+          if (refer && u.key.substring(0, 6).toUpperCase() === refer) referrerUid = u.key;
+        });
+      }
+      if (phoneTaken) { setLoading(false); return toast('Phone number already registered!', 'err'); }
+      if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
+    } catch(e) {
+      // If rules block pre-auth read, skip phone check — proceed with signup
+      console.warn('Pre-auth users read skipped:', e.message);
+    }
+
+    // Get config
+    let cfg = { signup_bonus: 400, refer_reward: 500 };
+    try {
+      const cfgSnap = await db.ref('app_control').once('value');
+      if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
+    } catch(e) { /* use defaults */ }
+
+    // Create Firebase Auth account
+    const res = await auth.createUserWithEmailAndPassword(email, pass);
+    const uid = res.user.uid;
+
+    // Check device multi-account
+    const devCheck = await checkDevice(uid);
+    if (!devCheck.allowed) {
+      showDeviceBlocked(devCheck.uids);
+      setLoading(false); return;
+    }
+
+    const now = Date.now();
+    const joinBonus = cfg.signup_bonus || 400;  // Hamesha milega
+
+    // Save user to database
+    await db.ref('users/' + uid).set({
+      name, email, mobile: phone,
+      balance: joinBonus,
+      referredBy: referrerUid || 'DIRECT',
+      streak: 0, xp: 0,
+      status: 'active',
+      deviceId: DEVICE_ID,
+      joinDate: new Date().toLocaleDateString('en-IN'),
+      joinedAt: now,
+      // Refer reward held until referrer's 2-day activity check
+      pendingReferral: referrerUid ? {
+        referrerUid,
+        reward: cfg.refer_reward || 500,
+        joinedAt: now,
+        credited: false
+      } : null
+    });
+
+    // Register this device
+    await registerDevice(uid);
+
+    // Refer log (reward will be given after 2 days of activity)
+    if (referrerUid) {
+      await db.ref('refer_logs/' + uid).set({
+        from: referrerUid,
+        joinedAt: now,
+        rewardCredited: false,
+        rewardAmount: cfg.refer_reward || 500
+      });
+      toast('Welcome! 🎉 ' + joinBonus + ' coins credited! Refer bonus unlocks after 2 days of activity.', 'ok');
+    } else {
+      toast('Account created! Welcome to CashVibe 🚀', 'ok');
+    }
+
+    setTimeout(() => window.location.replace('dashboard.html'), 1400);
+
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Email already registered! Please login.',
+      'auth/invalid-email': 'Invalid email format!',
+      'auth/weak-password': 'Password is too weak (min 6 chars)!',
+      'auth/network-request-failed': 'Network error! Check your internet.',
+      'auth/operation-not-allowed': 'Signup is disabled. Contact admin.'
+    };
+    toast(msgs[e.code] || ('Error: ' + e.message), 'err');
+  } finally { setLoading(false); }
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const email = document.getElementById('log-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('log-pass').value;
+  if (!email || !pass) return toast('Fill in all fields!', 'err');
+
+  setLoading(true);
+  try {
+    const res = await auth.signInWithEmailAndPassword(email, pass);
+    const uid = res.user.uid;
+
+    // Check if blocked
+    const snap = await db.ref('users/' + uid + '/status').once('value');
+    if (snap.val() === 'blocked') {
+      await auth.signOut();
+      setLoading(false);
+      return toast('Your account is blocked! Contact support.', 'err');
+    }
+
+    // Check device — allow login but log device
+    const devSnap = await db.ref('devices/' + DEVICE_ID).once('value');
+    if (devSnap.val() && devSnap.val().blocked) {
+      await auth.signOut();
+      showDeviceBlocked(Object.keys(devSnap.val().uids || {}));
+      setLoading(false); return;
+    }
+
+    // Update device record & check if different device
+    const userSnap = await db.ref('users/' + uid).once('value');
+    const userData = userSnap.val() || {};
+
+    // Device switch: notify but allow — admin can lock if needed
+    if (userData.deviceId && userData.deviceId !== DEVICE_ID) {
+      // Log the device switch attempt
+      await db.ref('device_switches/' + uid).push({
+        oldDevice: userData.deviceId,
+        newDevice: DEVICE_ID,
+        at: Date.now()
+      });
+      // If admin has set device_lock on this user, block
+      if (userData.device_locked) {
+        await auth.signOut();
+        setLoading(false);
+        return toast('Login from new device blocked! Contact support to unlock.', 'err');
+      }
+    }
+
+    await registerDevice(uid);
+    // Check 2-day referral reward
+    checkReferralReward(uid);
+    toast('Welcome back! 💰', 'ok');
+    setTimeout(() => window.location.replace('dashboard.html'), 800);
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': 'No account with this email!',
+      'auth/wrong-password': 'Wrong password!',
+      'auth/invalid-credential': 'Wrong email or password!',
+      'auth/invalid-email': 'Invalid email format!',
+      'auth/too-many-requests': 'Too many attempts! Try again later.',
+      'auth/network-request-failed': 'Network error! Check your internet.'
+    };
+    toast(msgs[e.code] || 'Login failed! Try again.', 'err');
+  } finally { setLoading(false); }
+}
+
+// ── GOOGLE LOGIN ──
+async function doGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  setLoading(true);
+  try {
+    const res = await auth.signInWithPopup(provider);
+    const uid = res.user.uid;
+    const snap = await db.ref('users/' + uid).once('value');
+    if (!snap.exists()) {
+      await db.ref('users/' + uid).set({
+        name: res.user.displayName || 'User',
+        email: res.user.email,
+        mobile: 'Not Linked',
+        balance: 0, streak: 0, xp: 0,
+        referredBy: 'GOOGLE', status: 'active',
+        deviceId: DEVICE_ID,
+        joinDate: new Date().toLocaleDateString('en-IN'),
+        joinedAt: Date.now()
+      });
+    }
+    await registerDevice(uid);
+    toast('Logged in with Google! 🎉', 'ok');
+    setTimeout(() => window.location.replace('dashboard.html'), 800);
+  } catch(e) {
+    const msgs = {
+      'auth/popup-closed-by-user': 'Google popup closed.',
+      'auth/cancelled-popup-request': '',
+      'auth/network-request-failed': 'Network error!'
+    };
+    if (msgs[e.code] !== '') toast(msgs[e.code] || e.message, 'err');
+  } finally { setLoading(false); }
+}
+
+// ── 2-DAY REFERRAL REWARD CHECK ──
+async function checkReferralReward(uid) {
+  try {
+    const logSnap = await db.ref('refer_logs/' + uid).once('value');
+    const log = logSnap.val();
+    if (!log || log.rewardCredited) return;
+    const daysSinceJoin = (Date.now() - log.joinedAt) / (1000 * 60 * 60 * 24);
+    if (daysSinceJoin >= 2) {
+      // Credit referrer
+      const refBalSnap = await db.ref('users/' + log.from + '/balance').once('value');
+      const refBal = refBalSnap.val() || 0;
+      await db.ref('users/' + log.from).update({
+        balance: refBal + (log.rewardAmount || 500),
+        refer_bonus: firebase.database.ServerValue.increment(log.rewardAmount || 500)
+      });
+      await db.ref('refer_logs/' + uid).update({ rewardCredited: true, creditedAt: Date.now() });
+      // Notify referrer via notice
+      await db.ref('notices_list').push({
+        text: '🎉 Referral reward of ' + (log.rewardAmount || 500) + ' coins credited! Your referred user has been active for 2 days.',
+        timestamp: Date.now(),
+        targetUid: log.from
+      });
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ── DEVICE BLOCKED SCREEN ──
+function showDeviceBlocked(uids) {
+  const screen = document.getElementById('dev-blocked');
+  screen.style.display = 'flex';
+  const list = document.getElementById('dev-uid-list');
+  list.innerHTML = '<strong style="color:var(--danger);">Blocked Account IDs:</strong><br>' +
+    (uids || []).map(u => '• ' + u.substring(0,16) + '...').join('<br>');
+}
+
+// ── RESET PASSWORD ──
+function openReset() {
+  document.getElementById('resetModal').classList.add('open');
+  document.getElementById('reset-sent').style.display = 'none';
+  document.getElementById('reset-btn').style.display = 'flex';
+  document.getElementById('resetEmail').value = '';
+}
+function openResetPrefill() {
+  // Auto-fill email from login field if filled
+  const loginEmail = document.getElementById('log-email').value.trim();
+  openReset();
+  if (loginEmail) document.getElementById('resetEmail').value = loginEmail;
+}
+function closeReset() {
+  document.getElementById('resetModal').classList.remove('open');
+}
+async function sendReset() {
+  const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+  if (!email || !email.includes('@')) return toast('Enter a valid email!', 'err');
+  const btn = document.getElementById('reset-btn');
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Sending...';
+  try {
+    await auth.sendPasswordResetEmail(email);
+    document.getElementById('reset-sent').style.display = 'block';
+    btn.style.display = 'none';
+    toast('Reset link sent to ' + email + ' ✉️', 'ok');
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': '❌ No account with this email!',
+      'auth/invalid-email': '❌ Invalid email format!',
+      'auth/too-many-requests': '⏳ Too many attempts! Try later.'
+    };
+    toast(msgs[e.code] || 'Error sending reset link', 'err');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Reset Link';
+  }
+}
+
+// ── UTILS ──
+function togglePass(id, el) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  el.innerHTML = inp.type === 'password' ?
+    '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
+}
+</script>
+</body>
+</html>
