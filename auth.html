@@ -143,7 +143,7 @@ input::placeholder{color:var(--dim);}
           <i class="fa-solid fa-phone icon"></i>
           <input type="tel" id="reg-phone" placeholder="Mobile Number (10 digits)" maxlength="10">
         </div>
-        <div class="refer-tag"><i class="fa-solid fa-gift"></i> Referral code? 400 FREE Coins bonus!</div>
+        <div class="refer-tag"><i class="fa-solid fa-gift"></i> Referral code? Get extra joining bonus!</div>
         <div class="inp-wrap">
           <i class="fa-solid fa-ticket icon"></i>
           <input type="text" id="reg-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
@@ -363,7 +363,7 @@ async function doSignup() {
     }
 
     const now = Date.now();
-    const joinBonus = referrerUid ? (cfg.signup_bonus || 400) : 0;
+    const joinBonus = cfg.signup_bonus || 400;  // Hamesha milega
 
     // Save user to database
     await db.ref('users/' + uid).set({
@@ -395,7 +395,7 @@ async function doSignup() {
         rewardCredited: false,
         rewardAmount: cfg.refer_reward || 500
       });
-      toast('Welcome! 🎉 400 coins credited! Refer bonus unlocks after 2 days of activity.', 'ok');
+      toast('Welcome! 🎉 ' + joinBonus + ' coins credited! Refer bonus unlocks after 2 days of activity.', 'ok');
     } else {
       toast('Account created! Welcome to CashVibe 🚀', 'ok');
     }

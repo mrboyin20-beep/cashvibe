@@ -137,6 +137,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 }
 @media(max-width:680px){.sidebar{position:fixed;z-index:100;transform:translateX(-100%);transition:.3s;}.sidebar.open{transform:none;}.mob-hdr{display:flex!important;}}
 .mob-hdr{display:none;background:var(--s1);border-bottom:1px solid var(--border);padding:13px 18px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+
+/* ═══ CASHVIBE COIN ═══ */
+.cv-coin{display:inline-flex;align-items:center;justify-content:center;width:1.15em;height:1.15em;vertical-align:middle;margin-right:2px;flex-shrink:0;position:relative;top:-1px;}
+.cv-coin.lg{width:1.5em;height:1.5em;}
+.cv-coin.sm{width:0.85em;height:0.85em;}
+.cv-coin.xl{width:2em;height:2em;top:-2px;}
+.cv-coin svg{width:100%;height:100%;}
 </style>
 </head>
 <body>
@@ -213,7 +220,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div style="font-size:.65rem;color:var(--dim);margin-top:-7px;margin-bottom:10px;">⚠️ Email change ke liye Firebase Console use karo</div>
     <div class="frow">
       <div>
-        <label class="flabel">Balance (Coins 🪙)</label>
+        <label class="flabel">Balance (Coins <span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>)</label>
         <input class="finp" type="number" id="eu-bal" placeholder="e.g. 500" min="0">
         <div style="font-size:.62rem;color:var(--dim);margin-top:-7px;margin-bottom:8px;" id="eu-rupees">= ₹0.00</div>
       </div>
@@ -347,11 +354,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div class="pg-hdr"><div class="pg-title">Admin Dashboard</div><div class="pg-sub">Live overview of CashVibe</div></div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
       <div class="stat"><div class="stat-icon si-g"><i class="fa-solid fa-users"></i></div><div class="stat-num" id="s-users">0</div><div class="stat-lbl">Total Users</div></div>
-      <div class="stat"><div class="stat-icon si-p"><i class="fa-solid fa-coins"></i></div><div class="stat-num" id="s-bal" style="font-size:1.3rem;">🪙0</div><div class="stat-lbl">Total Coins (Wallet)</div></div>
+      <div class="stat"><div class="stat-icon si-p"><i class="fa-solid fa-coins"></i></div><div class="stat-num" id="s-bal" style="font-size:1.3rem;"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>0</div><div class="stat-lbl">Total Coins (Wallet)</div></div>
       <div class="stat"><div class="stat-icon si-y"><i class="fa-solid fa-money-bill-transfer"></i></div><div class="stat-num" id="s-paid">₹0</div><div class="stat-lbl">Total Paid Out (₹)</div></div>
       <div class="stat"><div class="stat-icon si-r"><i class="fa-solid fa-clock"></i></div><div class="stat-num" id="s-pend">0</div><div class="stat-lbl">Pending Withdrawals</div></div>
       <div class="stat" style="border-color:rgba(245,166,35,.25);"><div class="stat-icon si-y"><i class="fa-solid fa-hourglass-half"></i></div><div class="stat-num" id="s-ref-pending" style="color:#f5a623;">0</div><div class="stat-lbl">Pending Referrals</div></div>
-      <div class="stat" style="border-color:rgba(245,166,35,.25);"><div class="stat-icon si-y"><i class="fa-solid fa-coins"></i></div><div class="stat-num" id="s-ref-coins" style="color:#f5a623;font-size:1.3rem;">🪙0</div><div class="stat-lbl">Pending Ref. Coins</div></div>
+      <div class="stat" style="border-color:rgba(245,166,35,.25);"><div class="stat-icon si-y"><i class="fa-solid fa-coins"></i></div><div class="stat-num" id="s-ref-coins" style="color:#f5a623;font-size:1.3rem;"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>0</div><div class="stat-lbl">Pending Ref. Coins</div></div>
     </div>
     <!-- Pending Referrals Card -->
     <div class="card" id="pending-ref-card" style="display:none;border-color:rgba(245,166,35,.25);background:rgba(245,166,35,.03);">
@@ -504,20 +511,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <div class="set-card-title">Watch Ads</div>
         <label class="flabel">Ad Link</label><input class="finp" id="set-adlink" placeholder="https://...">
         <label class="flabel">Daily Limit</label><input class="finp" type="number" id="set-adlimit" placeholder="5">
-        <label class="flabel">Reward per Ad (Coins 🪙)</label><input class="finp" type="number" id="set-adreward" placeholder="10">
+        <label class="flabel">Reward per Ad (Coins <span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>)</label><input class="finp" type="number" id="set-adreward" placeholder="10">
         <button class="fbtn fbtn-p" style="width:100%;" onclick="saveSettings('ads')">SAVE</button>
       </div>
       <div class="set-card">
         <div class="set-card-title">Daily Checkin</div>
         <label class="flabel">Checkin Ad Link</label><input class="finp" id="set-cilink" placeholder="https://...">
-        <label class="flabel">Daily Checkin Reward (Coins 🪙)</label><input class="finp" type="number" id="set-cireward" placeholder="20">
+        <label class="flabel">Daily Checkin Reward (Coins <span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>)</label><input class="finp" type="number" id="set-cireward" placeholder="20">
         <button class="fbtn fbtn-p" style="width:100%;margin-top:10px;" onclick="saveSettings('checkin')">SAVE</button>
       </div>
       <div class="set-card">
         <div class="set-card-title">Referral</div>
-        <label class="flabel">Refer Reward (Coins 🪙)</label><input class="finp" type="number" id="set-refreward" placeholder="500">
-        <label class="flabel">Joining Bonus (Coins 🪙)</label><input class="finp" type="number" id="set-joinbonus" placeholder="400">
+        <label class="flabel">Refer Reward (Coins <span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>)</label><input class="finp" type="number" id="set-refreward" placeholder="500">
+        <label class="flabel">Joining Bonus (Coins <span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>)</label><input class="finp" type="number" id="set-joinbonus" placeholder="400">
         <button class="fbtn fbtn-p" style="width:100%;margin-top:10px;" onclick="saveSettings('refer')">SAVE</button>
+      </div>
+
+      <!-- SPIN LIMIT SETTING -->
+      <div class="set-card">
+        <div class="set-card-title">🎡 Spin Wheel</div>
+        <label class="flabel">Daily Spin Limit (per user)</label>
+        <input class="finp" type="number" id="set-spinlimit" min="1" max="10" placeholder="1">
+        <label class="flabel">Ad Link (30s ad after spin win)</label>
+        <input class="finp" type="text" id="set-spinadlink" placeholder="https://...">
+        <button class="fbtn fbtn-p" style="margin-top:10px;" onclick="saveSettings('spin')">💾 Save Spin Settings</button>
       </div>
       <div class="set-card">
         <div class="set-card-title">Social Links</div>
@@ -796,7 +813,7 @@ function loadDashboard() {
     const td=new Date().toLocaleDateString();
     const at=ul.filter(x=>x.lastCheckIn===td).length;
     document.getElementById('s-users').textContent=ul.length;
-    document.getElementById('s-bal').textContent='🪙'+Math.floor(tb)+' (₹'+(tb/20).toFixed(0)+')';
+    document.getElementById('s-bal').innerHTML='<span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>'+Math.floor(tb)+' (₹'+(tb/20).toFixed(0)+')';
     document.getElementById('usr-cnt').textContent=ul.length;
     document.getElementById('qs-blocked').textContent=bl;
     document.getElementById('qs-active').textContent=at;
@@ -815,7 +832,7 @@ function loadDashboard() {
     document.getElementById('pend-cnt').textContent=pend.length;
     const tbody=document.getElementById('home-wdl'); tbody.innerHTML='';
     wl.slice(-5).reverse().forEach(([wid,x])=>{
-      tbody.innerHTML+=`<tr><td><strong>${x.name||'?'}</strong></td><td style="color:var(--g1);font-weight:700;">🪙${x.coins||x.amount*20}<br><small style="color:var(--dim);">₹${x.amount}</small></td><td style="font-size:.72rem;color:var(--mid);">${x.upi}</td><td><span class="badge ${x.status==='Done'?'b-ok':x.status==='Rejected'?'b-block':'b-pend'}">${x.status}</span></td><td style="color:var(--dim);font-size:.72rem;">${x.date||'—'}</td><td>${x.status==='Processing'?`<button class="act-btn ab-g" onclick="approveWdl('${wid}','${x.uid}',${x.amount})">Approve</button>`:''}</td></tr>`;
+      tbody.innerHTML+=`<tr><td><strong>${x.name||'?'}</strong></td><td style="color:var(--g1);font-weight:700;"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>${x.coins||x.amount*20}<br><small style="color:var(--dim);">₹${x.amount}</small></td><td style="font-size:.72rem;color:var(--mid);">${x.upi}</td><td><span class="badge ${x.status==='Done'?'b-ok':x.status==='Rejected'?'b-block':'b-pend'}">${x.status}</span></td><td style="color:var(--dim);font-size:.72rem;">${x.date||'—'}</td><td>${x.status==='Processing'?`<button class="act-btn ab-g" onclick="approveWdl('${wid}','${x.uid}',${x.amount})">Approve</button>`:''}</td></tr>`;
     });
   });
   db.ref('tasks').once('value',s=>document.getElementById('qs-tasks').textContent=s.numChildren());
@@ -836,7 +853,7 @@ function loadDashboard() {
     document.getElementById('qs-refs').textContent = total;
     document.getElementById('qs-ref-pend').textContent = pending.length;
     document.getElementById('s-ref-pending').textContent = pending.length;
-    document.getElementById('s-ref-coins').textContent = '🪙' + pendingCoins;
+    document.getElementById('s-ref-coins').innerHTML = '🪙' + pendingCoins;
 
     // Pending referrals card dikhao
     const card = document.getElementById('pending-ref-card');
@@ -1509,6 +1526,21 @@ function loadSettings() {
     document.getElementById('set-cireward').value=ci.reward||20;
     document.getElementById('set-refreward').value=v.refer_reward||500;
     document.getElementById('set-joinbonus').value=v.join_bonus||400;
+    // Spin prizes
+    let spRaw = v.spin_prizes;
+    let sp;
+    if (!spRaw) {
+      sp = [1,2,5,1,0,3,10,2];
+    } else if (Array.isArray(spRaw)) {
+      sp = spRaw.map(Number);
+    } else {
+      sp = Object.keys(spRaw).sort((a,b)=>a-b).map(k=>Number(spRaw[k]));
+    }
+    sp.forEach((val,i) => {
+      const el = document.getElementById('sp'+(i+1));
+      if(el) el.value = val;
+    });
+    updateSpinPreview(sp);
   });
   db.ref('social_links').once('value',s=>{
     const v=s.val()||{};
@@ -1535,9 +1567,34 @@ function loadSettings() {
   });
 }
 async function saveSettings(type) {
-  if(type==='ads'){ await db.ref('settings/ads').set({link:document.getElementById('set-adlink').value.trim(),limit:parseInt(document.getElementById('set-adlimit').value)||5,reward:parseFloat(document.getElementById('set-adreward').value)||0.5}); toast('Ad settings saved!','ok'); }
-  else if(type==='checkin'){ await db.ref('settings/checkin').set({link:document.getElementById('set-cilink').value.trim(),reward:parseFloat(document.getElementById('set-cireward').value)||1}); toast('Checkin saved!','ok'); }
-  else if(type==='refer'){ const rr=parseFloat(document.getElementById('set-refreward').value)||25; const jb=parseFloat(document.getElementById('set-joinbonus').value)||20; await db.ref('settings').update({refer_reward:rr,join_bonus:jb}); await db.ref('app_control').update({refer_reward:rr,signup_bonus:jb}); toast('Referral saved!','ok'); }
+  if (type === 'ads') {
+    await db.ref('settings/ads').set({
+      link: document.getElementById('set-adlink').value.trim(),
+      limit: parseInt(document.getElementById('set-adlimit').value) || 5,
+      reward: parseInt(document.getElementById('set-adreward').value) || 10
+    });
+    toast('✅ Ad settings saved!', 'ok');
+  }
+  else if (type === 'checkin') {
+    await db.ref('settings/checkin').set({
+      link: document.getElementById('set-cilink').value.trim(),
+      reward: parseInt(document.getElementById('set-cireward').value) || 20
+    });
+    toast('✅ Check-in settings saved!', 'ok');
+  }
+  else if (type === 'refer') {
+    const rr = parseInt(document.getElementById('set-refreward').value) || 500;
+    const jb = parseInt(document.getElementById('set-joinbonus').value) || 400;
+    await db.ref('settings').update({ refer_reward: rr, join_bonus: jb });
+    await db.ref('app_control').update({ refer_reward: rr, signup_bonus: jb });
+    toast('✅ Referral settings saved! Refer: 🪙' + rr + ' | Joining: 🪙' + jb, 'ok');
+  }
+  else if (type === 'spin') {
+    const sl = parseInt(document.getElementById('set-spinlimit').value) || 1;
+    const slink = document.getElementById('set-spinadlink').value.trim();
+    await db.ref('settings/spin').update({ daily_limit: sl, ad_link: slink });
+    toast('✅ Spin settings saved!', 'ok');
+  }
 }
 async function saveSocial() {
   await db.ref('social_links').set({
@@ -1585,7 +1642,7 @@ async function toggleMaintenance(enable) {
 function loadRedeem() {
   db.ref('admin/redeem_config').on('value',s=>{
     const v=s.val(); const box=document.getElementById('rd-current');
-    if(v&&v.active_code){ document.getElementById('rd-code').value=v.active_code; document.getElementById('rd-amount').value=v.reward_amount; box.innerHTML=`<div style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;letter-spacing:6px;color:var(--g1);margin:8px 0;">${v.active_code}</div><div style="font-size:.8rem;color:var(--mid);">Reward: <strong style="color:var(--g3);">🪙${v.reward_amount} Coins (= ₹${(v.reward_amount/20).toFixed(2)})</strong></div>`; }
+    if(v&&v.active_code){ document.getElementById('rd-code').value=v.active_code; document.getElementById('rd-amount').value=v.reward_amount; box.innerHTML=`<div style="font-size:1.6rem;font-family:'Bebas Neue',sans-serif;letter-spacing:6px;color:var(--g1);margin:8px 0;">${v.active_code}</div><div style="font-size:.8rem;color:var(--mid);">Reward: <strong style="color:var(--g3);"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>${v.reward_amount} Coins (= ₹${(v.reward_amount/20).toFixed(2)})</strong></div>`; }
     else { box.innerHTML='<span style="color:var(--dim);">No active code.</span>'; }
   });
 }
@@ -1615,5 +1672,3 @@ function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 function toast(msg,type='ok'){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type; setTimeout(()=>t.className='',3500); }
 </script>
-</body>
-</html>
