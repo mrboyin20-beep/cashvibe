@@ -6,6 +6,8 @@
 <title>CashVibe — Join & Start Earning</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -37,6 +39,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 input{width:100%;background:var(--s2);border:1px solid var(--border);padding:14px 14px 14px 44px;border-radius:14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:.25s;}
 input:focus{border-color:var(--g1);background:rgba(0,245,196,0.03);box-shadow:0 0 0 3px rgba(0,245,196,0.07);}
 input::placeholder{color:var(--dim);}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 .inp-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--dim);cursor:pointer;font-size:0.85rem;transition:.2s;}
 .inp-eye:hover{color:var(--g1);}
 .auth-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g1),#00c49a);border:none;border-radius:14px;color:#000;font-family:'DM Sans',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:.2s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
@@ -56,19 +59,33 @@ input::placeholder{color:var(--dim);}
 #loader{display:none;text-align:center;padding:12px;color:var(--g1);}
 #loader i{animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border);border-radius:99px;padding:12px 24px;font-size:0.82rem;font-weight:600;opacity:0;transition:.3s;z-index:9999;white-space:nowrap;pointer-events:none;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.ok{border-color:rgba(0,245,196,0.3);color:var(--g1);}
 #toast.err{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+
+/* Modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:5000;align-items:center;justify-content:center;padding:20px;}
 .modal.open{display:flex;}
-.modal-box{background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:380px;width:100%;text-align:center;}
+.modal-box{background:var(--s1);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:400px;width:100%;text-align:center;}
 .modal-cancel{color:var(--danger);font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:14px;display:block;}
-/* DEVICE BLOCKED SCREEN */
+
+/* OTP Boxes */
+.otp-row{display:flex;gap:10px;justify-content:center;margin:18px 0 8px;}
+.otp-box{width:48px;height:56px;background:var(--s2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-size:1.4rem;font-weight:800;text-align:center;outline:none;transition:.25s;font-family:'DM Sans',sans-serif;padding:0;}
+.otp-box:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(0,245,196,0.1);}
+.otp-box.filled{border-color:var(--g1);}
+.otp-timer{font-size:0.78rem;color:var(--dim);margin:4px 0 14px;}
+.otp-timer span{color:var(--g1);font-weight:700;}
+
+/* Device Blocked */
 #dev-blocked{display:none;position:fixed;inset:0;background:var(--bg);z-index:99000;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;}
+
 .back-link{text-align:center;margin-top:20px;font-size:0.78rem;color:var(--dim);}
 .back-link a{color:var(--g1);text-decoration:none;font-weight:700;}
-@media(max-width:480px){.auth-card{padding:28px 20px;}}
+@media(max-width:480px){.auth-card{padding:28px 20px;}.otp-box{width:42px;height:50px;font-size:1.2rem;}}
 </style>
 </head>
 <body>
@@ -78,16 +95,50 @@ input::placeholder{color:var(--dim);}
 <div class="grid-bg"></div>
 <div id="toast"></div>
 
-<!-- DEVICE BLOCKED SCREEN -->
+<!-- ═══════════ DEVICE BLOCKED SCREEN ═══════════ -->
 <div id="dev-blocked">
   <div style="font-size:3rem;margin-bottom:16px;">📵</div>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;color:var(--danger);margin-bottom:10px;">Device Blocked</div>
-  <p style="color:var(--mid);font-size:.85rem;max-width:340px;line-height:1.7;margin-bottom:20px;" id="dev-block-msg">Multiple accounts detected on this device. All accounts have been blocked. Contact support to resolve.</p>
+  <p style="color:var(--mid);font-size:.85rem;max-width:340px;line-height:1.7;margin-bottom:20px;">Multiple accounts detected on this device. All accounts have been blocked. Contact support to resolve.</p>
   <div id="dev-uid-list" style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px;width:100%;max-width:360px;margin-bottom:18px;font-size:.75rem;color:var(--dim);line-height:1.9;text-align:left;"></div>
   <a href="mailto:support@cashvibe.in" style="padding:13px 28px;background:var(--g2);border:none;border-radius:13px;color:#fff;font-weight:700;font-size:.88rem;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px;"><i class="fa-solid fa-envelope"></i> Contact Support</a>
 </div>
 
-<!-- RESET MODAL -->
+<!-- ═══════════ OTP MODAL ═══════════ -->
+<div class="modal" id="otpModal">
+  <div class="modal-box">
+    <div style="width:64px;height:64px;background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.2);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;">🔐</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:6px;">Verify Your Email</div>
+    <p style="font-size:0.8rem;color:var(--dim);margin-bottom:4px;line-height:1.6;">6-digit OTP bheja gaya hai:</p>
+    <p id="otpEmailDisplay" style="font-size:0.85rem;color:var(--g1);font-weight:700;margin-bottom:4px;"></p>
+    <!-- Provider badge — kaun sa service use hua -->
+    <div id="otp-provider-badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,245,196,0.08);border:1px solid rgba(0,245,196,0.15);border-radius:99px;padding:4px 12px;font-size:0.65rem;font-weight:700;color:var(--g1);margin-bottom:2px;"></div>
+    <p style="font-size:0.72rem;color:var(--dim);margin-bottom:4px;">Spam/Junk folder bhi check karein.</p>
+
+    <!-- 6 OTP Boxes -->
+    <div class="otp-row">
+      <input class="otp-box" type="number" id="o1" maxlength="1" oninput="otpMove(this,'','o2')" onkeydown="otpBack(event,this,'')">
+      <input class="otp-box" type="number" id="o2" maxlength="1" oninput="otpMove(this,'o1','o3')" onkeydown="otpBack(event,this,'o1')">
+      <input class="otp-box" type="number" id="o3" maxlength="1" oninput="otpMove(this,'o2','o4')" onkeydown="otpBack(event,this,'o2')">
+      <input class="otp-box" type="number" id="o4" maxlength="1" oninput="otpMove(this,'o3','o5')" onkeydown="otpBack(event,this,'o3')">
+      <input class="otp-box" type="number" id="o5" maxlength="1" oninput="otpMove(this,'o4','o6')" onkeydown="otpBack(event,this,'o4')">
+      <input class="otp-box" type="number" id="o6" maxlength="1" oninput="otpMove(this,'o5','')"   onkeydown="otpBack(event,this,'o5')">
+    </div>
+
+    <div class="otp-timer">OTP expire hoga: <span id="timerDisplay">10:00</span></div>
+
+    <button class="auth-btn" id="verifyBtn" onclick="verifyOTP()"><i class="fa-solid fa-shield-halved"></i> VERIFY OTP</button>
+
+    <p style="margin-top:14px;font-size:0.8rem;color:var(--dim);">
+      OTP nahi mila?
+      <span id="resendBtn" onclick="resendOTP()" style="color:var(--g1);cursor:pointer;font-weight:700;">Resend OTP</span>
+      <span id="resendCool" style="display:none;color:var(--dim);"></span>
+    </p>
+    <span class="modal-cancel" onclick="cancelOTP()">✕ Cancel Signup</span>
+  </div>
+</div>
+
+<!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
 <div class="modal" id="resetModal">
   <div class="modal-box">
     <div style="width:64px;height:64px;background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.2);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem;">🔑</div>
@@ -108,7 +159,7 @@ input::placeholder{color:var(--dim);}
   </div>
 </div>
 
-<!-- MAIN CARD -->
+<!-- ═══════════ MAIN AUTH CARD ═══════════ -->
 <div class="auth-card">
   <div class="brand">⚡ CASHVIBE</div>
   <div class="brand-sub">India's #1 Micro-Earning Platform</div>
@@ -179,16 +230,21 @@ input::placeholder{color:var(--dim);}
           Continue with Google
         </button>
       </div>
+
     </div>
   </div>
   <div class="back-link">← Back to <a href="index.html">Home</a></div>
 </div>
 
+<!-- ═══════════ FIREBASE (compat) ═══════════ -->
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
 <script>
-// ── FIREBASE CONFIG ──
+// ══════════════════════════════════════════════
+// 🔥 FIREBASE CONFIG
+// ══════════════════════════════════════════════
 if (!firebase.apps.length) firebase.initializeApp({
   apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
   authDomain: "cash-vibe.firebaseapp.com",
@@ -199,71 +255,99 @@ if (!firebase.apps.length) firebase.initializeApp({
   appId: "1:547096717498:web:5d73026c5e743c2bf2ba83"
 });
 const auth = firebase.auth();
-const db = firebase.database();
-// ── DEVICE FINGERPRINT ──
-// Generates a stable device ID from browser properties
+const db   = firebase.database();
+
+// ══════════════════════════════════════════════
+// 📧 EMAIL MULTI-FALLBACK CONFIG
+// ══════════════════════════════════════════════
+
+// ── STEP 1: Brevo (Sendinblue) API ──
+const BREVO_API_KEY      = "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";
+const BREVO_SENDER_EMAIL = "mrboy.in20@gmail.com";
+const BREVO_SENDER_NAME  = "CashVibe";
+
+// ── STEP 2: Mailjet API ──
+const MAILJET_API_KEY      = "1ebe9def4971f53113cdcc937f18a785";
+const MAILJET_SECRET_KEY   = "852e470b435211b6e770a7b8527902b5";
+const MAILJET_SENDER_EMAIL = "mrboy.in20@gmail.com";
+const MAILJET_SENDER_NAME  = "CashVibe";
+
+// ── STEP 3: EmailJS (fallback) ──
+const EMAILJS_PUBLIC_KEY  = "UeIZEoG8IqH3xZ1Y4";
+const EMAILJS_SERVICE_ID  = "service_72at465";
+const EMAILJS_TEMPLATE_ID = "template_1sz8mu4";
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+// ══════════════════════════════════════════════
+// 🔢 OTP STATE
+// ══════════════════════════════════════════════
+let currentOTP     = "";
+let otpExpireTime  = 0;
+let otpTimerInt    = null;
+let resendCoolInt  = null;
+let pendingData    = null;
+
+// ══════════════════════════════════════════════
+// 🛡️ DEVICE FINGERPRINT
+// ══════════════════════════════════════════════
 function getDeviceId() {
   const stored = localStorage.getItem('cv_device_id');
   if (stored) return stored;
   const nav = window.navigator;
   const raw = [
     nav.userAgent, nav.language, nav.platform,
-    screen.width + 'x' + screen.height,
-    screen.colorDepth,
+    screen.width + 'x' + screen.height, screen.colorDepth,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
-    nav.hardwareConcurrency || '',
-    nav.deviceMemory || ''
+    nav.hardwareConcurrency || '', nav.deviceMemory || ''
   ].join('|');
-  // Simple hash
   let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
-    hash |= 0;
-  }
+  for (let i = 0; i < raw.length; i++) { hash = ((hash << 5) - hash) + raw.charCodeAt(i); hash |= 0; }
   const deviceId = 'dev_' + Math.abs(hash).toString(36) + '_' + Date.now().toString(36).slice(-4);
   localStorage.setItem('cv_device_id', deviceId);
   return deviceId;
 }
-
 const DEVICE_ID = getDeviceId();
 
-// ── AUTH STATE ──
-// Persistence set karo PEHLE, phir auth state check karo
+// ══════════════════════════════════════════════
+// 🔄 AUTO LOGIN CHECK
+// ══════════════════════════════════════════════
+let otpVerifyInProgress = false;
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .then(() => {
-    // Ab check karo — agar pehle se logged in hai
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        unsubscribe(); // ek baar hi fire karo
-        window.location.replace('dashboard.html');
-      }
+    const unsub = auth.onAuthStateChanged(user => {
+      if (user && !otpVerifyInProgress) { unsub(); window.location.replace('dashboard.html'); }
     });
-  })
-  .catch(err => {
-    // Fallback without persistence
-    const unsubscribe = auth.onAuthStateChanged(user => {
-      if (user) {
-        unsubscribe();
-        window.location.replace('dashboard.html');
-      }
+  }).catch(() => {
+    const unsub = auth.onAuthStateChanged(user => {
+      if (user && !otpVerifyInProgress) { unsub(); window.location.replace('dashboard.html'); }
     });
   });
 
-// ── UI HELPERS ──
-function toast(msg, type='ok') {
+// ══════════════════════════════════════════════
+// 🍞 TOAST NOTIFICATION
+// ══════════════════════════════════════════════
+function toast(msg, type = 'ok') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'show ' + type;
   setTimeout(() => t.className = '', 3200);
 }
+
+// ══════════════════════════════════════════════
+// ⏳ LOADING STATE
+// ══════════════════════════════════════════════
 function setLoading(on) {
   document.getElementById('loader').style.display = on ? 'block' : 'none';
   document.querySelectorAll('.auth-btn,.google-btn').forEach(b => b.disabled = on);
 }
+
+// ══════════════════════════════════════════════
+// 🔄 TOGGLE SIGNUP / LOGIN
+// ══════════════════════════════════════════════
 function setMode(isLogin) {
-  const tog = document.getElementById('toggle');
+  const tog   = document.getElementById('toggle');
   const track = document.getElementById('track');
-  const bR = document.getElementById('btnReg');
-  const bL = document.getElementById('btnLog');
+  const bR    = document.getElementById('btnReg');
+  const bL    = document.getElementById('btnLog');
   if (isLogin) {
     tog.classList.add('login'); track.classList.add('show-login');
     bL.classList.add('active'); bR.classList.remove('active');
@@ -273,17 +357,15 @@ function setMode(isLogin) {
   }
 }
 
-// ── DEVICE CHECK (multi-account fraud detection) ──
+// ══════════════════════════════════════════════
+// 📱 DEVICE CHECK
+// ══════════════════════════════════════════════
 async function checkDevice(newUid) {
   try {
     const snap = await db.ref('devices/' + DEVICE_ID).once('value');
     const devData = snap.val() || {};
     const uids = devData.uids ? Object.keys(devData.uids) : [];
-
-    // If this UID already registered on this device — allow
     if (uids.includes(newUid)) return { allowed: true };
-
-    // Check how many UNIQUE accounts on this device
     if (uids.length >= 2) {
       const updates = {};
       uids.forEach(uid => { updates['users/' + uid + '/status'] = 'blocked'; });
@@ -294,7 +376,6 @@ async function checkDevice(newUid) {
     }
     return { allowed: true };
   } catch(e) {
-    // If permission error, allow signup and track later
     console.warn('Device check skipped:', e.message);
     return { allowed: true };
   }
@@ -308,18 +389,182 @@ async function registerDevice(uid) {
     updates['devices/' + DEVICE_ID + '/userAgent'] = navigator.userAgent.substring(0, 100);
     updates['users/' + uid + '/deviceId'] = DEVICE_ID;
     await db.ref().update(updates);
-  } catch(e) { /* device tracking silently fails - not critical */ }
+  } catch(e) { /* silent */ }
 }
 
-// ── SIGNUP ──
-async function doSignup() {
-  const name    = document.getElementById('reg-name').value.trim();
-  const email   = document.getElementById('reg-email').value.trim().toLowerCase();
-  const pass    = document.getElementById('reg-pass').value;
-  const phone   = document.getElementById('reg-phone').value.trim().replace(/\D/g,'');
-  const refer   = document.getElementById('reg-refer').value.trim().toUpperCase();
+function showDeviceBlocked(uids) {
+  document.getElementById('dev-blocked').style.display = 'flex';
+  document.getElementById('dev-uid-list').innerHTML =
+    '<strong style="color:var(--danger);">Blocked Account IDs:</strong><br>' +
+    (uids || []).map(u => '• ' + u.substring(0, 16) + '...').join('<br>');
+}
 
-  // Validate
+// ══════════════════════════════════════════════
+// 📧 MULTI-FALLBACK EMAIL SYSTEM
+// Flow: Brevo → Mailjet → EmailJS
+// ══════════════════════════════════════════════
+async function sendViaBrevo(toEmail, toName, otp) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
+    body: JSON.stringify({
+      sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
+      to: [{ email: toEmail, name: toName }],
+      subject: '🔐 Your CashVibe OTP Code',
+      htmlContent: buildOTPEmailHTML(toName, otp)
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error('Brevo: ' + (err.message || res.status));
+  }
+  return 'brevo';
+}
+
+async function sendViaMailjet(toEmail, toName, otp) {
+  const credentials = btoa(MAILJET_API_KEY + ':' + MAILJET_SECRET_KEY);
+  const res = await fetch('https://api.mailjet.com/v3.1/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + credentials },
+    body: JSON.stringify({
+      Messages: [{
+        From: { Email: MAILJET_SENDER_EMAIL, Name: MAILJET_SENDER_NAME },
+        To: [{ Email: toEmail, Name: toName }],
+        Subject: '🔐 Your CashVibe OTP Code',
+        HTMLPart: buildOTPEmailHTML(toName, otp)
+      }]
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || (data.Messages && data.Messages[0].Status !== 'success')) {
+    throw new Error('Mailjet: ' + (data.Messages?.[0]?.Errors?.[0]?.ErrorMessage || res.status));
+  }
+  return 'mailjet';
+}
+
+async function sendViaEmailJS(toEmail, toName, otp) {
+  await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    email: toEmail, to_name: toName, name: toName, passcode: otp, app_name: "CashVibe"
+  });
+  return 'emailjs';
+}
+
+function buildOTPEmailHTML(name, otp) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#060610;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#060610;padding:30px 20px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:480px;background:#0c0c1e;border-radius:20px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
+        <tr><td style="background:linear-gradient(135deg,#00f5c4,#7b5ea7);padding:28px;text-align:center;">
+          <div style="font-size:2rem;font-weight:900;letter-spacing:4px;color:#000;font-family:'Bebas Neue',Impact,sans-serif;">⚡ CASHVIBE</div>
+          <div style="color:rgba(0,0,0,0.7);font-size:0.85rem;margin-top:4px;font-weight:600;">Email Verification</div>
+        </td></tr>
+        <tr><td style="padding:32px 28px;text-align:center;">
+          <div style="font-size:1.05rem;color:#eef0ff;font-weight:600;margin-bottom:6px;">Hello, ${name}! 👋</div>
+          <div style="font-size:0.88rem;color:#6b7280;margin-bottom:28px;line-height:1.7;">
+            Aapka CashVibe account verify karne ke liye<br>yeh OTP code use karein:
+          </div>
+          <div style="background:linear-gradient(135deg,rgba(0,245,196,0.08),rgba(123,94,167,0.08));border:2px dashed rgba(0,245,196,0.3);border-radius:16px;padding:24px;margin:0 auto 24px;max-width:320px;">
+            <div style="font-size:0.7rem;color:#6b7280;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:10px;">Your OTP Code</div>
+            <div style="font-family:'Courier New',monospace;font-size:2.8rem;font-weight:900;letter-spacing:12px;color:#00f5c4;text-shadow:0 0 20px rgba(0,245,196,0.4);">${otp}</div>
+            <div style="font-size:0.72rem;color:#6b7280;margin-top:10px;">⏰ Valid for 10 minutes only</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px;text-align:left;margin-bottom:20px;">
+            <div style="font-size:0.78rem;color:#9ca3af;line-height:2;">
+              ✅ Enter this code in the CashVibe app<br>
+              🔒 Do not share this OTP with anyone<br>
+              ⚡ You'll get <strong style="color:#00f5c4;">400 coins</strong> joining bonus after verification
+            </div>
+          </div>
+          <div style="font-size:0.72rem;color:#374151;line-height:1.6;">
+            Agar aapne signup nahi kiya toh is email ko ignore karein.<br>
+            This OTP will expire automatically.
+          </div>
+        </td></tr>
+        <tr><td style="border-top:1px solid rgba(255,255,255,0.05);padding:16px 28px;text-align:center;">
+          <div style="font-size:0.7rem;color:#374151;">© CashVibe • Earn Real Money Daily</div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+let lastUsedProvider = '';
+
+async function sendOTPEmail(toEmail, toName, otp) {
+  const providers = [
+    { name: 'brevo',   fn: () => sendViaBrevo(toEmail, toName, otp) },
+    { name: 'mailjet', fn: () => sendViaMailjet(toEmail, toName, otp) },
+    { name: 'emailjs', fn: () => sendViaEmailJS(toEmail, toName, otp) }
+  ];
+  const errors = [];
+  for (const provider of providers) {
+    try {
+      console.log(`📧 Trying ${provider.name}...`);
+      await provider.fn();
+      lastUsedProvider = provider.name;
+      console.log(`✅ Email sent via ${provider.name}`);
+      try {
+        await db.ref('email_logs').push({
+          to: toEmail.replace(/(.{3}).+(@.+)/, '$1***$2'),
+          provider: provider.name,
+          status: 'success',
+          timestamp: Date.now()
+        });
+      } catch(e) { /* ignore */ }
+      return;
+    } catch(err) {
+      const errMsg = err.message || err.text || String(err);
+      errors.push(`${provider.name}: ${errMsg}`);
+      console.warn(`❌ ${provider.name} failed:`, errMsg);
+      continue;
+    }
+  }
+  console.error('All email providers failed:', errors);
+  throw new Error('Email bhejne mein problem aa rahi hai. Thodi der baad try karein.\n\nDetails: ' + errors.join(' | '));
+}
+
+// ══════════════════════════════════════════════
+// ⏱️ OTP TIMER (10 minutes)
+// ══════════════════════════════════════════════
+function startOTPTimer() {
+  clearInterval(otpTimerInt);
+  otpExpireTime = Date.now() + 10 * 60 * 1000;
+  const verifyBtn = document.getElementById('verifyBtn');
+  const timerEl   = document.getElementById('timerDisplay');
+  verifyBtn.disabled = false;
+  verifyBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> VERIFY OTP';
+  timerEl.style.color = '';
+  otpTimerInt = setInterval(() => {
+    const rem = otpExpireTime - Date.now();
+    if (rem <= 0) {
+      clearInterval(otpTimerInt);
+      timerEl.textContent = '00:00';
+      timerEl.style.color = 'var(--danger)';
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<i class="fa-solid fa-clock"></i> OTP Expire Ho Gaya';
+      return;
+    }
+    const m = Math.floor(rem / 60000);
+    const s = Math.floor((rem % 60000) / 1000);
+    timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════
+// 📝 SIGNUP — Step 1: Validate + Send OTP
+// ══════════════════════════════════════════════
+async function doSignup() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('reg-pass').value;
+  const phone = document.getElementById('reg-phone').value.trim().replace(/\D/g, '');
+  const refer = document.getElementById('reg-refer').value.trim().toUpperCase();
+
   if (!name || name.length < 2) return toast('Name at least 2 characters!', 'err');
   if (!email || !email.includes('@')) return toast('Valid email required!', 'err');
   if (pass.length < 6) return toast('Password must be 6+ characters!', 'err');
@@ -327,7 +572,6 @@ async function doSignup() {
 
   setLoading(true);
   try {
-    // Check phone duplicate + referrer (requires DB read before auth)
     let phoneTaken = false, referrerUid = null;
     try {
       const usersSnap = await db.ref('users').once('value');
@@ -339,82 +583,190 @@ async function doSignup() {
       }
       if (phoneTaken) { setLoading(false); return toast('Phone number already registered!', 'err'); }
       if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
-    } catch(e) {
-      // If rules block pre-auth read, skip phone check — proceed with signup
-      console.warn('Pre-auth users read skipped:', e.message);
-    }
+    } catch(e) { console.warn('Pre-auth read skipped:', e.message); }
 
-    // Get config
-    let cfg = { signup_bonus: 400, refer_reward: 500 };
+    // ✅ CHANGE 1: Default 0 — admin set kare tab hi milega
+    let cfg = { signup_bonus: 0, refer_reward: 0 };
     try {
       const cfgSnap = await db.ref('app_control').once('value');
       if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
-    } catch(e) { /* use defaults */ }
+    } catch(e) { /* use 0 defaults */ }
 
-    // Create Firebase Auth account
+    currentOTP  = Math.floor(100000 + Math.random() * 900000).toString();
+    pendingData = { name, email, pass, phone, refer, referrerUid, cfg };
+
+    await sendOTPEmail(email, name, currentOTP);
+    openOTPModal(email);
+    toast('OTP bheja gaya! Email check karein 📧', 'ok');
+
+  } catch(e) {
+    toast('OTP bhejne mein error! ' + (e.text || e.message || 'Try again'), 'err');
+  } finally { setLoading(false); }
+}
+
+// ══════════════════════════════════════════════
+// ✅ OTP VERIFY — Step 2: Check OTP + Create Account
+// ══════════════════════════════════════════════
+async function verifyOTP() {
+  const entered = ['o1','o2','o3','o4','o5','o6'].map(id => document.getElementById(id).value).join('');
+
+  if (entered.length !== 6) return toast('Poora 6-digit OTP darj karein!', 'err');
+  if (Date.now() > otpExpireTime) return toast('OTP expire ho gaya! Resend karein.', 'err');
+  if (entered !== currentOTP) {
+    document.querySelectorAll('.otp-box').forEach(b => {
+      b.style.borderColor = 'var(--danger)';
+      setTimeout(() => b.style.borderColor = '', 1500);
+    });
+    return toast('Galat OTP! Dobara check karein.', 'err');
+  }
+
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Account ban raha hai...';
+
+  try {
+    const { name, email, pass, phone, referrerUid, cfg } = pendingData;
+
+    otpVerifyInProgress = true;
     const res = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = res.user.uid;
 
-    // Check device multi-account
     const devCheck = await checkDevice(uid);
     if (!devCheck.allowed) {
       showDeviceBlocked(devCheck.uids);
-      setLoading(false); return;
+      clearInterval(otpTimerInt);
+      document.getElementById('otpModal').classList.remove('open');
+      return;
     }
 
     const now = Date.now();
-    const joinBonus = cfg.signup_bonus || 400;  // Hamesha milega
 
-    // Save user to database
+    // ✅ CHANGE 2: Bina refer = 0 coins | Refer ke saath = admin ka signup_bonus
+    const joinBonus = referrerUid ? (cfg.signup_bonus || 0) : 0;
+
     await db.ref('users/' + uid).set({
       name, email, mobile: phone,
       balance: joinBonus,
       referredBy: referrerUid || 'DIRECT',
       streak: 0, xp: 0,
       status: 'active',
+      emailVerified: true,
       deviceId: DEVICE_ID,
       joinDate: new Date().toLocaleDateString('en-IN'),
       joinedAt: now,
-      // Refer reward held until referrer's 2-day activity check
       pendingReferral: referrerUid ? {
         referrerUid,
-        reward: cfg.refer_reward || 500,
+        reward: cfg.refer_reward || 0,
         joinedAt: now,
         credited: false
       } : null
     });
 
-    // Register this device
     await registerDevice(uid);
 
-    // Refer log (reward will be given after 2 days of activity)
     if (referrerUid) {
       await db.ref('refer_logs/' + uid).set({
         from: referrerUid,
         joinedAt: now,
         rewardCredited: false,
-        rewardAmount: cfg.refer_reward || 500
+        rewardAmount: cfg.refer_reward || 0
       });
-      toast('Welcome! 🎉 ' + joinBonus + ' coins credited! Refer bonus unlocks after 2 days of activity.', 'ok');
+      const bonusMsg = joinBonus > 0 ? joinBonus + ' coins credited! ' : '';
+      toast('Welcome! 🎉 ' + bonusMsg + 'Refer bonus 2 days baad milega.', 'ok');
     } else {
       toast('Account created! Welcome to CashVibe 🚀', 'ok');
     }
 
-    setTimeout(() => window.location.replace('dashboard.html'), 1400);
+    clearInterval(otpTimerInt);
+    otpVerifyInProgress = false;
+    window.location.replace('dashboard.html');
 
   } catch(e) {
+    otpVerifyInProgress = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> VERIFY OTP';
     const msgs = {
       'auth/email-already-in-use': 'Email already registered! Please login.',
-      'auth/invalid-email': 'Invalid email format!',
-      'auth/weak-password': 'Password is too weak (min 6 chars)!',
-      'auth/network-request-failed': 'Network error! Check your internet.',
-      'auth/operation-not-allowed': 'Signup is disabled. Contact admin.'
+      'auth/weak-password': 'Password too weak!',
+      'auth/network-request-failed': 'Network error! Check internet.'
     };
     toast(msgs[e.code] || ('Error: ' + e.message), 'err');
-  } finally { setLoading(false); }
+  }
 }
 
-// ── LOGIN ──
+// ══════════════════════════════════════════════
+// 🔁 RESEND OTP
+// ══════════════════════════════════════════════
+async function resendOTP() {
+  if (!pendingData) return;
+  document.getElementById('resendBtn').style.display = 'none';
+  document.getElementById('resendCool').style.display = 'inline';
+
+  currentOTP = Math.floor(100000 + Math.random() * 900000).toString();
+  try {
+    await sendOTPEmail(pendingData.email, pendingData.name, currentOTP);
+    toast('Naya OTP bhej diya gaya! ✅', 'ok');
+    startOTPTimer();
+    ['o1','o2','o3','o4','o5','o6'].forEach(id => {
+      document.getElementById(id).value = '';
+      document.getElementById(id).style.borderColor = '';
+    });
+    let cd = 60;
+    resendCoolInt = setInterval(() => {
+      cd--;
+      document.getElementById('resendCool').textContent = ' (' + cd + 's)';
+      if (cd <= 0) {
+        clearInterval(resendCoolInt);
+        document.getElementById('resendBtn').style.display = 'inline';
+        document.getElementById('resendCool').style.display = 'none';
+      }
+    }, 1000);
+  } catch(e) {
+    toast('Resend failed! Try again.', 'err');
+    document.getElementById('resendBtn').style.display = 'inline';
+    document.getElementById('resendCool').style.display = 'none';
+  }
+}
+
+// OTP Modal helpers
+function openOTPModal(email) {
+  document.getElementById('otpEmailDisplay').textContent = email;
+  document.getElementById('otpModal').classList.add('open');
+  ['o1','o2','o3','o4','o5','o6'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).style.borderColor = '';
+  });
+  document.getElementById('resendBtn').style.display = 'inline';
+  document.getElementById('resendCool').style.display = 'none';
+  const badge = document.getElementById('otp-provider-badge');
+  if (badge) {
+    const icons = { brevo: '📨', mailjet: '✉️', emailjs: '📧' };
+    const names = { brevo: 'Sent via Brevo', mailjet: 'Sent via Mailjet', emailjs: 'Sent via EmailJS' };
+    badge.innerHTML = (icons[lastUsedProvider] || '📧') + ' ' + (names[lastUsedProvider] || 'Email sent');
+  }
+  startOTPTimer();
+  setTimeout(() => document.getElementById('o1').focus(), 300);
+}
+
+function cancelOTP() {
+  clearInterval(otpTimerInt);
+  clearInterval(resendCoolInt);
+  currentOTP = ''; pendingData = null;
+  document.getElementById('otpModal').classList.remove('open');
+}
+
+function otpMove(el, prevId, nextId) {
+  el.value = el.value.replace(/[^0-9]/g, '').slice(-1);
+  el.classList.toggle('filled', el.value !== '');
+  if (el.value && nextId) document.getElementById(nextId).focus();
+}
+function otpBack(e, el, prevId) {
+  if (e.key === 'Backspace' && !el.value && prevId) document.getElementById(prevId).focus();
+}
+
+// ══════════════════════════════════════════════
+// 🔐 LOGIN
+// ══════════════════════════════════════════════
 async function doLogin() {
   const email = document.getElementById('log-email').value.trim().toLowerCase();
   const pass  = document.getElementById('log-pass').value;
@@ -425,15 +777,12 @@ async function doLogin() {
     const res = await auth.signInWithEmailAndPassword(email, pass);
     const uid = res.user.uid;
 
-    // Check if blocked
     const snap = await db.ref('users/' + uid + '/status').once('value');
     if (snap.val() === 'blocked') {
-      await auth.signOut();
-      setLoading(false);
-      return toast('Your account is blocked! Contact support.', 'err');
+      await auth.signOut(); setLoading(false);
+      return toast('Account blocked! Contact support.', 'err');
     }
 
-    // Check device — allow login but log device
     const devSnap = await db.ref('devices/' + DEVICE_ID).once('value');
     if (devSnap.val() && devSnap.val().blocked) {
       await auth.signOut();
@@ -441,45 +790,39 @@ async function doLogin() {
       setLoading(false); return;
     }
 
-    // Update device record & check if different device
     const userSnap = await db.ref('users/' + uid).once('value');
     const userData = userSnap.val() || {};
-
-    // Device switch: notify but allow — admin can lock if needed
     if (userData.deviceId && userData.deviceId !== DEVICE_ID) {
-      // Log the device switch attempt
       await db.ref('device_switches/' + uid).push({
-        oldDevice: userData.deviceId,
-        newDevice: DEVICE_ID,
-        at: Date.now()
+        oldDevice: userData.deviceId, newDevice: DEVICE_ID, at: Date.now()
       });
-      // If admin has set device_lock on this user, block
       if (userData.device_locked) {
-        await auth.signOut();
-        setLoading(false);
-        return toast('Login from new device blocked! Contact support to unlock.', 'err');
+        await auth.signOut(); setLoading(false);
+        return toast('Login from new device blocked! Contact support.', 'err');
       }
     }
 
     await registerDevice(uid);
-    // Check 2-day referral reward
     checkReferralReward(uid);
     toast('Welcome back! 💰', 'ok');
     setTimeout(() => window.location.replace('dashboard.html'), 800);
+
   } catch(e) {
     const msgs = {
       'auth/user-not-found': 'No account with this email!',
       'auth/wrong-password': 'Wrong password!',
       'auth/invalid-credential': 'Wrong email or password!',
       'auth/invalid-email': 'Invalid email format!',
-      'auth/too-many-requests': 'Too many attempts! Try again later.',
-      'auth/network-request-failed': 'Network error! Check your internet.'
+      'auth/too-many-requests': 'Too many attempts! Try later.',
+      'auth/network-request-failed': 'Network error! Check internet.'
     };
     toast(msgs[e.code] || 'Login failed! Try again.', 'err');
   } finally { setLoading(false); }
 }
 
-// ── GOOGLE LOGIN ──
+// ══════════════════════════════════════════════
+// 🌐 GOOGLE LOGIN
+// ══════════════════════════════════════════════
 async function doGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   setLoading(true);
@@ -494,6 +837,7 @@ async function doGoogle() {
         mobile: 'Not Linked',
         balance: 0, streak: 0, xp: 0,
         referredBy: 'GOOGLE', status: 'active',
+        emailVerified: true,
         deviceId: DEVICE_ID,
         joinDate: new Date().toLocaleDateString('en-IN'),
         joinedAt: Date.now()
@@ -512,25 +856,25 @@ async function doGoogle() {
   } finally { setLoading(false); }
 }
 
-// ── 2-DAY REFERRAL REWARD CHECK ──
+// ══════════════════════════════════════════════
+// 🎁 2-DAY REFERRAL REWARD CHECK
+// ══════════════════════════════════════════════
 async function checkReferralReward(uid) {
   try {
     const logSnap = await db.ref('refer_logs/' + uid).once('value');
     const log = logSnap.val();
     if (!log || log.rewardCredited) return;
-    const daysSinceJoin = (Date.now() - log.joinedAt) / (1000 * 60 * 60 * 24);
-    if (daysSinceJoin >= 2) {
-      // Credit referrer
+    const daysSince = (Date.now() - log.joinedAt) / (1000 * 60 * 60 * 24);
+    if (daysSince >= 2) {
       const refBalSnap = await db.ref('users/' + log.from + '/balance').once('value');
       const refBal = refBalSnap.val() || 0;
       await db.ref('users/' + log.from).update({
-        balance: refBal + (log.rewardAmount || 500),
-        refer_bonus: firebase.database.ServerValue.increment(log.rewardAmount || 500)
+        balance: refBal + (log.rewardAmount || 0),
+        refer_bonus: firebase.database.ServerValue.increment(log.rewardAmount || 0)
       });
       await db.ref('refer_logs/' + uid).update({ rewardCredited: true, creditedAt: Date.now() });
-      // Notify referrer via notice
       await db.ref('notices_list').push({
-        text: '🎉 Referral reward of ' + (log.rewardAmount || 500) + ' coins credited! Your referred user has been active for 2 days.',
+        text: '🎉 Referral reward of ' + (log.rewardAmount || 0) + ' coins credited! Your referred user has been active for 2 days.',
         timestamp: Date.now(),
         targetUid: log.from
       });
@@ -538,16 +882,9 @@ async function checkReferralReward(uid) {
   } catch(e) { /* silent */ }
 }
 
-// ── DEVICE BLOCKED SCREEN ──
-function showDeviceBlocked(uids) {
-  const screen = document.getElementById('dev-blocked');
-  screen.style.display = 'flex';
-  const list = document.getElementById('dev-uid-list');
-  list.innerHTML = '<strong style="color:var(--danger);">Blocked Account IDs:</strong><br>' +
-    (uids || []).map(u => '• ' + u.substring(0,16) + '...').join('<br>');
-}
-
-// ── RESET PASSWORD ──
+// ══════════════════════════════════════════════
+// 🔑 RESET PASSWORD
+// ══════════════════════════════════════════════
 function openReset() {
   document.getElementById('resetModal').classList.add('open');
   document.getElementById('reset-sent').style.display = 'none';
@@ -555,14 +892,12 @@ function openReset() {
   document.getElementById('resetEmail').value = '';
 }
 function openResetPrefill() {
-  // Auto-fill email from login field if filled
   const loginEmail = document.getElementById('log-email').value.trim();
   openReset();
   if (loginEmail) document.getElementById('resetEmail').value = loginEmail;
 }
-function closeReset() {
-  document.getElementById('resetModal').classList.remove('open');
-}
+function closeReset() { document.getElementById('resetModal').classList.remove('open'); }
+
 async function sendReset() {
   const email = document.getElementById('resetEmail').value.trim().toLowerCase();
   if (!email || !email.includes('@')) return toast('Enter a valid email!', 'err');
@@ -585,12 +920,15 @@ async function sendReset() {
   }
 }
 
-// ── UTILS ──
+// ══════════════════════════════════════════════
+// 👁️ PASSWORD TOGGLE
+// ══════════════════════════════════════════════
 function togglePass(id, el) {
   const inp = document.getElementById(id);
   inp.type = inp.type === 'password' ? 'text' : 'password';
-  el.innerHTML = inp.type === 'password' ?
-    '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
+  el.innerHTML = inp.type === 'password'
+    ? '<i class="fa-solid fa-eye"></i>'
+    : '<i class="fa-solid fa-eye-slash"></i>';
 }
 </script>
 </body>

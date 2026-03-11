@@ -336,6 +336,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button onclick="doLogout()" style="background:none;border:none;color:var(--dim);font-size:.78rem;cursor:pointer;text-decoration:underline;margin-top:6px;">Logout</button>
 </div>
 
+
 <!-- MAINTENANCE SCREEN -->
 <div id="maintenance-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:88000;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;">
   <div style="font-size:3.5rem;margin-bottom:18px;animation:float 3s ease-in-out infinite;">🔧</div>
@@ -710,6 +711,9 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
 
+// Session only — browser/tab band = logout
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
+
 // STATE
 let U = {}, adCfg = {}, ciCfg = {}, refRew = 500, selAmt = 0, adBusy = false, spinning = false, curUser = null;
 const TODAY = new Date().toLocaleDateString();
@@ -725,9 +729,18 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 // onAuthStateChanged mein SIRF data load karo
 // KABHI bhi yahan se redirect mat karo - token refresh par null briefly aata hai
 // Redirect sirf doLogout() mein hai
-auth.onAuthStateChanged(u => {
-  if (!u) return; // Token refresh ya koi aur reason - ignore karo
+// Agar 12s mein koi user nahi aaya to login page pe bhejo
+const _authTimeout = setTimeout(() => {
+  if (!curUser) window.location.replace('auth.html');
+}, 12000);
+
+auth.onAuthStateChanged(async u => {
+  if (!u) return; // Token refresh ya null — ignore (timeout handle karega)
+  clearTimeout(_authTimeout); // User mila — timeout cancel
+
   curUser = u;
+
+  // OTP verify auth.html mein ho chuka hai — yahan check nahi
 
   // Load app_control (maintenance, blocked, support settings)
   // Social links — realtime
@@ -1153,11 +1166,20 @@ function loadTasks(cat,tabEl){
   });
 }
 function renderTask(t,box){
-  const rew=t.reward_type==='percent'?t.reward+'% Profit':'+🪙'+t.reward+' Coins';
-  const el=document.createElement('div'); el.className='ti';
-  el.innerHTML=`<img class="ti-img" src="${t.icon||''}" onerror="this.style.background='var(--s3)';this.style.display='block';">
+  const rew = t.reward_type==='percent' ? t.reward+'% Profit' : '+🪙'+t.reward+' Coins';
+  const el = document.createElement('div'); el.className='ti';
+
+  // vCommission link mein user UID attach karo (sub_id)
+  let taskLink = t.link || '#';
+  if (taskLink.includes('vcommission.com') || taskLink.includes('track.vcommission')) {
+    const uid = curUser ? curUser.uid : '';
+    const sep = taskLink.includes('?') ? '&' : '?';
+    taskLink = taskLink + sep + 'sub_id=' + uid;
+  }
+
+  el.innerHTML = `<img class="ti-img" src="${t.icon||''}" onerror="this.style.background='var(--s3)';this.style.display='block';">
     <div class="ti-info"><div class="ti-name">${t.name}</div><div class="ti-rew">${rew}</div></div>
-    <button class="ti-btn" onclick="window.open('${t.link}','_blank')">START →</button>`;
+    <button class="ti-btn" onclick="window.open('${taskLink}','_blank')">START →</button>`;
   box.appendChild(el);
 }
 
@@ -1336,17 +1358,43 @@ function loadHistory(){
 
 // REDEEM
 async function doRedeem(){
-  const code=document.getElementById('redeem-inp').value.trim().toUpperCase();
-  if(!code){ toast('Enter a code first!','err'); return; }
-  if(U.lastRedeemDate===TODAY){ toast('Already claimed today! Try tomorrow.','err'); return; }
-  const s=await db.ref('admin/redeem_config').once('value');
-  const cfg=s.val();
-  if(cfg&&code===cfg.active_code.toUpperCase()){
-    const rew=parseInt(cfg.reward_amount);
-    await db.ref('users/'+curUser.uid).update({lastRedeemDate:TODAY,balance:(U.balance||0)+rew});
-    toast('🎉 '+rew+' coins redeemed!','ok');
-    document.getElementById('redeem-inp').value='';
-  } else { toast('❌ Wrong code! Check social media.','err'); }
+  const code = document.getElementById('redeem-inp').value.trim().toUpperCase();
+  if (!code) { toast('Pehle code enter karo!','err'); return; }
+  if (U.lastRedeemDate === TODAY) { toast('Aaj ka code pehle se claim ho gaya! Kal aao.','err'); return; }
+
+  try {
+    const s = await db.ref('admin/redeem_config').once('value');
+    const cfg = s.val();
+
+    if (!cfg || !cfg.active_code) {
+      toast('❌ Abhi koi active code nahi hai.','err'); return;
+    }
+    if (code !== cfg.active_code.toUpperCase()) {
+      toast('❌ Wrong code! Social media pe check karo.','err'); return;
+    }
+
+    const rew = parseInt(cfg.reward_amount) || 0;
+    if (rew <= 0) { toast('❌ Code ka reward set nahi hai.','err'); return; }
+
+    // Coins add karo transaction se
+    await db.ref('users/'+curUser.uid+'/balance').transaction(bal => (bal||0) + rew);
+    await db.ref('users/'+curUser.uid).update({ lastRedeemDate: TODAY });
+
+    toast('🎉 '+rew+' coins redeem ho gaye! 💰','ok');
+    document.getElementById('redeem-inp').value = '';
+
+    // Notification
+    await db.ref('user_notifications/'+curUser.uid).push({
+      title: '🎟️ Redeem Successful!',
+      message: '🪙 '+rew+' coins aapke wallet mein add ho gaye!',
+      type: 'reward',
+      timestamp: Date.now(),
+      read: false
+    });
+
+  } catch(e) {
+    toast('Error: '+e.message,'err');
+  }
 }
 
 // SETTINGS
@@ -1407,23 +1455,7 @@ function checkMaintPass(){
 }
 function doLogout(){ auth.signOut().then(()=>window.location.replace('auth.html')); }
 
-// Page load par check — sirf tab redirect karo jab user genuinely logged out ho
-// curUser variable use karo — onAuthStateChanged se set hota hai
-// auth.currentUser pe depend mat karo — token refresh par null hota hai briefly
-let _authChecked = false;
-auth.onAuthStateChanged(u => {
-  _authChecked = true;
-  if (!u && !curUser) {
-    // Genuinely logged out — auth page pe bhejo
-    window.location.replace('auth.html');
-  }
-});
-// Fallback: 12 second baad agar koi bhi auth response nahi aaya
-setTimeout(() => {
-  if (!_authChecked && !curUser) {
-    window.location.replace('auth.html');
-  }
-}, 12000);
+// Auth handled by single listener above — doLogout() se redirect hota hai
 
 // LIVE TICKER
 const names=['Rahul','Priya','Amit','Anjali','Vikram','Sumit','Neha','Rohit'];
@@ -1598,6 +1630,7 @@ function openSocial(type){
   }
   window.open(url, '_blank');
 }
+
 
 function toast(msg,type='ok'){
   const t=document.getElementById('toast');
