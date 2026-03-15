@@ -188,7 +188,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   </div>
 </div>
 
-<div id="login-screen">
+<div id="login-screen" class="hide">
   <div class="login-card">
     <div class="login-brand">⚡ CASHVIBE</div>
     <div class="login-sub">🔐 Admin Panel</div>
@@ -196,7 +196,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <i class="fa-solid fa-circle-user" style="color:var(--g1);"></i>
       <span style="font-size:.82rem;color:var(--g1);font-weight:700;"><a href="mailto:mrboy.in20@gmail.com">mrboy.in20@gmail.com</a></span>
     </div>
-    <input type="hidden" id="l-email" value="mrboy.in@gmail.com">
+    <input type="hidden" id="l-email" value="mrboy.in20@gmail.com">
     <div class="linp-wrap"><i class="fa-solid fa-lock"></i><input class="linp" type="password" id="l-pass" placeholder="Enter Password" onkeydown="if(event.key==='Enter')adminLogin()" autofocus></div>
     <button class="lbtn" onclick="adminLogin()">ACCESS PANEL</button>
     <p style="font-size:.65rem;color:var(--dim);margin-top:14px;">🔒 Restricted Access Only</p>
@@ -737,23 +737,8 @@ const auth = firebase.auth();
 let allUsers=[], allWithdrawals=[], allTasks=[], editingUserId=null, editingTaskId=null;
 let uFilter='all', wFilter='Processing', tFilter='all';
 
-// Har refresh par logout — passcode phir se maange
-auth.signOut();
 
-auth.onAuthStateChanged(u => {
-  if (u) {
-    // Sirf allowed email access kar sake
-    if (u.email.toLowerCase() !== 'mrboy.in@gmail.com') {
-      auth.signOut();
-      toast('Access denied! Unauthorized email.', 'err');
-      return;
-    }
-    document.getElementById('login-screen').classList.add('hide');
-    // Passcode gate dikhao — data startAdminData() se load hoga
-    const ps = document.getElementById('passcode-screen');
-    if (ps) ps.classList.remove('hide');
-  }
-});
+;
 
 // ── PASSCODE GATE ──
 const ADMIN_PASSCODE = '9973386508';
@@ -803,8 +788,8 @@ function pcEnter() {
     document.getElementById('pc-hint').style.color = 'var(--g1)';
     setTimeout(() => {
       document.getElementById('passcode-screen').classList.add('hide');
-      // Data load karo — passcode sahi hone ke baad
-      startAdminData();
+      document.getElementById('login-screen').classList.remove('hide');
+      setTimeout(() => document.getElementById('l-pass').focus(), 100);
     }, 500);
   } else {
     // Wrong
@@ -859,34 +844,23 @@ function startAdminData() {
   autoLoadWithdrawals();
 }
 
-async function adminLogin() {
-  const email = document.getElementById('l-email').value.trim().toLowerCase();
-  const pass  = document.getElementById('l-pass').value;
-  if (!email || !pass) return toast('Fill all fields!', 'err');
-  // Email lock — sirf authorized email
-  if (email !== 'mrboy.in@gmail.com') {
-    return toast('❌ Unauthorized email!', 'err');
-  }
-  const btn = document.querySelector('.lbtn');
-  btn.textContent = 'Verifying...'; btn.disabled = true;
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-    toast('Welcome Admin! 👑', 'ok');
-  } catch(e) {
-    const m = {
-      'auth/wrong-password': '❌ Wrong password!',
-      'auth/user-not-found': '❌ Email not found!',
-      'auth/invalid-credential': '❌ Wrong email or password!',
-      'auth/too-many-requests': '⏳ Too many attempts! Wait a while.'
-    };
-    toast(m[e.code] || e.message, 'err');
-  } finally {
-    btn.textContent = 'ACCESS PANEL'; btn.disabled = false;
+function adminLogin() {
+  const pass = document.getElementById('l-pass').value;
+  if (!pass) { document.getElementById('l-pass').style.borderColor='var(--danger)'; return; }
+  if (pass === 'CashVibe@Admin2024') {
+    document.getElementById('login-screen').classList.add('hide');
+    startAdminData();
+  } else {
+    document.getElementById('l-pass').value = '';
+    document.getElementById('l-pass').style.borderColor = 'var(--danger)';
+    document.getElementById('l-pass').placeholder = '❌ Wrong Password!';
+    setTimeout(() => {
+      document.getElementById('l-pass').style.borderColor = '';
+      document.getElementById('l-pass').placeholder = 'Enter Admin Password';
+    }, 2000);
   }
 }
-
 function doLogout() {
-  auth.signOut();
   document.getElementById('login-screen').classList.remove('hide');
   // Also re-show passcode on logout
   const ps = document.getElementById('passcode-screen');
@@ -1979,6 +1953,22 @@ function gpa(id, btn) {
   if (id === 'pg-settings') loadSettings();
 }
 
+
+
+function closeSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (sb) sb.classList.remove('open');
+}
+function updateSpinPreview(sp) {
+  if (!sp || !Array.isArray(sp)) return;
+  sp.forEach((val, i) => {
+    const el = document.getElementById('sp' + (i + 1));
+    if (el) el.value = val;
+  });
+}
+function loadTasksAdmin()  { loadTasks(); }
+function loadNoticesAdmin(){ loadNotices(); }
+function loadRedeemConfig(){ loadRedeem(); }
 function toast(msg, type) {
   if (!type) type = 'ok';
   const t = document.getElementById('toast');
