@@ -283,6 +283,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .cv-coin.sm{width:0.85em;height:0.85em;}
 .cv-coin.xl{width:2em;height:2em;top:-2px;}
 .cv-coin svg{width:100%;height:100%;}
+
+/* ═══ GAME ARENA ═══ */
+.g-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;transition:.2s;}
+.g-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);}
+.g-card:active{transform:scale(.97);}
+.g-tc{aspect-ratio:1;min-height:80px;background:var(--s2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.9rem;cursor:pointer;transition:.2s;border:2px solid var(--border);}
+.g-tc:hover:not(.taken){border-color:var(--g1);background:var(--g1d);}
+.g-tc.taken{cursor:not-allowed;}
+.g-tc.X{color:var(--g1);font-size:1.6rem;font-weight:900;}
+.g-tc.O{color:var(--g2);font-size:1.6rem;font-weight:900;}
+.g-tc.win{background:var(--g1d);border-color:var(--g1);animation:gpulse .6s ease;}
+@keyframes gpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.g-qopt{width:100%;padding:11px 14px;margin:5px 0;background:var(--s2);border:1.5px solid var(--border);border-radius:11px;color:var(--text);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.84rem;cursor:pointer;transition:.2s;text-align:left;}
+.g-qopt:hover:not(:disabled){border-color:var(--g1);}
+.g-qopt.correct{background:rgba(0,245,196,.1);border-color:var(--g1);color:var(--g1);}
+.g-qopt.wrong{background:rgba(239,68,68,.1);border-color:var(--danger);color:var(--danger);}
+@keyframes gspin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -414,6 +431,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <div class="sb-section">Account</div>
   <button class="nb" onclick="gp('pg-withdraw',this)"><i class="fa-solid fa-wallet"></i> Cash Out</button>
   <button class="nb" onclick="gp('pg-profile',this)"><i class="fa-solid fa-user"></i> Profile</button>
+  <button class="nb" onclick="gp('pg-game',this)" style="background:rgba(99,102,241,.08);color:#a5b4fc;margin-top:2px;"><i class="fa-solid fa-gamepad"></i> Game Arena <span class="nb-badge" style="background:#7b5ea7;color:#fff;font-size:.5rem;">NEW</span></button>
   <div class="sb-bottom">
     <div class="sb-user" onclick="gp('pg-profile',null)">
       <div class="sb-av" id="sb-av">U</div>
@@ -560,6 +578,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <div class="rst"><div class="rst-num" id="ref-cnt">0</div><div class="rst-lbl">Total Referrals</div></div>
       <div class="rst"><div class="rst-num" id="ref-earn">0</div><div class="rst-lbl">Coins Earned</div></div>
       <div class="rst"><div class="rst-num" style="color:#f5a623;" id="ref-pending-cnt">0</div><div class="rst-lbl">Pending</div></div>
+      <div class="rst" style="grid-column:1/-1;"><div class="rst-num" style="font-size:1.2rem;color:#818cf8;" id="ref-avg-prog">—</div><div class="rst-lbl">Avg Friend Progress</div></div>
     </div>
 
     <!-- Pending Coins Banner — sirf tab dikhao jab pending ho -->
@@ -568,7 +587,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <div style="width:42px;height:42px;background:rgba(245,166,35,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">⏳</div>
         <div>
           <div style="font-weight:700;font-size:.92rem;">Pending Referral Coins</div>
-          <div style="font-size:.72rem;color:var(--dim);">Jab friend 2 din app use kare — coins milenge</div>
+          <div style="font-size:.72rem;color:var(--dim);">Friend tasks, spin & ad complete kare — coins turant milenge</div>
         </div>
         <div style="margin-left:auto;text-align:right;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#f5a623;"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span><span id="pending-coins-total">0</span></div>
@@ -659,7 +678,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div class="prof-hdr">
       <div class="prof-av" id="p-av">U</div>
       <div class="prof-name" id="p-name">User</div>
-      <div class="prof-email" id="p-email">user@email.com</div>
+      <div class="prof-email" id="p-email"><a href="mailto:mrboy.in20@gmail.com">mrboy.in20@gmail.com</a></div>
       <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <span class="tag g">Level: <span id="p-lvl">Bronze</span></span>
         <span class="tag"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span> <span id="p-xp">0</span> Coins</span>
@@ -680,6 +699,150 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <button onclick="doLogout()" style="width:100%;padding:15px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:14px;color:var(--danger);font-weight:700;cursor:pointer;font-size:.9rem;margin-top:4px;"><i class="fa-solid fa-power-off"></i> LOGOUT</button>
   </div>
 
+
+  <!-- ═══ GAME ARENA PAGE ═══ -->
+  <div id="pg-game" class="page">
+    <div class="sec-title">Game Arena 🎮 <span style="background:linear-gradient(135deg,#6366f1,#7b5ea7);color:#fff;font-size:.55rem;padding:2px 9px;border-radius:99px;font-family:'DM Sans',sans-serif;vertical-align:middle;font-weight:800;">NEW</span></div>
+
+    <!-- Balance + Wins -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(123,94,167,.06));border:1px solid rgba(99,102,241,.18);border-radius:18px;padding:18px 20px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:.62rem;color:var(--dim);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Game Balance</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;color:var(--text);"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span><span id="g-bal-disp">0</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:.62rem;color:var(--dim);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Wins</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;color:#818cf8;">🏆 <span id="g-wins-disp">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arena Status Message -->
+    <div id="g-arena-msg" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:12px 16px;margin-bottom:12px;font-size:.82rem;color:var(--danger);text-align:center;font-weight:700;"></div>
+
+    <!-- TTT Card -->
+    <div class="g-card" id="g-ttt-card" onclick="joinGame('ttt')">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;background:rgba(99,102,241,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">⚔️</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.92rem;">Tic Tac Toe</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">1v1 Classic — 3 line pehle banao</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <span style="background:rgba(99,102,241,.12);color:#818cf8;font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">VS Player</span>
+            <span style="background:rgba(245,166,35,.1);color:var(--g3);font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">~1 min</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="background:var(--g1d);color:var(--g1);padding:5px 12px;border-radius:99px;font-size:.7rem;font-weight:800;white-space:nowrap;" id="g-ttt-fee-lbl">10 coins</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:4px;">🏆 <span id="g-ttt-prize-lbl">18 coins</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Card -->
+    <div class="g-card" id="g-quiz-card" onclick="joinGame('quiz')">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;background:rgba(245,166,35,.1);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">🧠</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.92rem;">Quiz Battle</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">5 sawaal — jyada sahi = winner</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <span style="background:rgba(245,166,35,.1);color:var(--g3);font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">VS Player</span>
+            <span style="background:rgba(245,166,35,.1);color:var(--g3);font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">~3 min</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="background:var(--g1d);color:var(--g1);padding:5px 12px;border-radius:99px;font-size:.7rem;font-weight:800;white-space:nowrap;" id="g-quiz-fee-lbl">20 coins</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:4px;">🏆 <span id="g-quiz-prize-lbl">36 coins</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game History -->
+    <div class="sec-title" style="margin-top:6px;">Recent Games</div>
+    <div id="g-hist-list">
+      <div class="card" style="text-align:center;padding:22px;">
+        <div style="font-size:1.5rem;margin-bottom:6px;">🎮</div>
+        <div style="color:var(--dim);font-size:.8rem;">Koi game nahi khela abhi</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCHMAKING OVERLAY -->
+  <div id="g-mm-ov" style="display:none;position:fixed;inset:0;background:rgba(6,6,16,.96);z-index:8000;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(18px);">
+    <div style="width:60px;height:60px;border-radius:50%;border:3px solid rgba(99,102,241,.2);border-top-color:#818cf8;animation:gspin .8s linear infinite;margin-bottom:20px;"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;">Finding Opponent...</div>
+    <div style="color:var(--dim);font-size:.78rem;margin:6px 0 20px;" id="g-mm-lbl">Game</div>
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 20px;font-size:.74rem;color:var(--dim);text-align:center;max-width:280px;line-height:1.7;">Entry coins deduct ho gaye.<br>Opponent milte hi game shuru hoga! ⚡</div>
+    <button onclick="cancelMM()" style="margin-top:18px;background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);padding:11px 26px;border-radius:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem;">✕ Cancel & Refund</button>
+  </div>
+
+  <!-- GAME BOARD OVERLAY -->
+  <div id="g-board-ov" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9000;flex-direction:column;align-items:center;padding:16px;overflow-y:auto;">
+    <!-- Top bar -->
+    <div style="width:100%;max-width:480px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="quitGame()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--danger);border-radius:10px;padding:6px 12px;font-size:.72rem;font-weight:700;cursor:pointer;">✕ Quit</button>
+        <div>
+          <div style="font-size:.62rem;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;" id="g-board-lbl">GAME</div>
+          <div style="font-weight:800;font-size:.9rem;" id="g-board-status">Loading...</div>
+        </div>
+      </div>
+      <div style="background:var(--g1d);color:var(--g1);padding:5px 14px;border-radius:99px;font-size:.72rem;font-weight:900;" id="g-board-prize">Prize</div>
+    </div>
+    <!-- VS Row -->
+    <div style="width:100%;max-width:480px;background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="text-align:center;">
+        <div style="width:42px;height:42px;background:var(--g1d);border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--g1);margin:0 auto 4px;font-size:1rem;" id="g-me-av">Y</div>
+        <div style="font-size:.7rem;font-weight:700;" id="g-me-name">You</div>
+        <div style="font-size:.65rem;color:var(--g1);font-weight:800;" id="g-me-mark">✕</div>
+      </div>
+      <div style="color:var(--dim);font-weight:900;font-size:.9rem;">VS</div>
+      <div style="text-align:center;">
+        <div style="width:42px;height:42px;background:rgba(123,94,167,.15);border-radius:11px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--g2);margin:0 auto 4px;font-size:1rem;" id="g-opp-av">?</div>
+        <div style="font-size:.7rem;font-weight:700;" id="g-opp-name">Opponent</div>
+        <div style="font-size:.65rem;color:var(--g2);font-weight:800;" id="g-opp-mark">○</div>
+      </div>
+    </div>
+    <!-- TTT Board -->
+    <div id="g-ttt-wrap" style="width:100%;max-width:480px;">
+      <div id="g-ttt-board" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:300px;margin:0 auto 10px;"></div>
+      <div style="text-align:center;color:var(--dim);font-size:.76rem;margin-bottom:8px;" id="g-ttt-hint"></div>
+    </div>
+    <!-- Quiz -->
+    <div id="g-quiz-wrap" style="display:none;width:100%;max-width:480px;">
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+          <span style="color:var(--dim);font-size:.72rem;font-weight:700;">Q <span id="g-q-num">1</span>/<span id="g-q-total">5</span></span>
+          <span style="color:var(--g3);font-size:.72rem;font-weight:700;">Score: <span id="g-q-score">0</span></span>
+        </div>
+        <p style="color:var(--text);font-weight:700;font-size:.88rem;margin:0 0 14px;line-height:1.5;" id="g-q-text">Loading...</p>
+        <div id="g-q-opts"></div>
+      </div>
+      <div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;font-size:.72rem;font-weight:700;">
+        <span>Aap: <b style="color:var(--g1);" id="g-q-me">0</b></span>
+        <span>Opponent: <b style="color:var(--g2);" id="g-q-opp">?</b></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME RESULT POPUP -->
+  <div id="g-result-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(20px);">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:22px;padding:28px 24px;max-width:320px;width:90%;text-align:center;">
+      <div style="font-size:3.5rem;margin-bottom:10px;" id="g-res-emoji">🏆</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:1px;margin-bottom:6px;" id="g-res-title">Jeete!</div>
+      <p style="color:var(--dim);font-size:.8rem;margin-bottom:16px;line-height:1.6;" id="g-res-msg"></p>
+      <div style="background:var(--s2);border-radius:12px;padding:14px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;margin-bottom:6px;"><span style="color:var(--dim);">Entry Fee</span><span style="color:var(--danger);" id="g-res-fee">-10</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;font-weight:700;margin-bottom:6px;"><span style="color:var(--dim);">Prize</span><span style="color:var(--g1);" id="g-res-prize">+18</span></div>
+        <div style="border-top:1px solid var(--border);padding-top:9px;display:flex;justify-content:space-between;font-size:.88rem;font-weight:900;"><span>Net</span><span id="g-res-net">+8</span></div>
+      </div>
+      <button onclick="closeGameResult()" class="btn-main" style="font-size:.86rem;padding:13px;margin-bottom:10px;">Play Again 🎮</button>
+      <button onclick="closeGameResult();gp('pg-game',null);" style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--border);border-radius:99px;color:var(--mid);font-weight:700;cursor:pointer;font-size:.82rem;">← Back to Dashboard</button>
+    </div>
+  </div>
+
 </div><!-- /main -->
 
 <!-- BOTTOM NAV -->
@@ -689,17 +852,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="bn" onclick="gp('pg-spin',this)"><i class="fa-solid fa-dharmachakra"></i>Spin</button>
   <button class="bn" onclick="gp('pg-refer',this)"><i class="fa-solid fa-share-nodes"></i>Refer</button>
   <button class="bn" onclick="gp('pg-withdraw',this)"><i class="fa-solid fa-wallet"></i>Wallet</button>
+  <button class="bn" onclick="gp('pg-game',this)"><i class="fa-solid fa-gamepad"></i>Games</button>
 </nav>
 
-<!-- FIREBASE + APP SCRIPT -->
+<!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
 <script>
 // ⚙️ FIREBASE CONFIG — Replace with your own!
 const firebaseConfig = {
   apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
-  authDomain: "cash-vibe.firebaseapp.com",
+  authDomain: "cashvibe.in",
   databaseURL: "https://cash-vibe-default-rtdb.firebaseio.com",
   projectId: "cash-vibe",
   storageBucket: "cash-vibe.appspot.com",
@@ -873,6 +1039,7 @@ function updateUI(){
   document.getElementById('spin-btn').disabled = U.lastSpinDate===TODAY;
   renderStreak();
   updateAdUI();
+  checkReferralReward();
   // Refer stats — total + pending + earned
   db.ref('refer_logs').orderByChild('from').equalTo(curUser.uid).on('value', s => {
     const allRefs = [];
@@ -889,6 +1056,16 @@ function updateUI(){
     document.getElementById('ref-cnt').textContent = total;
     document.getElementById('ref-earn').textContent = earnedCoins;
     document.getElementById('ref-pending-cnt').textContent = pending.length;
+    // Avg progress
+    const avgEl = document.getElementById('ref-avg-prog');
+    if (avgEl) {
+      if (pending.length > 0) {
+        const avg = Math.round(pending.reduce((s,r) => s+(r.progress||0),0) / pending.length);
+        avgEl.textContent = avg + '%';
+      } else {
+        avgEl.textContent = total > 0 ? '100%' : '—';
+      }
+    }
 
     // Pending banner
     const banner = document.getElementById('pending-banner');
@@ -899,43 +1076,59 @@ function updateUI(){
       banner.style.display = 'block';
       if (pendingTotal) pendingTotal.textContent = pendingCoins;
 
-      // Har pending referral ka status dikhao
       if (pendingList) {
         pendingList.innerHTML = '';
         pending.forEach(r => {
-          const joinedAt = r.joinedAt || Date.now();
-          const daysActive = Math.floor((Date.now() - joinedAt) / 86400000);
-          const daysLeft = Math.max(0, 2 - daysActive);
-          const progress = Math.min(100, (daysActive / 2) * 100);
-          // rewardAmount — jo us waqt set tha (fixed, admin change se affect nahi hoga)
           const coins = r.rewardAmount || 500;
+          const prog = r.progress || 0;
+          const taskDone = prog >= 40;
+          const spinDone = prog >= 70;
+          const adDone   = prog >= 100;
 
-          // Friend ka naam Firebase se laao
+          // Color based on progress
+          const progColor = prog >= 100 ? '#00f5c4' : prog >= 60 ? '#f5a623' : '#818cf8';
+
           db.ref('users/' + r.key).once('value', us => {
-            const friendName = us.val() ? (us.val().name || 'Friend') : 'Friend';
+            const ud = us.val() || {};
+            const friendName = ud.name || 'Friend';
+            const mobile = ud.mobile ? ud.mobile.slice(-4) : '';
+
             const row = document.createElement('div');
-            row.style.cssText = 'background:rgba(0,0,0,.2);border-radius:12px;padding:12px 14px;';
+            row.style.cssText = 'background:rgba(0,0,0,.25);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);';
             row.innerHTML = `
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:9px;">
-                  <div style="width:32px;height:32px;background:rgba(245,166,35,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;">👤</div>
+                  <div style="width:36px;height:36px;background:rgba(245,166,35,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:#f5a623;">${friendName.charAt(0).toUpperCase()}</div>
                   <div>
-                    <div style="font-weight:700;font-size:.82rem;">\${friendName}</div>
-                    <div style="font-size:.62rem;color:var(--dim);">Joined \${new Date(joinedAt).toLocaleDateString('en-IN')}</div>
+                    <div style="font-weight:700;font-size:.84rem;">${friendName}${mobile ? ' ···'+mobile : ''}</div>
+                    <div style="font-size:.62rem;color:var(--dim);">Joined ${new Date(r.joinedAt||Date.now()).toLocaleDateString('en-IN')}</div>
                   </div>
                 </div>
                 <div style="text-align:right;">
-                  <div style="font-weight:700;color:#f5a623;font-size:.85rem;">🪙\${coins}</div>
-                  <div style="font-size:.6rem;color:var(--dim);">\${daysLeft > 0 ? daysLeft + ' din baaki' : 'Almost done!'}</div>
+                  <div style="font-weight:800;color:#f5a623;font-size:.9rem;">🪙${coins}</div>
+                  <div style="font-size:.6rem;color:${progColor};font-weight:700;">${prog}% complete</div>
                 </div>
               </div>
-              <div style="background:rgba(255,255,255,.06);border-radius:99px;height:6px;overflow:hidden;">
-                <div style="background:linear-gradient(90deg,#f5a623,#ff9500);height:100%;border-radius:99px;width:\${progress}%;transition:.5s;"></div>
+              <!-- Progress bar -->
+              <div style="background:rgba(255,255,255,.06);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px;position:relative;">
+                <div style="background:linear-gradient(90deg,#818cf8,#f5a623,#00f5c4);height:100%;border-radius:99px;width:${prog}%;transition:.6s;"></div>
               </div>
-              <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:.6rem;color:var(--dim);">
-                <span>Day \${Math.min(2, daysActive)}/2</span>
-                <span>\${daysLeft > 0 ? '⏳ Pending' : '✅ Processing...'}</span>
+              <!-- Activity steps -->
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+                <div style="background:${taskDone?'rgba(0,245,196,.1)':'rgba(255,255,255,.04)'};border:1px solid ${taskDone?'rgba(0,245,196,.25)':'var(--border)'};border-radius:9px;padding:7px;text-align:center;">
+                  <div style="font-size:.85rem;">${taskDone?'✅':'📅'}</div>
+                  <div style="font-size:.58rem;color:${taskDone?'var(--g1)':'var(--dim)'};font-weight:700;margin-top:2px;">Daily Bonus<br>40%</div>
+                </div>
+                <div style="background:${spinDone?'rgba(0,245,196,.1)':'rgba(255,255,255,.04)'};border:1px solid ${spinDone?'rgba(0,245,196,.25)':'var(--border)'};border-radius:9px;padding:7px;text-align:center;">
+                  <div style="font-size:.85rem;">${spinDone?'✅':'🎡'}</div>
+                  <div style="font-size:.58rem;color:${spinDone?'var(--g1)':'var(--dim)'};font-weight:700;margin-top:2px;">Spin Wheel<br>30%</div>
+                </div>
+                <div style="background:${adDone?'rgba(0,245,196,.1)':'rgba(255,255,255,.04)'};border:1px solid ${adDone?'rgba(0,245,196,.25)':'var(--border)'};border-radius:9px;padding:7px;text-align:center;">
+                  <div style="font-size:.85rem;">${adDone?'✅':'📺'}</div>
+                  <div style="font-size:.58rem;color:${adDone?'var(--g1)':'var(--dim)'};font-weight:700;margin-top:2px;">Watch Ad<br>30%</div>
+                </div>
               </div>
+              ${prog >= 100 ? '<div style="margin-top:8px;text-align:center;color:var(--g1);font-size:.75rem;font-weight:700;background:var(--g1d);border-radius:8px;padding:6px;">🎉 Reward Credited!</div>' : ''}
             `;
             pendingList.appendChild(row);
           });
@@ -946,8 +1139,9 @@ function updateUI(){
       const ptagCoins = document.getElementById('pending-tag-coins');
       if (ptag && ptagCoins) {
         if (pending.length > 0) {
+          const totalProg = Math.round(pending.reduce((s,r) => s+(r.progress||0),0) / pending.length);
           ptag.style.display = 'inline-flex';
-          ptagCoins.textContent = pendingCoins;
+          ptagCoins.textContent = pendingCoins + ' (' + totalProg + '%)';
         } else {
           ptag.style.display = 'none';
         }
@@ -1020,15 +1214,19 @@ function creditCash(amt,type){
     db.ref('users/'+uid).update({lastCheckIn:TODAY,streak:(U.streak||0)+1});
     db.ref('users/'+uid+'/balance').transaction(c=>(c||0)+amt);
     toast('🪙 '+amt+' coins daily bonus credited!','ok');
+    setTimeout(checkReferralReward, 1000); // refer progress check
   } else if(type==='ad'){
     db.ref('user_ads/'+uid+'/'+TKEY).transaction(c=>(c||0)+1);
     db.ref('users/'+uid+'/balance').transaction(c=>(c||0)+amt);
     toast('🪙 '+amt+' coins credited!','ok');
     updateAdUI();
+    markAdDone(); // refer progress - ad done flag
+    setTimeout(checkReferralReward, 1000);
   } else if(type==='spin'){
     db.ref('users/'+uid).update({lastSpinDate:TODAY});
     db.ref('users/'+uid+'/balance').transaction(c=>(c||0)+amt);
     toast('🎉 '+amt+' coins credited!','ok');
+    setTimeout(checkReferralReward, 1000); // refer progress check
   }
 }
 
@@ -1226,7 +1424,7 @@ async function loadLb(){
 // REFER
 function shareRef(){
   const code = U.referralCode || curUser.uid.substring(0,6).toUpperCase();
-  const link = 'https://mrboyin20-beep.github.io/cashvibe/auth.html?ref=' + code;
+  const link = 'https://cashvibe.in/auth.html?ref=' + code;
 
   // Firebase se fresh values lo — admin ne jo set kiya wo hi jaaye
   db.ref('app_control').once('value', snap => {
@@ -1266,7 +1464,7 @@ async function applyRef(){
   if(!uid){ toast('Code not found!','err'); return; }
   const jBonus = appCfg.signup_bonus || 400;
   await db.ref('users/'+curUser.uid).update({referredBy:uid, balance:(U.balance||0)+jBonus});
-  await db.ref('refer_logs').push({from:uid, uid:curUser.uid, joinedAt:Date.now(), rewardCredited:false, rewardAmount:refRew});
+  await db.ref('refer_logs/' + curUser.uid).set({from:uid, uid:curUser.uid, joinedAt:Date.now(), rewardCredited:false, rewardAmount:refRew});
   toast('🎉 ' + jBonus + ' coins joining bonus credited!','ok');
   document.getElementById('apply-code').value='';
 }
@@ -1455,6 +1653,68 @@ function checkMaintPass(){
 }
 function doLogout(){ auth.signOut().then(()=>window.location.replace('auth.html')); }
 
+// ══ REFER ACTIVITY SYSTEM ══
+// Friend activity track karo aur referrer ko auto-credit karo
+// Task complete = 40pts, Spin = 30pts, Ad = 30pts → 100% = reward!
+
+async function checkReferralReward() {
+  if (!curUser || !U.referredBy || U.referredBy === 'DIRECT') return;
+  try {
+    const refSnap = await db.ref('refer_logs/' + curUser.uid).once('value');
+    if (!refSnap.exists()) return;
+    const ref = refSnap.val();
+    if (ref.rewardCredited) return; // already credited
+
+    // Calculate current progress
+    const prog = calcReferProgress();
+    const prevProg = ref.progress || 0;
+
+    // Update progress in Firebase
+    if (prog !== prevProg) {
+      await db.ref('refer_logs/' + curUser.uid).update({ progress: prog });
+    }
+
+    // 100% complete? Auto-credit referrer!
+    if (prog >= 100 && !ref.rewardCredited) {
+      const reward = ref.rewardAmount || 500;
+      const referrerUid = ref.from;
+      if (referrerUid) {
+        // Credit referrer
+        await db.ref('users/' + referrerUid + '/balance').transaction(b => (b || 0) + reward);
+        // Mark as credited
+        await db.ref('refer_logs/' + curUser.uid).update({
+          rewardCredited: true,
+          creditedAt: Date.now(),
+          progress: 100
+        });
+        console.log('Referral reward auto-credited!', reward);
+      }
+    }
+  } catch(e) { console.log('checkReferralReward:', e); }
+}
+
+// Progress calculate karo - task/spin/ad completion based
+function calcReferProgress() {
+  let pts = 0;
+  // Task complete kiya? (40 pts) — lastCheckIn ya task history se check
+  if (U.lastCheckIn) pts += 40;
+  // Spin kiya? (30 pts)
+  if (U.lastSpinDate) pts += 30;
+  // Ad dekha? (30 pts)
+  // Check user_ads se - agar aaj ya pehle kabhi dekha
+  if (U.adDone || U.lastAdDate) pts += 30;
+  return Math.min(pts, 100);
+}
+
+// Ad complete hone par adDone flag set karo
+async function markAdDone() {
+  if (!curUser) return;
+  if (!U.adDone) {
+    await db.ref('users/' + curUser.uid).update({ adDone: true, lastAdDate: TODAY });
+  }
+}
+
+
 // Auth handled by single listener above — doLogout() se redirect hota hai
 
 // LIVE TICKER
@@ -1613,6 +1873,8 @@ function gp(id,btn){
   const pg=document.getElementById(id); if(pg) pg.classList.add('active');
   if(btn) btn.classList.add('active');
   if(id==='pg-tasks') loadTasks('simple',document.querySelector('.ttab'));
+  if(id==='pg-lb') loadLb();
+  if(id==='pg-game') loadGamePageData();
   closeSidebar();
 }
 function openSidebar(){ document.getElementById('sidebar').classList.add('mopen'); document.getElementById('sob').style.display='block'; }
@@ -1631,12 +1893,446 @@ function openSocial(type){
   window.open(url, '_blank');
 }
 
-
-function toast(msg,type='ok'){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='show '+type;
-  setTimeout(()=>t.className='',3200);
+function toast(msg, type) {
+  if (!type) type = 'ok';
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(function() { t.className = ''; }, 3200);
 }
 
 
+// 🎮 GAME ARENA — Complete JS (Admin se Firebase-driven)
+// DB nodes: game_config, game_rooms, game_history/[uid]
+// ══════════════════════════════════════════════════════════
+let GCFG = {
+  ttt:  { name:'Tic Tac Toe', fee:10, prize:18, platform:2, status:'active', timeout:30 },
+  quiz: { name:'Quiz Battle', fee:20, prize:36, platform:4, status:'active', questions:5 },
+};
+let gArenaStatus = 'active', gMaintMsg = '';
+let gType=null, gRoom=null, gRole=null, gMark=null;
+let gBoardStarted=false, gGameEnded=false;
+let gBoard=Array(9).fill(''), gMyTurn=false;
+let gQList=[], gQIdx=0, gMyScore=0;
+let gRoomListener=null, gMmTimer=null;
+
+// Realtime config from Firebase (admin panel se control)
+db.ref('game_config').on('value', snap => {
+  const cfg = snap.val(); if (!cfg) return;
+  if (cfg.ttt)  { Object.assign(GCFG.ttt,  cfg.ttt);  }
+  if (cfg.quiz) { Object.assign(GCFG.quiz, cfg.quiz); }
+  if (cfg.global) {
+    gArenaStatus = cfg.global.arena_status || 'active';
+    gMaintMsg    = cfg.global.maint_msg    || '';
+  }
+  updateGameUI();
+});
+
+function updateGameUI() {
+  const ids = {
+    'g-ttt-fee-lbl':   GCFG.ttt.fee   + ' coins',
+    'g-ttt-prize-lbl': GCFG.ttt.prize + ' coins',
+    'g-quiz-fee-lbl':  GCFG.quiz.fee  + ' coins',
+    'g-quiz-prize-lbl':GCFG.quiz.prize + ' coins',
+  };
+  Object.entries(ids).forEach(([id, val]) => {
+    const el = document.getElementById(id); if (el) el.textContent = val;
+  });
+  const msgEl = document.getElementById('g-arena-msg');
+  const tttC  = document.getElementById('g-ttt-card');
+  const quizC = document.getElementById('g-quiz-card');
+  if (msgEl) {
+    if (gArenaStatus !== 'active') {
+      msgEl.style.display = 'block';
+      msgEl.textContent = gArenaStatus === 'maintenance'
+        ? '🔧 ' + (gMaintMsg || 'Game Arena maintenance mein hai!')
+        : '❌ Game Arena abhi unavailable hai.';
+      if (tttC)  tttC.style.opacity  = '0.45';
+      if (quizC) quizC.style.opacity = '0.45';
+    } else {
+      msgEl.style.display = 'none';
+      if (tttC)  tttC.style.opacity  = '1';
+      if (quizC) quizC.style.opacity = '1';
+    }
+  }
+}
+
+function loadGamePageData() {
+  if (!curUser) return;
+  const balEl = document.getElementById('g-bal-disp');
+  if (balEl) balEl.textContent = Math.floor(U.balance || 0);
+  db.ref('game_history/' + curUser.uid).once('value', snap => {
+    let wins = 0;
+    if (snap.exists()) snap.forEach(g => { if (g.val().result === 'win') wins++; });
+    const el = document.getElementById('g-wins-disp');
+    if (el) el.textContent = wins;
+  });
+  loadGameHistory();
+}
+
+function loadGameHistory() {
+  const box = document.getElementById('g-hist-list');
+  if (!box || !curUser) return;
+  db.ref('game_history/' + curUser.uid).limitToLast(5).once('value', snap => {
+    if (!snap.exists()) {
+      box.innerHTML = '<div class="card" style="text-align:center;padding:22px;"><div style="font-size:1.5rem;margin-bottom:6px;">🎮</div><div style="color:var(--dim);font-size:.8rem;">Koi game nahi khela abhi</div></div>';
+      return;
+    }
+    const items = [];
+    snap.forEach(c => items.unshift(c.val()));
+    box.innerHTML = items.map(g => {
+      const w = g.result === 'win', d = g.result === 'draw';
+      const col = w ? 'var(--g1)' : d ? 'var(--g3)' : 'var(--danger)';
+      const ico = w ? '🏆' : d ? '🤝' : '💀';
+      return `<div class="card" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:38px;height:38px;background:${w?'var(--g1d)':d?'rgba(245,166,35,.1)':'rgba(239,68,68,.1)'};border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;">${ico}</div>
+          <div><b style="font-size:.82rem;display:block;">${g.gameName || 'Game'}</b><small style="color:var(--dim);font-size:.65rem;">${g.date || ''}</small></div>
+        </div>
+        <b style="color:${col};font-size:.82rem;">${w ? '+' + g.prize : d ? 'Draw' : '-' + g.fee} coins</b>
+      </div>`;
+    }).join('');
+  });
+}
+
+async function joinGame(gameType) {
+  if (!curUser) return;
+  if (gArenaStatus !== 'active') {
+    toast(gArenaStatus === 'maintenance' ? (gMaintMsg || 'Game Arena maintenance mein hai!') : 'Game Arena unavailable!', 'err');
+    return;
+  }
+  const cfg = GCFG[gameType];
+  if (!cfg) return;
+  if (cfg.status === 'inactive') { toast(cfg.name + ' abhi disabled hai!', 'err'); return; }
+  const bal = Math.floor(U.balance || 0);
+  if (bal < cfg.fee) { toast('Insufficient coins! ' + cfg.fee + ' coins chahiye.', 'err'); return; }
+
+  gType = gameType;
+  gBoardStarted = false;
+  gGameEnded = false;
+
+  // Deduct entry fee
+  await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) - cfg.fee);
+
+  // Show matchmaking
+  document.getElementById('g-mm-lbl').textContent = cfg.name + ' — Entry: ' + cfg.fee + ' coins';
+  document.getElementById('g-mm-ov').style.display = 'flex';
+
+  // Find or create room
+  const snap = await db.ref('game_rooms').orderByChild('gameType').equalTo(gameType).once('value');
+  let joined = false;
+  if (snap.exists()) {
+    snap.forEach(child => {
+      const r = child.val();
+      if (!joined && r.status === 'waiting' && r.playerA !== curUser.uid) {
+        joined = true; gRoom = child.key; gRole = 'playerB';
+        db.ref('game_rooms/' + gRoom).update({ playerB: curUser.uid, status: 'active', startedAt: Date.now() });
+      }
+    });
+  }
+  if (!joined) {
+    const nr = db.ref('game_rooms').push(); gRoom = nr.key; gRole = 'playerA';
+    await nr.set({ gameType, playerA: curUser.uid, playerB: null, status: 'waiting',
+      board: Array(9).fill(''), scores: { A: 0, B: 0 }, currentTurn: 'A', createdAt: Date.now() });
+    const timeout = (GCFG[gameType].timeout || 60) * 1000;
+    gMmTimer = setTimeout(() => cancelMM(true), timeout);
+  }
+  listenRoom();
+}
+
+function listenRoom() {
+  if (!gRoom) return;
+  if (gRoomListener) gRoomListener.off();
+  gRoomListener = db.ref('game_rooms/' + gRoom);
+  gRoomListener.on('value', snap => {
+    const r = snap.val(); if (!r) return;
+    if (r.status === 'active' && !gBoardStarted) {
+      gBoardStarted = true;
+      clearTimeout(gMmTimer);
+      document.getElementById('g-mm-ov').style.display = 'none';
+      startGameBoard(r);
+    }
+    if (r.status === 'finished') endGame(r);
+  });
+}
+
+async function startGameBoard(room) {
+  const cfg = GCFG[gType];
+  const isA = gRole === 'playerA';
+  const oppUid = isA ? room.playerB : room.playerA;
+  let oppName = 'Opponent';
+  try { oppName = (await db.ref('users/' + oppUid + '/name').once('value')).val() || 'Opponent'; } catch(e) {}
+  const myName = U.name || 'You';
+
+  document.getElementById('g-board-lbl').textContent   = cfg.name.toUpperCase();
+  document.getElementById('g-board-prize').textContent = '🏆 ' + cfg.prize + ' coins';
+  document.getElementById('g-board-status').textContent = 'Loading...';
+  document.getElementById('g-me-name').textContent     = myName;
+  document.getElementById('g-opp-name').textContent    = oppName;
+  document.getElementById('g-me-av').textContent       = myName.charAt(0).toUpperCase();
+  document.getElementById('g-opp-av').textContent      = oppName.charAt(0).toUpperCase();
+  document.getElementById('g-board-ov').style.display  = 'flex';
+
+  if (gType === 'ttt') initTTT(isA);
+  else initQuiz();
+}
+
+// ── TTT ──
+function initTTT(isA) {
+  document.getElementById('g-ttt-wrap').style.display  = 'block';
+  document.getElementById('g-quiz-wrap').style.display = 'none';
+  gMark = isA ? 'X' : 'O';
+  document.getElementById('g-me-mark').textContent  = gMark === 'X' ? '✕' : '○';
+  document.getElementById('g-opp-mark').textContent = gMark === 'X' ? '○' : '✕';
+
+  // Turn listener — update gMyTurn AND re-render board so onclick handlers update
+  db.ref('game_rooms/' + gRoom + '/currentTurn').on('value', s => {
+    if (!s.val()) return;
+    gMyTurn = (s.val() === (gRole === 'playerA' ? 'A' : 'B'));
+    document.getElementById('g-board-status').textContent = gMyTurn ? 'Aapki Baari ⚔️' : 'Opponent ki baari...';
+    document.getElementById('g-ttt-hint').textContent     = gMyTurn ? '👆 Cell tap karo' : '⏳ Wait kar raho...';
+    // Re-render board with updated turn so onclick handlers are fresh
+    renderTTTBoard(gBoard);
+  });
+
+  // Board listener — renders latest board state
+  db.ref('game_rooms/' + gRoom + '/board').on('value', s => {
+    if (s.val()) renderTTTBoard(s.val());
+  });
+}
+
+function renderTTTBoard(board) {
+  if (!board || !board.length) return;
+  gBoard = [...board];
+  const el = document.getElementById('g-ttt-board');
+  if (!el) return;
+  el.innerHTML = '';
+  board.forEach((c, i) => {
+    const d = document.createElement('div');
+    d.className = 'g-tc' + (c ? ' taken ' + c : '');
+    d.textContent = c === 'X' ? '✕' : c === 'O' ? '○' : '';
+    // ALWAYS attach onclick to empty cells — check gMyTurn inside makeTTTMove
+    if (!c) d.onclick = () => makeTTTMove(i);
+    el.appendChild(d);
+  });
+}
+
+async function makeTTTMove(i) {
+  if (!gMyTurn || gBoard[i] || gGameEnded) return; // guard check inside
+  gMyTurn = false;
+  renderTTTBoard(gBoard); // immediately re-render to remove onclick (prevent double click)
+  const nb = [...gBoard]; nb[i] = gMark;
+  await db.ref('game_rooms/' + gRoom + '/board').set(nb);
+  const winner = checkTTTWinner(nb);
+  if (winner || nb.every(c => c)) {
+    await db.ref('game_rooms/' + gRoom).update({ status: 'finished', winner: winner || 'draw', finishedAt: Date.now() });
+  } else {
+    await db.ref('game_rooms/' + gRoom + '/currentTurn').set(gRole === 'playerA' ? 'B' : 'A');
+  }
+}
+
+function checkTTTWinner(b) {
+  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for (const [a,bc,c] of lines) {
+    if (b[a] && b[a] === b[bc] && b[a] === b[c]) {
+      setTimeout(() => {
+        document.querySelectorAll('.g-tc').forEach((el,idx) => {
+          if ([a,bc,c].includes(idx)) el.classList.add('win');
+        });
+      }, 100);
+      return b[a];
+    }
+  }
+  return null;
+}
+
+// ── QUIZ ──
+const G_QB = [
+  {q:'India ki rajdhani kya hai?',opts:['Mumbai','Delhi','Kolkata','Chennai'],a:1},
+  {q:'1+1 = ?',opts:['1','2','3','11'],a:1},
+  {q:'Sabse bada ocean kaun sa hai?',opts:['Atlantic','Indian','Arctic','Pacific'],a:3},
+  {q:'HTML full form kya hai?',opts:['Hyper Text ML','High Text ML','Hyper Text Markup Language','None'],a:2},
+  {q:'Google ki sthapna kab hui?',opts:['1994','1996','1998','2000'],a:2},
+  {q:'CPU ka full form?',opts:['Central Process Unit','Central Processing Unit','Computer Process Unit','Control Processing Unit'],a:1},
+  {q:'Android kisne banaya?',opts:['Apple','Google','Microsoft','Samsung'],a:1},
+  {q:'1 GB = ? MB',opts:['100','512','1000','1024'],a:3},
+  {q:'Bharat mein kitne rajya hain?',opts:['25','28','29','30'],a:1},
+  {q:'Internet kisne invent kiya?',opts:['Bill Gates','Tim Berners-Lee','Elon Musk','Steve Jobs'],a:1},
+  {q:'2 × 8 = ?',opts:['14','16','18','20'],a:1},
+  {q:'Python kya hai?',opts:['Saamp','Programming Language','Game','Browser'],a:1},
+];
+
+function initQuiz() {
+  document.getElementById('g-ttt-wrap').style.display  = 'none';
+  document.getElementById('g-quiz-wrap').style.display = 'block';
+  const total = GCFG.quiz.questions || 5;
+  gQList = [...G_QB].sort(() => Math.random() - .5).slice(0, total);
+  gQIdx = 0; gMyScore = 0;
+  document.getElementById('g-q-score').textContent = '0';
+  document.getElementById('g-q-me').textContent    = '0';
+  document.getElementById('g-q-total').textContent  = total;
+  const oppK = gRole === 'playerA' ? 'B' : 'A';
+  db.ref('game_rooms/' + gRoom + '/scores/' + oppK).on('value', s => {
+    const el = document.getElementById('g-q-opp'); if (el) el.textContent = s.val() || '0';
+  });
+  showNextQ();
+}
+
+function showNextQ() {
+  if (gQIdx >= gQList.length) { finishQuiz(); return; }
+  const q = gQList[gQIdx];
+  document.getElementById('g-q-num').textContent  = gQIdx + 1;
+  document.getElementById('g-q-text').textContent = q.q;
+  const el = document.getElementById('g-q-opts'); el.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const b = document.createElement('button');
+    b.className = 'g-qopt'; b.textContent = o;
+    b.onclick = () => answerQ(i, b, q);
+    el.appendChild(b);
+  });
+}
+
+function answerQ(sel, btn, q) {
+  document.querySelectorAll('.g-qopt').forEach(b => b.disabled = true);
+  if (sel === q.a) {
+    btn.classList.add('correct'); gMyScore++;
+    document.getElementById('g-q-score').textContent = gMyScore;
+    document.getElementById('g-q-me').textContent    = gMyScore;
+    db.ref('game_rooms/' + gRoom + '/scores/' + (gRole === 'playerA' ? 'A' : 'B')).set(gMyScore);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.g-qopt')[q.a].classList.add('correct');
+  }
+  gQIdx++;
+  setTimeout(showNextQ, 1000);
+}
+
+async function finishQuiz() {
+  const mk = gRole === 'playerA' ? 'A' : 'B';
+  await db.ref('game_rooms/' + gRoom + '/scores/' + mk).set(gMyScore);
+  await db.ref('game_rooms/' + gRoom + '/done/' + mk).set(true);
+  document.getElementById('g-board-status').textContent = 'Calculating result...';
+  const ds = await db.ref('game_rooms/' + gRoom + '/done').once('value');
+  const done = ds.val() || {};
+  if (done.A && done.B) {
+    const sc = (await db.ref('game_rooms/' + gRoom + '/scores').once('value')).val() || { A:0, B:0 };
+    let winner = 'draw';
+    if (sc.A > sc.B) winner = 'A';
+    else if (sc.B > sc.A) winner = 'B';
+    await db.ref('game_rooms/' + gRoom).update({ status: 'finished', winner, finishedAt: Date.now() });
+  } else {
+    document.getElementById('g-board-status').textContent = 'Waiting for opponent to finish...';
+  }
+}
+
+async function endGame(room) {
+  if (!curUser || gGameEnded) return;
+  gGameEnded = true;
+  if (gRoomListener) { gRoomListener.off(); gRoomListener = null; }
+  const cfg = GCFG[gType];
+  const isA = gRole === 'playerA';
+  const myMark = gMark;
+  const myKey  = isA ? 'A' : 'B';
+
+  let result = 'loss', prize = 0;
+  const w = room.winner;
+
+  if (w === 'draw') {
+    result = 'draw'; prize = cfg.fee; // refund
+  } else if (gType === 'ttt') {
+    // TTT winner is 'X' or 'O'
+    result = (w === myMark) ? 'win' : 'loss';
+    prize  = result === 'win' ? cfg.prize : 0;
+  } else {
+    // Quiz winner is 'A' or 'B'
+    result = (w === myKey) ? 'win' : 'loss';
+    prize  = result === 'win' ? cfg.prize : 0;
+  }
+
+  if (prize > 0) {
+    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + prize);
+  }
+
+  const histKey = 'game_' + Date.now();
+  await db.ref('game_history/' + curUser.uid + '/' + histKey).set({
+    gameName: cfg.name, gameType: gType, result,
+    fee: cfg.fee, prize,
+    date: new Date().toLocaleDateString('en-IN'),
+    roomId: gRoom
+  });
+
+  document.getElementById('g-board-ov').style.display = 'none';
+  showGameResult(result, cfg, prize);
+  loadGamePageData();
+  // Update main balance display
+  const newBal = Math.floor((U.balance || 0) + prize - cfg.fee);
+  const balEl = document.getElementById('g-bal-disp'); if (balEl) balEl.textContent = Math.max(0, newBal);
+}
+
+function showGameResult(result, cfg, prize) {
+  const data = {
+    win:  { emoji:'🏆', title:'Aap Jeete! 🎉', msg:'Prize credited! Well played!' },
+    loss: { emoji:'😔', title:'Haar Gaye!',     msg:'Better luck next time! Practice karo.' },
+    draw: { emoji:'🤝', title:'Draw!',           msg:'Entry coins wapas credit ho gaye.' },
+  };
+  const d = data[result];
+  document.getElementById('g-res-emoji').textContent = d.emoji;
+  document.getElementById('g-res-title').textContent = d.title;
+  document.getElementById('g-res-msg').textContent   = d.msg;
+  document.getElementById('g-res-fee').textContent   = '-' + cfg.fee + ' coins';
+  document.getElementById('g-res-prize').textContent = '+' + prize + ' coins';
+  const net = prize - cfg.fee;
+  const netEl = document.getElementById('g-res-net');
+  netEl.textContent  = (net >= 0 ? '+' : '') + net + ' coins';
+  netEl.style.color  = net >= 0 ? 'var(--g1)' : 'var(--danger)';
+  document.getElementById('g-result-popup').style.display = 'flex';
+}
+
+function closeGameResult() {
+  document.getElementById('g-result-popup').style.display = 'none';
+  gType = gRoom = gRole = gMark = null;
+  gBoard = Array(9).fill(''); gMyTurn = false;
+  gQIdx = gMyScore = 0;
+  gGameEnded = false;
+}
+
+function quitGame() {
+  if (!confirm('Game quit karo? Entry coins wapas nahi milenge.')) return;
+  document.getElementById('g-board-ov').style.display = 'none';
+  if (gRoomListener) { gRoomListener.off(); gRoomListener = null; }
+  // Mark game as finished if room exists
+  if (gRoom && curUser) {
+    const myKey = gRole === 'playerA' ? 'A' : 'B';
+    const oppKey = myKey === 'A' ? 'B' : 'A';
+    db.ref('game_rooms/' + gRoom + '/winner').once('value', s => {
+      if (!s.val()) {
+        db.ref('game_rooms/' + gRoom).update({ status: 'finished', winner: oppKey, finishedAt: Date.now() });
+      }
+    });
+  }
+  gType = gRoom = gRole = gMark = null;
+  gBoard = Array(9).fill(''); gMyTurn = false;
+  gQIdx = gMyScore = 0;
+  gGameEnded = true;
+  gBoardStarted = false;
+  loadGamePageData();
+  gp('pg-game', null);
+}
+
+async function cancelMM(timedOut = false) {
+  clearTimeout(gMmTimer);
+  document.getElementById('g-mm-ov').style.display = 'none';
+  const cfg = GCFG[gType];
+  if (curUser && cfg) {
+    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + cfg.fee);
+    if (gRoom) await db.ref('game_rooms/' + gRoom).remove();
+    toast(timedOut ? 'Opponent nahi mila. ' + cfg.fee + ' coins refund!' : 'Cancelled! ' + cfg.fee + ' coins wapas.', 'ok');
+  }
+  gType = gRoom = gRole = null;
+  gGameEnded = false;
+  gBoardStarted = false;
+  loadGamePageData();
+}
 </script>
+</body>
+</html>

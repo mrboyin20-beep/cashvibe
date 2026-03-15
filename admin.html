@@ -194,7 +194,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div class="login-sub">🔐 Admin Panel</div>
     <div style="background:rgba(0,245,196,.06);border:1px solid rgba(0,245,196,.15);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:9px;">
       <i class="fa-solid fa-circle-user" style="color:var(--g1);"></i>
-      <span style="font-size:.82rem;color:var(--g1);font-weight:700;">mrboy.in@gmail.com</span>
+      <span style="font-size:.82rem;color:var(--g1);font-weight:700;"><a href="mailto:mrboy.in20@gmail.com">mrboy.in20@gmail.com</a></span>
     </div>
     <input type="hidden" id="l-email" value="mrboy.in@gmail.com">
     <div class="linp-wrap"><i class="fa-solid fa-lock"></i><input class="linp" type="password" id="l-pass" placeholder="Enter Password" onkeydown="if(event.key==='Enter')adminLogin()" autofocus></div>
@@ -331,6 +331,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <div class="sb-sec">Settings</div>
   <button class="nb" onclick="gp('pg-settings',this);loadSettings()"><i class="fa-solid fa-sliders"></i> App Settings</button>
   <button class="nb" onclick="gp('pg-redeem',this);loadRedeem()"><i class="fa-solid fa-ticket"></i> Redeem Codes</button>
+  <button class="nb" onclick="gp('pg-game',this);loadGameAdmin()" style="background:rgba(99,102,241,.08);color:#a5b4fc;"><i class="fa-solid fa-gamepad"></i> Game Arena</button>
   <div class="sb-bottom">
     <button class="logout-btn" onclick="doLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
   </div>
@@ -587,6 +588,106 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
+
+  <!-- ═══ GAME ARENA CONTROL ═══ -->
+  <div id="pg-game" class="page">
+    <div class="pg-hdr"><div class="pg-title">Game Arena Control 🎮</div><div class="pg-sub">Entry fees, prizes aur game settings control karein</div></div>
+
+    <!-- Stats -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat"><div class="stat-icon si-p"><i class="fa-solid fa-gamepad"></i></div><div class="stat-num" id="g-stat-total">0</div><div class="stat-lbl">Total Games</div></div>
+      <div class="stat"><div class="stat-icon si-g"><i class="fa-solid fa-circle-play"></i></div><div class="stat-num" id="g-stat-active" style="color:var(--g1);">0</div><div class="stat-lbl">Active Rooms</div></div>
+      <div class="stat"><div class="stat-icon si-y"><i class="fa-solid fa-coins"></i></div><div class="stat-num" id="g-stat-coins" style="color:var(--g3);">0</div><div class="stat-lbl">Total Entry</div></div>
+      <div class="stat"><div class="stat-icon si-r"><i class="fa-solid fa-sack-dollar"></i></div><div class="stat-num" id="g-stat-earn" style="color:#ec4899;">0</div><div class="stat-lbl">Platform Earnings</div></div>
+    </div>
+
+    <div class="set-grid">
+      <!-- TTT Settings -->
+      <div class="set-card" style="border-top:3px solid #6366f1;">
+        <div class="set-card-title">⚔️ Tic Tac Toe Settings</div>
+        <label class="flabel">Entry Fee (Coins)</label>
+        <input class="finp" type="number" id="g-ttt-fee" placeholder="e.g. 10" min="1" oninput="calcPF('ttt')">
+        <label class="flabel">Prize Pool (Coins)</label>
+        <input class="finp" type="number" id="g-ttt-prize" placeholder="e.g. 18" min="1" oninput="calcPF('ttt')">
+        <label class="flabel">Platform Fee (Auto-calculate)</label>
+        <input class="finp" type="number" id="g-ttt-platform" placeholder="Auto" readonly style="opacity:.5;cursor:not-allowed;">
+        <label class="flabel">Turn Timeout (Seconds)</label>
+        <input class="finp" type="number" id="g-ttt-timeout" placeholder="30" min="10">
+        <label class="flabel">Status</label>
+        <select class="fselect" id="g-ttt-status">
+          <option value="active">✅ Active</option>
+          <option value="inactive">❌ Disabled</option>
+        </select>
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:6px;" onclick="saveGameSettings('ttt')">💾 SAVE TTT SETTINGS</button>
+        <div style="font-size:.65rem;color:var(--dim);margin-top:8px;line-height:1.6;">💡 Platform Fee = (Entry × 2) − Prize. Prize < Entry × 2 hona chahiye.</div>
+      </div>
+
+      <!-- Quiz Settings -->
+      <div class="set-card" style="border-top:3px solid var(--g3);">
+        <div class="set-card-title">🧠 Quiz Battle Settings</div>
+        <label class="flabel">Entry Fee (Coins)</label>
+        <input class="finp" type="number" id="g-quiz-fee" placeholder="e.g. 20" min="1" oninput="calcPF('quiz')">
+        <label class="flabel">Prize Pool (Coins)</label>
+        <input class="finp" type="number" id="g-quiz-prize" placeholder="e.g. 36" min="1" oninput="calcPF('quiz')">
+        <label class="flabel">Platform Fee (Auto-calculate)</label>
+        <input class="finp" type="number" id="g-quiz-platform" placeholder="Auto" readonly style="opacity:.5;cursor:not-allowed;">
+        <label class="flabel">Questions per Match</label>
+        <input class="finp" type="number" id="g-quiz-questions" placeholder="5" min="3" max="10">
+        <label class="flabel">Status</label>
+        <select class="fselect" id="g-quiz-status">
+          <option value="active">✅ Active</option>
+          <option value="inactive">❌ Disabled</option>
+        </select>
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:6px;" onclick="saveGameSettings('quiz')">💾 SAVE QUIZ SETTINGS</button>
+      </div>
+
+      <!-- Global Settings -->
+      <div class="set-card" style="border-top:3px solid var(--g1);grid-column:span 2;">
+        <div class="set-card-title">⚙️ Global Game Settings</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div>
+            <label class="flabel">Matchmaking Timeout (sec)</label>
+            <input class="finp" type="number" id="g-mm-timeout" placeholder="60" min="30">
+          </div>
+          <div>
+            <label class="flabel">Arena Status</label>
+            <select class="fselect" id="g-arena-status">
+              <option value="active">✅ Live</option>
+              <option value="maintenance">🔧 Maintenance</option>
+              <option value="inactive">❌ Disabled</option>
+            </select>
+          </div>
+          <div>
+            <label class="flabel">Maintenance Message</label>
+            <input class="finp" type="text" id="g-maint-msg" placeholder="Games paused for upgrade...">
+          </div>
+        </div>
+        <button class="fbtn fbtn-p" style="margin-top:12px;" onclick="saveGameSettings('global')">💾 SAVE GLOBAL SETTINGS</button>
+      </div>
+    </div>
+
+    <!-- Recent Game History -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">📊 Recent Games
+        <button class="act-btn ab-p" onclick="loadGameHistory()">🔄 Refresh</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tbl" id="g-hist-table">
+          <thead><tr><th>User</th><th>Game</th><th>Result</th><th>Entry</th><th>Coins</th><th>Date</th></tr></thead>
+          <tbody id="g-hist-body"><tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Active Rooms -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">🔴 Active Game Rooms
+        <button class="act-btn ab-p" onclick="loadActiveRooms()">🔄 Refresh</button>
+      </div>
+      <div id="g-rooms-list"><p style="color:var(--dim);font-size:.8rem;">Loading...</p></div>
+    </div>
+  </div>
+
   <!-- REDEEM CODES -->
   <div id="pg-redeem" class="page">
     <div class="pg-hdr"><div class="pg-title">Redeem Codes</div><div class="pg-sub">Set daily bonus codes for users</div></div>
@@ -622,7 +723,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
-  authDomain: "cash-vibe.firebaseapp.com",
+  authDomain: "cashvibe.in",
   databaseURL: "https://cash-vibe-default-rtdb.firebaseio.com",
   projectId: "cash-vibe",
   storageBucket: "cash-vibe.appspot.com",
@@ -1054,7 +1155,7 @@ function renderUsers() {
     const coins = Math.floor(u.balance || 0);
     const rupees = (coins / 20).toFixed(2);
     const uidShort = u.uid ? u.uid.substring(0, 8) + '...' : '—';
-    const safeName = (u.name || 'User').replace(/'/g, "\'");
+    const safeName = String(u.name || 'User').replace(/[^a-zA-Z0-9 ]/g, '');
     const lvl = u.level || (coins >= 10000 ? 'Diamond' : coins >= 4000 ? 'Gold' : coins >= 2000 ? 'Silver' : 'Bronze');
     const lvlColor = {Diamond:'#a78bfa',Gold:'#f5a623',Silver:'#9ca3af',Bronze:'#cd7f32'}[lvl] || 'var(--dim)';
     const refCode = u.referralCode || '—';
@@ -1670,5 +1771,222 @@ function gp(id,btn) {
 }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-function toast(msg,type='ok'){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type; setTimeout(()=>t.className='',3500); }
+
+
+// ══════════════════════════════════════════════════════
+// 🎮 GAME ARENA ADMIN FUNCTIONS
+// Existing functions bilkul touch nahi kiye
+// New Firebase node: game_config
+// ══════════════════════════════════════════════════════
+
+function loadGameAdmin() {
+  loadGameSettings();
+  loadGameStats();
+  loadGameHistory();
+  loadActiveRooms();
+}
+
+function loadGameSettings() {
+  db.ref('game_config').once('value', snap => {
+    const cfg = snap.val() || {};
+    const ttt    = cfg.ttt    || {};
+    const quiz   = cfg.quiz   || {};
+    const global = cfg.global || {};
+
+    // TTT
+    const tf = document.getElementById('g-ttt-fee');
+    const tp = document.getElementById('g-ttt-prize');
+    const tt = document.getElementById('g-ttt-timeout');
+    const ts = document.getElementById('g-ttt-status');
+    if (tf) tf.value = ttt.fee     || 10;
+    if (tp) tp.value = ttt.prize   || 18;
+    if (tt) tt.value = ttt.timeout || 30;
+    if (ts) ts.value = ttt.status  || 'active';
+    calcPF('ttt');
+
+    // Quiz
+    const qf = document.getElementById('g-quiz-fee');
+    const qp = document.getElementById('g-quiz-prize');
+    const qq = document.getElementById('g-quiz-questions');
+    const qs = document.getElementById('g-quiz-status');
+    if (qf) qf.value = quiz.fee       || 20;
+    if (qp) qp.value = quiz.prize     || 36;
+    if (qq) qq.value = quiz.questions || 5;
+    if (qs) qs.value = quiz.status    || 'active';
+    calcPF('quiz');
+
+    // Global
+    const gm  = document.getElementById('g-mm-timeout');
+    const ga  = document.getElementById('g-arena-status');
+    const gms = document.getElementById('g-maint-msg');
+    if (gm)  gm.value  = global.mm_timeout   || 60;
+    if (ga)  ga.value  = global.arena_status || 'active';
+    if (gms) gms.value = global.maint_msg    || '';
+  });
+}
+
+function calcPF(type) {
+  const feeEl  = document.getElementById('g-' + type + '-fee');
+  const prizeEl = document.getElementById('g-' + type + '-prize');
+  const platEl  = document.getElementById('g-' + type + '-platform');
+  if (!feeEl || !prizeEl || !platEl) return;
+  const fee   = parseInt(feeEl.value)   || 0;
+  const prize = parseInt(prizeEl.value) || 0;
+  platEl.value = Math.max(0, (fee * 2) - prize);
+}
+
+async function saveGameSettings(type) {
+  try {
+    if (type === 'ttt') {
+      const fee     = parseInt(document.getElementById('g-ttt-fee').value)     || 10;
+      const prize   = parseInt(document.getElementById('g-ttt-prize').value)   || 18;
+      const timeout = parseInt(document.getElementById('g-ttt-timeout').value) || 30;
+      const status  = document.getElementById('g-ttt-status').value;
+      if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
+      await db.ref('game_config/ttt').set({ fee, prize, platform: (fee*2)-prize, timeout, status });
+      toast('✅ Tic Tac Toe settings saved!', 'ok');
+    }
+    else if (type === 'quiz') {
+      const fee       = parseInt(document.getElementById('g-quiz-fee').value)       || 20;
+      const prize     = parseInt(document.getElementById('g-quiz-prize').value)     || 36;
+      const questions = parseInt(document.getElementById('g-quiz-questions').value) || 5;
+      const status    = document.getElementById('g-quiz-status').value;
+      if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
+      await db.ref('game_config/quiz').set({ fee, prize, platform: (fee*2)-prize, questions, status });
+      toast('✅ Quiz Battle settings saved!', 'ok');
+    }
+    else if (type === 'global') {
+      const mm_timeout   = parseInt(document.getElementById('g-mm-timeout').value) || 60;
+      const arena_status = document.getElementById('g-arena-status').value;
+      const maint_msg    = document.getElementById('g-maint-msg').value.trim();
+      await db.ref('game_config/global').set({ mm_timeout, arena_status, maint_msg, updated_at: Date.now() });
+      toast('✅ Global settings saved!', 'ok');
+    }
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+function loadGameStats() {
+  db.ref('game_history').once('value', snap => {
+    let total = 0, coins = 0, earn = 0;
+    if (snap.exists()) {
+      snap.forEach(userGames => {
+        userGames.forEach(g => {
+          const gv = g.val();
+          total++;
+          coins += (parseInt(gv.fee) || 0);
+          if (gv.result !== 'draw') earn += Math.max(0, (gv.fee || 0) * 2 - (gv.prize || 0));
+        });
+      });
+    }
+    const e1 = document.getElementById('g-stat-total');
+    const e3 = document.getElementById('g-stat-coins');
+    const e4 = document.getElementById('g-stat-earn');
+    if (e1) e1.textContent = total;
+    if (e3) e3.textContent = coins;
+    if (e4) e4.textContent = earn;
+  });
+  db.ref('game_rooms').once('value', snap => {
+    const el = document.getElementById('g-stat-active');
+    if (el) el.textContent = snap.numChildren ? snap.numChildren() : 0;
+  });
+}
+
+function loadGameHistory() {
+  const tbody = document.getElementById('g-hist-body');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">Loading...</td></tr>';
+  db.ref('game_history').limitToLast(40).once('value', snap => {
+    if (!snap.exists()) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">No games yet.</td></tr>';
+      return;
+    }
+    let rows = '';
+    snap.forEach(userSnap => {
+      const uid = userSnap.key;
+      userSnap.forEach(gSnap => {
+        const g = gSnap.val();
+        const w = g.result === 'win', d = g.result === 'draw';
+        const col = w ? 'var(--success)' : d ? 'var(--g3)' : 'var(--danger)';
+        const bg  = w ? 'rgba(16,185,129,.1)' : d ? 'rgba(245,166,35,.1)' : 'rgba(239,68,68,.1)';
+        rows = `<tr>
+          <td style="font-size:.7rem;color:var(--dim);font-family:monospace;">${uid.substring(0,10)}...</td>
+          <td style="font-weight:700;font-size:.78rem;">${g.gameName || '?'}</td>
+          <td><span class="badge" style="background:${bg};color:${col};">${(g.result||'?').toUpperCase()}</span></td>
+          <td style="font-size:.75rem;">-${g.fee||0} coins</td>
+          <td style="font-size:.75rem;font-weight:700;color:${col};">${w?'+'+g.prize:d?'Refund':'-'+g.fee} coins</td>
+          <td style="font-size:.68rem;color:var(--dim);">${g.date||'—'}</td>
+        </tr>` + rows;
+      });
+    });
+    tbody.innerHTML = rows;
+  });
+}
+
+function loadActiveRooms() {
+  const box = document.getElementById('g-rooms-list');
+  if (!box) return;
+  box.innerHTML = '<p style="color:var(--dim);font-size:.8rem;">Loading...</p>';
+  db.ref('game_rooms').once('value', snap => {
+    if (!snap.exists()) {
+      box.innerHTML = '<p style="color:var(--dim);font-size:.8rem;">No active game rooms.</p>';
+      return;
+    }
+    let html = '';
+    snap.forEach(room => {
+      const r = room.val();
+      const sCol = r.status === 'active' ? 'var(--success)' : r.status === 'waiting' ? 'var(--g3)' : 'var(--dim)';
+      html += `<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div>
+          <span style="font-weight:700;font-size:.8rem;">${r.gameType === 'ttt' ? '⚔️ TTT' : '🧠 Quiz'}</span>
+          <span style="background:rgba(255,255,255,.04);color:${sCol};font-size:.62rem;padding:2px 8px;border-radius:99px;margin-left:6px;font-weight:700;">${(r.status||'?').toUpperCase()}</span>
+          <div style="font-size:.7rem;color:var(--dim);margin-top:3px;">
+            A: ${(r.playerA||'?').substring(0,10)}...
+            ${r.playerB ? ' | B: ' + r.playerB.substring(0,10) + '...' : ' | <span style="color:var(--g3);">Waiting...</span>'}
+          </div>
+        </div>
+        <button onclick="deleteRoom('${room.key}')" class="act-btn ab-r">🗑️ Del</button>
+      </div>`;
+    });
+    box.innerHTML = html;
+  });
+}
+
+async function deleteRoom(roomId) {
+  if (!confirm('Delete this room? Players coins refund nahi honge.')) return;
+  try {
+    await db.ref('game_rooms/' + roomId).remove();
+    toast('Room deleted!', 'ok');
+    loadActiveRooms();
+    loadGameStats();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+
+// ── NAVIGATION ──
+function gpa(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  const pg = document.getElementById(id);
+  if (pg) pg.classList.add('active');
+  if (btn) btn.classList.add('active');
+  closeSidebar();
+  // Load data for page
+  if (id === 'pg-users')    loadUsers();
+  if (id === 'pg-tasks')    loadTasksAdmin();
+  if (id === 'pg-withdraw') loadWithdrawals();
+  if (id === 'pg-notices')  loadNoticesAdmin();
+  if (id === 'pg-redeem')   loadRedeemConfig();
+  if (id === 'pg-game')     loadGameAdmin();
+  if (id === 'pg-settings') loadSettings();
+}
+
+function toast(msg, type) {
+  if (!type) type = 'ok';
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(function() { t.className = ''; }, 3200);
+}
 </script>
+</body>
+</html>
