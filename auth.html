@@ -169,9 +169,9 @@ const db = firebase.database();
 const auth = firebase.auth();
 
 // EmailJS — fallback
-const EJS = { svc:'service_oj0f4yi', tpl:'template_8a71wd8', pub:'GfTjqzWL0CDqCT4Z8' };
+const EJS = { svc:'service_72at465', tpl:'template_hgowkog', pub:'UeIZEoG8IqH3xZ1Y4' };
 // Brevo — primary OTP sender
-const BREVO = { key:'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', from:'no-reply@cashvibe.in', name:'CashVibe' };
+const BREVO = { key:'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', from:'mrboy.in20@gmail.com', name:'CashVibe' };
 
 // STATE
 let pendingEmail='', pendingPass='', pendingName='', pendingRef='', pendingMobile='';
@@ -502,56 +502,52 @@ async function verifyOTP() {
   }
 }
 
-// ── SEND OTP — Brevo primary, EmailJS fallback ──
+// ── SEND OTP ──
 async function sendOTPEmail(email, name) {
   generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-  const subject = 'CashVibe OTP: ' + generatedOTP;
-  const body = 'Hi ' + name + ',\n\nAapka CashVibe verification OTP hai:\n\n' + generatedOTP + '\n\nYeh OTP 10 minutes mein expire hoga. Kisi ke saath share mat karo.\n\n— CashVibe Team';
 
-  // ── Try Brevo first ──
+  // Try EmailJS
+  try {
+    await emailjs.send(
+      EJS.svc,
+      EJS.tpl,
+      { to_email: email, to_name: name, otp_code: generatedOTP },
+      EJS.pub
+    );
+    toast('✅ OTP ' + email + ' pe bheja gaya!', 'ok');
+    return true;
+  } catch(e) {
+    console.error('EmailJS Error:', JSON.stringify(e));
+    toast('EmailJS Error: ' + (e.text || e.message || JSON.stringify(e)), 'err');
+  }
+
+  // Fallback: Brevo
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: {
-        'api-key': BREVO.key,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'api-key': BREVO.key, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sender: { email: BREVO.from, name: BREVO.name },
         to: [{ email: email, name: name }],
-        subject: subject,
-        textContent: body
+        subject: 'CashVibe OTP: ' + generatedOTP,
+        textContent: 'Hi ' + name + ', aapka OTP hai: ' + generatedOTP
       })
     });
     if (res.ok) {
-      toast('OTP ' + email + ' pe bheja gaya!', 'ok');
+      toast('✅ OTP bhej diya!', 'ok');
       return true;
-    } else {
-      const err = await res.json();
-      console.log('Brevo error:', err);
     }
-  } catch(e) {
-    console.log('Brevo failed:', e.message);
+    const err = await res.json().catch(()=>({}));
+    console.error('Brevo Error:', err);
+    toast('Brevo Error: ' + (err.message || JSON.stringify(err)), 'err');
+  } catch(e2) {
+    console.error('Brevo failed:', e2);
   }
 
-  // ── Fallback: EmailJS ──
-  try {
-    emailjs.init(EJS.pub);
-    await emailjs.send(EJS.svc, EJS.tpl, {
-      to_email: email,
-      to_name: name,
-      otp_code: generatedOTP,
-      subject: subject,
-      message: body
-    });
-    toast('OTP ' + email + ' pe bheja gaya!', 'ok');
-    return true;
-  } catch(e) {
-    console.log('EmailJS failed:', e);
-  }
-
-  // ── Last resort: show in toast (dev/test) ──
-  toast('OTP: ' + generatedOTP + ' (email failed)', 'err');
+  // Last resort — show OTP on screen
+  toast('⚠️ Email nahi gayi!', 'err');
+  document.getElementById('otp-sub').innerHTML =
+    'Email nahi gayi. Manually enter karo:<br><strong style="font-size:1.4rem;color:#00f5c4;letter-spacing:6px;">' + generatedOTP + '</strong>';
   return true;
 }
 </script>
