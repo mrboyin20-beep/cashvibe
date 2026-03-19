@@ -1371,19 +1371,36 @@ function renderTask(t, box) {
   let taskLink = t.link || '#';
   const uid = curUser ? curUser.uid : '';
 
-  // ADVANCED URL BUILDER (Fail-proof)
-  if (taskLink !== '#' && (taskLink.includes('cpagrip.com') || taskLink.includes('locked'))) {
-    try {
-      let urlObj = new URL(taskLink);
-      urlObj.searchParams.set('tracking_id', uid);
-      taskLink = urlObj.toString();
-    } catch(e) {
-      const sep = taskLink.includes('?') ? '&' : '?';
-      taskLink = taskLink + sep + 'tracking_id=' + uid;
+  if (taskLink !== '#') {
+    // TRICK 1: Agar aapne Admin Panel me link ke aage khud {uid} likh diya hai 
+    // Example: https://smrturl.co/12345?tracking_id={uid}
+    if (taskLink.includes('{uid}')) {
+      taskLink = taskLink.replace(/{uid}/g, uid);
+    } 
+    // TRICK 2: UNIVERSAL TRACKING (Agar aapne simple link daala hai)
+    // Yeh CPAGrip, vCommission aur baaki sabhi networks ke parameters ek sath laga dega.
+    // Jisko jo parameter chahiye hoga, wo network khud pick kar lega.
+    else {
+      try {
+        let urlObj = new URL(taskLink);
+        
+        // CPAGrip (Smart Links, Lockers, Direct Offers) ke liye
+        urlObj.searchParams.set('tracking_id', uid);
+        
+        // vCommission aur Indian Networks ke liye
+        urlObj.searchParams.set('sub_id', uid);
+        
+        // AdGate, AdGem, CPALead jaise baaki Global Networks ke liye
+        urlObj.searchParams.set('aff_sub', uid);
+        urlObj.searchParams.set('s1', uid);
+        
+        taskLink = urlObj.toString();
+      } catch(e) {
+        // Agar URL theek se load na ho, toh simple tarike se attach karo
+        const sep = taskLink.includes('?') ? '&' : '?';
+        taskLink = taskLink + sep + 'tracking_id=' + uid + '&sub_id=' + uid;
+      }
     }
-  } else if (taskLink.includes('vcommission.com') || taskLink.includes('track.vcommission')) {
-    const sep = taskLink.includes('?') ? '&' : '?';
-    taskLink = taskLink + sep + 'sub_id=' + uid;
   }
 
   el.innerHTML = `<img class="ti-img" src="${t.icon||''}" onerror="this.style.background='var(--s3)';this.style.display='block';">
