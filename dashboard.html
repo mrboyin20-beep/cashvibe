@@ -1359,18 +1359,29 @@ function loadTasks(cat,tabEl){
     if(cat==='shopping'){
       const g=document.createElement('div'); g.className='shop-grid'; box.appendChild(g);
       s.forEach(c=>{ const t=c.val(); const rew=t.reward_type==='percent'?t.reward+'% cashback':'+🪙'+t.reward+' Coins';
-        g.innerHTML+=`<div class="shop-card" onclick="window.open('${t.link}','_blank')"><img class="shop-img" src="${t.icon||''}" onerror="this.style.display='none'"><div class="shop-info"><div class="shop-name">${t.name}</div><div class="shop-rew">${rew}</div></div></div>`; });
+        g.innerHTML+=`<div class="shop-card" onclick="doTaskClick('${t.tid||t.id||""}')"><img class="shop-img" src="${t.icon||''}" onerror="this.style.display='none'"><div class="shop-info"><div class="shop-name">${t.name}</div><div class="shop-rew">${rew}</div></div></div>`; });
     } else { s.forEach(c=>renderTask(c.val(),box)); }
   });
 }
-function renderTask(t,box){
-  const rew = t.reward_type==='percent' ? t.reward+'% Profit' : '+🪙'+t.reward+' Coins';
-  const el = document.createElement('div'); el.className='ti';
+function renderTask(t, box) {
+  const rew = t.reward_type === 'percent' ? t.reward + '% Profit' : '+🪙' + t.reward + ' Coins';
+  const el = document.createElement('div');
+  el.className = 'ti';
 
-  // vCommission link mein user UID attach karo (sub_id)
   let taskLink = t.link || '#';
-  if (taskLink.includes('vcommission.com') || taskLink.includes('track.vcommission')) {
-    const uid = curUser ? curUser.uid : '';
+  const uid = curUser ? curUser.uid : '';
+
+  // ADVANCED URL BUILDER (Fail-proof)
+  if (taskLink !== '#' && (taskLink.includes('cpagrip.com') || taskLink.includes('locked'))) {
+    try {
+      let urlObj = new URL(taskLink);
+      urlObj.searchParams.set('tracking_id', uid);
+      taskLink = urlObj.toString();
+    } catch(e) {
+      const sep = taskLink.includes('?') ? '&' : '?';
+      taskLink = taskLink + sep + 'tracking_id=' + uid;
+    }
+  } else if (taskLink.includes('vcommission.com') || taskLink.includes('track.vcommission')) {
     const sep = taskLink.includes('?') ? '&' : '?';
     taskLink = taskLink + sep + 'sub_id=' + uid;
   }
@@ -1651,6 +1662,51 @@ function checkMaintPass(){
     document.getElementById('maint-pass').value = '';
   }
 }
+
+// ── TASK CLICK WITH LIMIT CHECK ──
+async function doTaskClick(tid) {
+  if (!tid) return;
+  const taskSnap = await db.ref('tasks/' + tid).once('value');
+  if (!taskSnap.exists()) return;
+  const t = taskSnap.val();
+
+  // Check if task is live
+  if ((t.status || 'live') === 'hidden') {
+    toast('Yeh task abhi available nahi hai.', 'err');
+    return;
+  }
+
+  const uid = curUser.uid;
+
+  // Check per-user limit
+  if (t.user_limit && t.user_limit > 0) {
+    const userDoneSnap = await db.ref('task_completions/' + tid + '/users/' + uid).once('value');
+    const userDone = userDoneSnap.val() || 0;
+    if (userDone >= t.user_limit) {
+      toast('Aapne yeh task ' + t.user_limit + ' baar kar liya hai. Limit puri ho gayi!', 'err');
+      return;
+    }
+  }
+
+  // Check total app limit
+  if (t.total_limit && t.total_limit > 0) {
+    const totalDone = t.total_completions || 0;
+    if (totalDone >= t.total_limit) {
+      toast('Yeh task limit puri ho gayi hai!', 'err');
+      return;
+    }
+  }
+
+  // All checks passed — open task link
+  window.open(t.link, '_blank');
+
+  // Record completion
+  const userDoneSnap2 = await db.ref('task_completions/' + tid + '/users/' + uid).once('value');
+  const currentUserDone = userDoneSnap2.val() || 0;
+  await db.ref('task_completions/' + tid + '/users/' + uid).set(currentUserDone + 1);
+  await db.ref('tasks/' + tid + '/total_completions').transaction(c => (c || 0) + 1);
+}
+
 function doLogout(){ auth.signOut().then(()=>window.location.replace('auth.html')); }
 
 // ══ REFER ACTIVITY SYSTEM ══
