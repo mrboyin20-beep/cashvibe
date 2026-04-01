@@ -1456,11 +1456,12 @@ async function unlockDevice(uid) {
 }
 
 // TASKS
-// TASKS
 function loadTasks() {
   db.ref('tasks').on('value', s => { 
     allTasks = []; 
-    s.forEach(c => allTasks.push({tid: c.key, ...c.val()})); 
+    s.forEach(c => { 
+      allTasks.push({tid: c.key, ...c.val()}); 
+    }); 
     renderTasksFiltered(); 
   });
 }
@@ -1751,9 +1752,15 @@ async function rejectWdl(btn) {
 // NOTICES
 function loadNotices() {
   db.ref('notices_list').orderByChild('timestamp').limitToLast(20).on('value',s=>{
-    const list=document.getElementById('notices-list'); list.innerHTML='';
+    const list = document.getElementById('notices-list'); 
+    list.innerHTML = '';
     if(!s.exists()){ list.innerHTML='<p style="color:var(--dim);font-size:.8rem;">No notices yet.</p>'; return; }
-    const items=[]; s.forEach(c=>items.push({nid:c.key,...c.val()})); items.reverse();
+    
+    const items = []; 
+    s.forEach(c => { 
+      items.push({nid: c.key, ...c.val()}); 
+    }); 
+    items.reverse();
     items.forEach(n=>{
       list.innerHTML+=`<div class="notice-item"><div><div style="font-size:.8rem;line-height:1.6;">${n.text}</div><div style="font-size:.62rem;color:var(--dim);margin-top:3px;">${new Date(n.timestamp).toLocaleString()}</div></div><button class="act-btn ab-r" onclick="deleteNotice('${n.nid}')">Del</button></div>`;
     });
