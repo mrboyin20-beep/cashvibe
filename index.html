@@ -4,6 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CashVibe — Earn Real Money Daily</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060610">
+<!-- ONESIGNAL PUSH NOTIFICATION -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "b451b706-25a7-44eb-87fa-c0d3f5fbcaf6",
+      notifyButton: {
+        enable: true,
+        colors: {
+          'circle.background': '#00f5c4',
+          'circle.foreground': '#000000',
+          'badge.background': '#ef4444',
+          'badge.foreground': 'white',
+          'badge.bordercolor': 'white',
+          'pulse.color': '#00f5c4',
+          'dialog.button.background.hovering': '#00c49a',
+          'dialog.button.background.active': '#00f5c4',
+          'dialog.button.background': '#00f5c4',
+          'dialog.button.foreground': '#000000'
+        }
+      },
+    });
+  });
+</script>
 <meta name="description" content="India's smartest earning app. Tasks, spin wheel, referrals & instant UPI payouts.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;600;700&family=Cabinet+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -240,15 +267,15 @@ footer{background:var(--s1);border-top:1px solid var(--border);padding:60px 6% 3
 <section class="stats">
   <div class="stats-grid">
     <div class="stat-card reveal reveal-d1">
-      <div class="stat-num">50K+</div>
+      <div class="stat-num">comeing soon+</div>
       <div class="stat-lbl">Active Users</div>
     </div>
     <div class="stat-card reveal reveal-d2">
-      <div class="stat-num">₹25L+</div>
+      <div class="stat-num">comeing soon +</div>
       <div class="stat-lbl">Total Paid Out</div>
     </div>
     <div class="stat-card reveal reveal-d3">
-      <div class="stat-num">4.8★</div>
+      <div class="stat-num">comeing soon★</div>
       <div class="stat-lbl">User Rating</div>
     </div>
     <div class="stat-card reveal reveal-d4">
@@ -351,7 +378,7 @@ footer{background:var(--s1);border-top:1px solid var(--border);padding:60px 6% 3
 <!-- CTA -->
 <div class="cta-banner reveal">
   <div class="cta-title">READY TO START <span style="background:linear-gradient(135deg,var(--g1),#7b5ea7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">EARNING?</span></div>
-  <p class="cta-sub">Join 50,000+ people already making money daily. It's 100% free to start!</p>
+  <p class="cta-sub">Join 100+ people already making money daily. It's 100% free to start!</p>
   <a class="btn-p" href="auth.html" style="display:inline-flex;margin:auto;"><i class="fa-solid fa-rocket"></i> Create Free Account</a>
 </div>
 
@@ -450,6 +477,13 @@ const obs=new IntersectionObserver(entries=>{
   entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});
 },{threshold:0.12});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+ if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('PWA SW Registered!'))
+      .catch(err => console.log('PWA SW Failed: ', err));
+    });
+  }
 </script>
 </body>
 </html>

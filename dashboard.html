@@ -4,6 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CashVibe — Dashboard</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#060610">
+<!-- ONESIGNAL PUSH NOTIFICATION -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "b451b706-25a7-44eb-87fa-c0d3f5fbcaf6",
+      notifyButton: {
+        enable: true,
+        colors: {
+          'circle.background': '#00f5c4',
+          'circle.foreground': '#000000',
+          'badge.background': '#ef4444',
+          'badge.foreground': 'white',
+          'badge.bordercolor': 'white',
+          'pulse.color': '#00f5c4',
+          'dialog.button.background.hovering': '#00c49a',
+          'dialog.button.background.active': '#00f5c4',
+          'dialog.button.background': '#00f5c4',
+          'dialog.button.foreground': '#000000'
+        }
+      },
+    });
+  });
+</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
@@ -138,6 +165,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .shop-info{padding:8px;}
 .shop-name{font-size:.65rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .shop-rew{font-size:.6rem;color:var(--g1);font-weight:800;margin-top:2px;}
+
+/* SCRATCH CARD */
+.sc-wrap{position:relative;width:240px;height:240px;margin:0 auto 16px;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,245,196,.15);border:2px solid var(--border);}
+.sc-base{position:absolute;inset:0;background:var(--s2);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;}
+.sc-canvas{position:absolute;inset:0;z-index:5;cursor:crosshair;touch-action:none;}
+.sc-win-amt{font-family:'Bebas Neue',sans-serif;font-size:3.5rem;color:var(--g1);line-height:1;margin:8px 0;letter-spacing:2px;}
 
 /* SPIN */
 .spin-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px;}
@@ -423,6 +456,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="nb active" onclick="gp('pg-home',this)"><i class="fa-solid fa-house"></i> Dashboard</button>
   <button class="nb" onclick="gp('pg-tasks',this)"><i class="fa-solid fa-list-check"></i> Tasks <span class="nb-badge" id="task-cnt">0</span></button>
   <button class="nb" onclick="gp('pg-spin',this)"><i class="fa-solid fa-dharmachakra"></i> Spin Wheel</button>
+  <button class="nb" onclick="gp('pg-scratch',this)"><i class="fa-solid fa-gem"></i> Scratch Card</button>
   <button class="nb" onclick="gp('pg-ads',this)"><i class="fa-solid fa-circle-play"></i> Watch & Earn</button>
   <div class="sb-section">Social</div>
   <button class="nb" onclick="gp('pg-refer',this)"><i class="fa-solid fa-share-nodes"></i> Refer & Earn</button>
@@ -462,6 +496,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
   <!-- HOME -->
   <div id="pg-home" class="page active">
+
+    <!-- PWA INSTALL BANNER -->
+    <div id="install-banner" style="display:none;background:linear-gradient(135deg,rgba(0,245,196,.15),rgba(123,94,167,.15));border:1px solid rgba(0,245,196,.3);border-radius:16px;padding:14px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;gap:12px;animation:fadeup .4s ease;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;background:var(--s1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📲</div>
+        <div>
+          <div style="font-weight:700;font-size:.88rem;color:var(--text);">Install CashVibe App</div>
+          <div style="font-size:.65rem;color:var(--dim);margin-top:2px;">Faster loading & direct home screen access!</div>
+        </div>
+      </div>
+      <button onclick="installApp()" style="background:linear-gradient(135deg,var(--g1),#00c49a);color:#000;border:none;padding:8px 18px;border-radius:99px;font-weight:800;font-size:.75rem;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(0,245,196,.3);">INSTALL</button>
+    </div>
+
     <div class="ticker">
       <div class="tick-dot"></div>
       <span class="tick-lbl">LIVE</span>
@@ -545,6 +592,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <div style="display:flex;gap:12px;align-items:center;"><div style="width:30px;height:30px;background:var(--g1d);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--g1);font-weight:800;flex-shrink:0;font-size:.85rem;">2</div><span style="font-size:.8rem;color:var(--mid);">Watch a 30s verification ad to unlock reward</span></div>
         <div style="display:flex;gap:12px;align-items:center;"><div style="width:30px;height:30px;background:var(--g1d);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--g1);font-weight:800;flex-shrink:0;font-size:.85rem;">3</div><span style="font-size:.8rem;color:var(--mid);">Coins instantly credited to your wallet!</span></div>
       </div>
+    </div>
+  </div>
+<!-- SCRATCH CARD -->
+  <div id="pg-scratch" class="page">
+    <div class="sec-title">Scratch & Win 💎</div>
+    <div class="card" style="text-align:center;padding:30px 20px;">
+      <div style="font-size:.85rem;color:var(--dim);margin-bottom:20px;font-weight:700;" id="sc-info">Loading...</div>
+      
+      <div class="sc-wrap" id="sc-wrap">
+        <div class="sc-base">
+          <div style="font-size:3rem;" id="sc-emoji">🎁</div>
+          <div class="sc-win-amt"><span style="font-size:1.8rem;">🪙</span><span id="sc-win-amt">?</span></div>
+          <div style="font-size:.75rem;color:var(--dim);font-weight:700;" id="sc-msg">You Won Coins!</div>
+        </div>
+        <canvas class="sc-canvas" id="sc-canvas" width="240" height="240"></canvas>
+      </div>
+
+      <button class="btn-main" id="sc-btn" style="display:none;max-width:240px;margin:auto;" onclick="setupScratchCard()">Next Scratch Card ➔</button>
+    </div>
+    
+    <div class="card">
+      <div class="sec-title" style="font-size:.88rem;">How it Works</div>
+      <ul style="color:var(--mid);font-size:.75rem;line-height:2;padding-left:16px;">
+        <li>Get 3 Free Scratch Cards every day.</li>
+        <li>Scratch the silver coating with your finger.</li>
+        <li>Win up to 50 Coins instantly per card!</li>
+        <li>Limit resets at midnight.</li>
+      </ul>
     </div>
   </div>
 
@@ -662,7 +737,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <div class="chip" onclick="selChip(2000,this)"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span>2000<br><small style="font-size:.6rem;opacity:.7;">= ₹100</small></div>
       </div>
       <input class="inp" type="text" id="upi-inp" placeholder="UPI ID (e.g. name@paytm)">
-      <button class="btn-main" onclick="doWithdraw()">SUBMIT WITHDRAWAL</button>
+      <button class="btn-main" id="btn-withdraw" onclick="doWithdraw()">SUBMIT WITHDRAWAL</button>
     </div>
     <div class="card" style="margin-top:14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -850,6 +925,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="bn active" onclick="gp('pg-home',this)"><i class="fa-solid fa-house"></i>Home</button>
   <button class="bn" onclick="gp('pg-tasks',this)"><i class="fa-solid fa-list-check"></i>Tasks</button>
   <button class="bn" onclick="gp('pg-spin',this)"><i class="fa-solid fa-dharmachakra"></i>Spin</button>
+  <button class="bn" onclick="gp('pg-scratch',this)"><i class="fa-solid fa-gem"></i>Scratch</button>
   <button class="bn" onclick="gp('pg-refer',this)"><i class="fa-solid fa-share-nodes"></i>Refer</button>
   <button class="bn" onclick="gp('pg-withdraw',this)"><i class="fa-solid fa-wallet"></i>Wallet</button>
   <button class="bn" onclick="gp('pg-game',this)"><i class="fa-solid fa-gamepad"></i>Games</button>
@@ -881,12 +957,12 @@ const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
 
 // STATE
-let U = {}, adCfg = {}, ciCfg = {}, refRew = 500, selAmt = 0, adBusy = false, spinning = false, curUser = null;
+let U = {}, adCfg = {}, ciCfg = {}, scratchCfg = {}, refRew = 500, selAmt = 0, adBusy = false, spinning = false, curUser = null;
 const TODAY = new Date().toLocaleDateString();
 const TKEY = TODAY.replace(/\//g,'-');
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-let appCfg = {support_wa:'919288678795', support_email:'support@cashvibe.in', maint_pass:'admin123'};
+let appCfg = {support_wa:'919288678795', support_email:'support@cashvibe.in', maint_pass:'admin123', withdrawal_status:true};
 let spinCfg = {daily_limit:1};
 
 // AUTH GUARD - SIMPLE & RELIABLE
@@ -905,7 +981,12 @@ auth.onAuthStateChanged(async u => {
   clearTimeout(_authTimeout); // User mila — timeout cancel
 
   curUser = u;
-
+// OneSignal User Login (Taaki specific user ko message bhej sakein)
+  if (window.OneSignalDeferred) {
+    OneSignalDeferred.push(function(OneSignal) {
+      OneSignal.login(u.uid);
+    });
+  }
   // OTP verify auth.html mein ho chuka hai — yahan check nahi
 
   // Load app_control (maintenance, blocked, support settings)
@@ -943,6 +1024,17 @@ db.ref('app_control').on('value', s => {
     appCfg.maint_pass = ac.maint_pass || 'admin123';
     appCfg.signup_bonus = ac.signup_bonus || 400;
     appCfg.refer_reward = ac.refer_reward || 500;
+    appCfg.withdrawal_status = ac.withdrawal_status !== false;
+    
+    // Withdrawal Button On/Off Logic
+    const wBtn = document.getElementById('btn-withdraw');
+    if (wBtn) {
+      if (appCfg.withdrawal_status) {
+        wBtn.disabled = false; wBtn.textContent = 'SUBMIT WITHDRAWAL'; wBtn.style.opacity = '1';
+      } else {
+        wBtn.disabled = true; wBtn.textContent = 'WITHDRAWALS PAUSED'; wBtn.style.opacity = '0.6';
+      }
+    }
 
     // ══ UI REALTIME UPDATE ══
     // Blocked screen support number
@@ -991,8 +1083,10 @@ db.ref('app_control').on('value', s => {
     adCfg = v.ads||{limit:5,reward:10,link:''};
     ciCfg = v.checkin||{reward:20,link:''};
     spinCfg = v.spin||{daily_limit:1, ad_link:''};
+    scratchCfg = v.scratch||{limit:3, min:5, max:20, ad_link:''};
     updateAdUI();
     updateSpinBtn();
+    if(typeof updateScratchUI === 'function') updateScratchUI();
   });
 
   loadTaskPreview();
@@ -1507,6 +1601,7 @@ async function doWithdraw(){
   const upi = document.getElementById('upi-inp').value.trim();
   if (!selAmt) { toast('Please select an amount!','err'); return; }
   if (!upi) { toast('Please enter your UPI ID!','err'); return; }
+  if (appCfg.withdrawal_status === false) { toast('Withdrawals are temporarily paused by Admin!','err'); return; }
   const coins = Math.floor(U.balance || 0);
   if (coins < selAmt) { toast('Insufficient coins! Need '+selAmt+' coins.','err'); return; }
 
@@ -1622,7 +1717,26 @@ async function doRedeem(){
     toast('Error: '+e.message,'err');
   }
 }
+// ══ PWA INSTALL LOGIC ══
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('install-banner');
+  if (banner) banner.style.display = 'flex';
+});
 
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      document.getElementById('install-banner').style.display = 'none';
+    }
+    deferredPrompt = null;
+  });
+}
 // SETTINGS
 function editName(){
   document.getElementById('mset-title').textContent='Edit Name';
@@ -2068,8 +2182,9 @@ function loadGameHistory() {
   });
 }
 
+let isJoining = false;
 async function joinGame(gameType) {
-  if (!curUser) return;
+  if (!curUser || isJoining) return;
   if (gArenaStatus !== 'active') {
     toast(gArenaStatus === 'maintenance' ? (gMaintMsg || 'Game Arena maintenance mein hai!') : 'Game Arena unavailable!', 'err');
     return;
@@ -2077,40 +2192,47 @@ async function joinGame(gameType) {
   const cfg = GCFG[gameType];
   if (!cfg) return;
   if (cfg.status === 'inactive') { toast(cfg.name + ' abhi disabled hai!', 'err'); return; }
+  
   const bal = Math.floor(U.balance || 0);
-  if (bal < cfg.fee) { toast('Insufficient coins! ' + cfg.fee + ' coins chahiye.', 'err'); return; }
+  const entryFee = Number(cfg.fee) || 0;
+  if (bal < entryFee) { toast('Insufficient coins! ' + entryFee + ' coins chahiye.', 'err'); return; }
 
-  gType = gameType;
-  gBoardStarted = false;
-  gGameEnded = false;
+  isJoining = true;
+  try {
+    gType = gameType;
+    gBoardStarted = false;
+    gGameEnded = false;
 
-  // Deduct entry fee
-  await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) - cfg.fee);
+    // Deduct entry fee
+    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) - entryFee);
 
-  // Show matchmaking
-  document.getElementById('g-mm-lbl').textContent = cfg.name + ' — Entry: ' + cfg.fee + ' coins';
-  document.getElementById('g-mm-ov').style.display = 'flex';
+    // Show matchmaking
+    document.getElementById('g-mm-lbl').textContent = cfg.name + ' — Entry: ' + entryFee + ' coins';
+    document.getElementById('g-mm-ov').style.display = 'flex';
 
-  // Find or create room
-  const snap = await db.ref('game_rooms').orderByChild('gameType').equalTo(gameType).once('value');
-  let joined = false;
-  if (snap.exists()) {
-    snap.forEach(child => {
-      const r = child.val();
-      if (!joined && r.status === 'waiting' && r.playerA !== curUser.uid) {
-        joined = true; gRoom = child.key; gRole = 'playerB';
-        db.ref('game_rooms/' + gRoom).update({ playerB: curUser.uid, status: 'active', startedAt: Date.now() });
-      }
-    });
+    // Find or create room
+    const snap = await db.ref('game_rooms').orderByChild('gameType').equalTo(gameType).once('value');
+    let joined = false;
+    if (snap.exists()) {
+      snap.forEach(child => {
+        const r = child.val();
+        if (!joined && r.status === 'waiting' && r.playerA !== curUser.uid) {
+          joined = true; gRoom = child.key; gRole = 'playerB';
+          db.ref('game_rooms/' + gRoom).update({ playerB: curUser.uid, status: 'active', startedAt: Date.now() });
+        }
+      });
+    }
+    if (!joined) {
+      const nr = db.ref('game_rooms').push(); gRoom = nr.key; gRole = 'playerA';
+      await nr.set({ gameType, playerA: curUser.uid, playerB: null, status: 'waiting',
+        board: Array(9).fill(''), scores: { A: 0, B: 0 }, currentTurn: 'A', createdAt: Date.now() });
+      const timeout = (GCFG[gameType].timeout || 60) * 1000;
+      gMmTimer = setTimeout(() => cancelMM(true), timeout);
+    }
+    listenRoom();
+  } finally {
+    setTimeout(() => { isJoining = false; }, 1000);
   }
-  if (!joined) {
-    const nr = db.ref('game_rooms').push(); gRoom = nr.key; gRole = 'playerA';
-    await nr.set({ gameType, playerA: curUser.uid, playerB: null, status: 'waiting',
-      board: Array(9).fill(''), scores: { A: 0, B: 0 }, currentTurn: 'A', createdAt: Date.now() });
-    const timeout = (GCFG[gameType].timeout || 60) * 1000;
-    gMmTimer = setTimeout(() => cancelMM(true), timeout);
-  }
-  listenRoom();
 }
 
 function listenRoom() {
@@ -2311,25 +2433,23 @@ async function endGame(room) {
   const w = room.winner;
 
   if (w === 'draw') {
-    result = 'draw'; prize = cfg.fee; // refund
+    result = 'draw'; prize = Number(cfg.fee) || 0; // refund
   } else if (gType === 'ttt') {
-    // TTT winner is 'X' or 'O'
     result = (w === myMark) ? 'win' : 'loss';
-    prize  = result === 'win' ? cfg.prize : 0;
+    prize  = result === 'win' ? (Number(cfg.prize) || 0) : 0;
   } else {
-    // Quiz winner is 'A' or 'B'
     result = (w === myKey) ? 'win' : 'loss';
-    prize  = result === 'win' ? cfg.prize : 0;
+    prize  = result === 'win' ? (Number(cfg.prize) || 0) : 0;
   }
 
   if (prize > 0) {
-    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + prize);
+    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + Number(prize));
   }
 
   const histKey = 'game_' + Date.now();
   await db.ref('game_history/' + curUser.uid + '/' + histKey).set({
     gameName: cfg.name, gameType: gType, result,
-    fee: cfg.fee, prize,
+    fee: Number(cfg.fee) || 0, prize: Number(prize) || 0,
     date: new Date().toLocaleDateString('en-IN'),
     roomId: gRoom
   });
@@ -2337,9 +2457,6 @@ async function endGame(room) {
   document.getElementById('g-board-ov').style.display = 'none';
   showGameResult(result, cfg, prize);
   loadGamePageData();
-  // Update main balance display
-  const newBal = Math.floor((U.balance || 0) + prize - cfg.fee);
-  const balEl = document.getElementById('g-bal-disp'); if (balEl) balEl.textContent = Math.max(0, newBal);
 }
 
 function showGameResult(result, cfg, prize) {
@@ -2394,17 +2511,176 @@ function quitGame() {
 
 async function cancelMM(timedOut = false) {
   clearTimeout(gMmTimer);
-  document.getElementById('g-mm-ov').style.display = 'none';
   const cfg = GCFG[gType];
-  if (curUser && cfg) {
-    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + cfg.fee);
-    if (gRoom) await db.ref('game_rooms/' + gRoom).remove();
-    toast(timedOut ? 'Opponent nahi mila. ' + cfg.fee + ' coins refund!' : 'Cancelled! ' + cfg.fee + ' coins wapas.', 'ok');
+  
+  if (gRoom && curUser && cfg) {
+    const rSnap = await db.ref('game_rooms/' + gRoom).once('value');
+    const r = rSnap.val();
+    if (r && r.status === 'active') return; 
   }
+
+  document.getElementById('g-mm-ov').style.display = 'none';
+  
+  if (curUser && cfg) {
+    const entryFee = Number(cfg.fee) || 0;
+    await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + entryFee);
+    if (gRoom) await db.ref('game_rooms/' + gRoom).remove();
+    toast(timedOut ? 'Opponent nahi mila. ' + entryFee + ' coins refund!' : 'Cancelled! ' + entryFee + ' coins wapas.', 'ok');
+  }
+  
   gType = gRoom = gRole = null;
   gGameEnded = false;
   gBoardStarted = false;
   loadGamePageData();
+}
+ if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('PWA SW Registered!'))
+      .catch(err => console.log('PWA SW Failed: ', err));
+    });
+  }
+  // ══════════════════════════════════════════════
+// 💎 SCRATCH CARD ENGINE (ADMIN CONTROLLED)
+// ══════════════════════════════════════════════
+
+let scCanvas, scCtx, isDragging = false, scActive = false, scReward = 0;
+
+function updateScratchUI() {
+  if(!curUser) return;
+  const limit = scratchCfg.limit || 3;
+  const used = (U.scratchDate === TODAY) ? (U.scratchCount || 0) : 0;
+  const left = Math.max(0, limit - used);
+  const info = document.getElementById('sc-info');
+  const btn = document.getElementById('sc-btn');
+  const wrap = document.getElementById('sc-wrap');
+
+  if(left > 0) {
+    info.innerHTML = `💎 <strong style="color:var(--g1);">${left}</strong> Scratch Cards left today!`;
+    if(!scActive) setupScratchCard();
+    wrap.style.opacity = '1';
+  } else {
+    info.innerHTML = '⏳ Daily limit reached! Come back tomorrow.';
+    wrap.style.opacity = '0.5';
+    document.getElementById('sc-canvas').style.pointerEvents = 'none';
+    btn.style.display = 'none';
+  }
+}
+
+// Hook into updateUI
+const originalUpdateUI = updateUI;
+updateUI = function() {
+  originalUpdateUI();
+  updateScratchUI();
+};
+
+function setupScratchCard() {
+  scCanvas = document.getElementById('sc-canvas');
+  if(!scCanvas) return;
+  scCtx = scCanvas.getContext('2d');
+  
+  // Dynamic Reward Calculation (Admin Settings)
+  const minC = scratchCfg.min || 5;
+  const maxC = scratchCfg.max || 20;
+  scReward = Math.floor(Math.random() * (maxC - minC + 1)) + minC;
+  
+  // Reset UI
+  document.getElementById('sc-win-amt').textContent = scReward;
+  document.getElementById('sc-btn').style.display = 'none';
+  scCanvas.style.pointerEvents = 'auto';
+  scCanvas.style.opacity = '1';
+  scActive = true;
+
+  const gradient = scCtx.createLinearGradient(0, 0, 240, 240);
+  gradient.addColorStop(0, "#d1d5db");
+  gradient.addColorStop(0.5, "#9ca3af");
+  gradient.addColorStop(1, "#d1d5db");
+  scCtx.fillStyle = gradient;
+  scCtx.fillRect(0, 0, 240, 240);
+  
+  scCtx.fillStyle = "#4b5563";
+  scCtx.font = "bold 20px DM Sans";
+  scCtx.textAlign = "center";
+  scCtx.fillText("SCRATCH HERE", 120, 125);
+
+  scCtx.globalCompositeOperation = 'destination-out';
+
+  scCanvas.onmousedown = (e) => { isDragging = true; scratch(e.offsetX, e.offsetY); };
+  scCanvas.onmousemove = (e) => { if(isDragging) scratch(e.offsetX, e.offsetY); };
+  scCanvas.onmouseup = () => { isDragging = false; checkScratchPercent(); };
+  scCanvas.onmouseleave = () => { isDragging = false; checkScratchPercent(); };
+
+  scCanvas.ontouchstart = (e) => { 
+    isDragging = true; 
+    const rect = scCanvas.getBoundingClientRect();
+    scratch(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top); 
+  };
+  scCanvas.ontouchmove = (e) => { 
+    if(isDragging) {
+      e.preventDefault(); 
+      const rect = scCanvas.getBoundingClientRect();
+      scratch(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+    }
+  };
+  scCanvas.ontouchend = () => { isDragging = false; checkScratchPercent(); };
+}
+
+function scratch(x, y) {
+  if(!scActive) return;
+  scCtx.beginPath();
+  scCtx.arc(x, y, 20, 0, Math.PI * 2);
+  scCtx.fill();
+}
+
+function checkScratchPercent() {
+  if(!scActive) return;
+  const pixels = scCtx.getImageData(0, 0, 240, 240).data;
+  let transparent = 0;
+  for (let i = 3; i < pixels.length; i += 4) {
+    if (pixels[i] === 0) transparent++;
+  }
+  const percent = (transparent / (240 * 240)) * 100;
+  
+  if (percent > 45) {
+    scActive = false;
+    scCanvas.style.transition = "opacity 0.5s ease";
+    scCanvas.style.opacity = "0"; 
+    document.getElementById('sc-emoji').style.animation = "gpulse 0.6s ease";
+    setTimeout(() => { claimScratchReward(); }, 500);
+  }
+}
+
+async function claimScratchReward() {
+  const limit = scratchCfg.limit || 3;
+  const used = (U.scratchDate === TODAY) ? (U.scratchCount || 0) : 0;
+  if(used >= limit) return;
+
+  const newCount = used + 1;
+  const btn = document.getElementById('sc-btn');
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+  btn.style.display = 'block';
+
+  const doCredit = async () => {
+    try {
+      await db.ref('users/' + curUser.uid).update({ scratchDate: TODAY, scratchCount: newCount });
+      await db.ref('users/' + curUser.uid + '/balance').transaction(b => (b || 0) + scReward);
+      toast('🎉 You won ' + scReward + ' coins!', 'ok');
+      btn.innerHTML = 'Next Scratch Card ➔';
+      updateScratchUI(); 
+    } catch(e) {
+      toast('Error claiming reward', 'err');
+      btn.innerHTML = 'Try Again';
+    }
+  };
+
+  // Agar Admin ne Ad link dala hai, toh pehle Ad dikhega, fir coins milenge
+  if (scratchCfg.ad_link) {
+    btn.innerHTML = 'Watching Ad...';
+    toast('📺 Watch Ad to claim coins!', 'warn');
+    showAd(scratchCfg.ad_link, 30, doCredit);
+  } else {
+    doCredit(); // Direct credit bina ad ke
+  }
 }
 </script>
 </body>

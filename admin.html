@@ -309,7 +309,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
     <label class="flabel">Task URL</label><input class="finp" id="t-link" placeholder="https://...">
     <label class="flabel">Icon URL (optional)</label><input class="finp" id="t-icon" placeholder="https://icon.png">
-    <button class="fbtn fbtn-p" style="width:100%;" onclick="saveTask()">SAVE TASK</button>
+    <div class="frow">
+      <div>
+        <label class="flabel">Per User Limit <span style="color:var(--dim);font-weight:400;text-transform:none;">(ek user kitni baar)</span></label>
+        <input class="finp" type="number" id="t-user-limit" placeholder="0 = unlimited" min="0">
+      </div>
+      <div>
+        <label class="flabel">Total App Limit <span style="color:var(--dim);font-weight:400;text-transform:none;">(total kitne users)</span></label>
+        <input class="finp" type="number" id="t-total-limit" placeholder="0 = unlimited" min="0">
+      </div>
+    </div>
+    <div class="frow" style="align-items:center;">
+      <div>
+        <label class="flabel">Status</label>
+        <select class="fselect" id="t-status">
+          <option value="live">🟢 Live (visible to users)</option>
+          <option value="hidden">🔴 Hidden (not visible)</option>
+        </select>
+      </div>
+      <div style="padding-top:20px;">
+        <div id="t-completion-info" style="font-size:.7rem;color:var(--dim);padding:10px;background:var(--s1);border-radius:10px;"></div>
+      </div>
+    </div>
+    <button class="fbtn fbtn-p" style="width:100%;margin-top:4px;" onclick="saveTask()">SAVE TASK</button>
     <span class="mclose" onclick="closeModal('modal-task');editingTaskId=null;">Cancel</span>
   </div>
 </div>
@@ -454,12 +476,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="fbtn fbtn-p" onclick="openAddTask()"><i class="fa-solid fa-plus"></i> ADD TASK</button>
       <button class="filt-btn active" onclick="setFilter('t','all',this)">All</button>
-      <button class="filt-btn" onclick="setFilter('t','simple',this)">Simple</button>
-      <button class="filt-btn" onclick="setFilter('t','download',this)">Download</button>
-      <button class="filt-btn" onclick="setFilter('t','shopping',this)">Shopping</button>
+      <button class="filt-btn" onclick="setFilter('t','simple',this)">⚡ Simple</button>
+      <button class="filt-btn" onclick="setFilter('t','download',this)">📥 Download</button>
+      <button class="filt-btn" onclick="setFilter('t','shopping',this)">🛍️ Shopping</button>
+      <button class="filt-btn" onclick="setFilter('t','__live',this)">🟢 Live</button>
+      <button class="filt-btn" onclick="setFilter('t','__hidden',this)">🔴 Hidden</button>
     </div>
     <div class="card" style="overflow-x:auto;">
-      <table class="tbl"><thead><tr><th>Name</th><th>Category</th><th>Reward</th><th>Link</th><th>Actions</th></tr></thead><tbody id="tasks-body"></tbody></table>
+      <table class="tbl"><thead><tr><th>Task</th><th>Category</th><th>Reward</th><th>Status</th><th>Limits</th><th>Done</th><th>Actions</th></tr></thead><tbody id="tasks-body"></tbody></table>
     </div>
   </div>
 
@@ -537,6 +561,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <input class="finp" type="text" id="set-spinadlink" placeholder="https://...">
         <button class="fbtn fbtn-p" style="margin-top:10px;" onclick="saveSettings('spin')">💾 Save Spin Settings</button>
       </div>
+      <!-- SCRATCH CARD SETTING -->
+      <div class="set-card">
+        <div class="set-card-title">💎 Scratch Card</div>
+        <div class="frow">
+          <div><label class="flabel">Daily Limit</label><input class="finp" type="number" id="set-sclimit" placeholder="3"></div>
+          <div><label class="flabel">Min Coins</label><input class="finp" type="number" id="set-scmin" placeholder="5"></div>
+          <div><label class="flabel">Max Coins</label><input class="finp" type="number" id="set-scmax" placeholder="20"></div>
+        </div>
+        <label class="flabel">Ad Link (30s ad after scratch win)</label>
+        <input class="finp" type="text" id="set-scadlink" placeholder="https://...">
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:10px;" onclick="saveSettings('scratch')">💾 Save Scratch Settings</button>
+      </div>
       <div class="set-card">
         <div class="set-card-title">Social Links</div>
         <label class="flabel">Instagram</label><input class="finp" id="sl-insta" placeholder="https://instagram.com/...">
@@ -582,6 +618,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
           <div style="display:flex;gap:8px;flex-direction:column;">
             <button class="fbtn" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);width:100%;" onclick="toggleMaintenance(true)">🔴 ENABLE MAINTENANCE</button>
             <button class="fbtn" style="background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.2);width:100%;" onclick="toggleMaintenance(false)">🟢 DISABLE MAINTENANCE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WITHDRAWAL CONTROL -->
+    <div class="card" style="background:rgba(123,94,167,.03);border-color:rgba(123,94,167,.12);margin-top:14px;">
+      <div class="card-title" style="color:#b88fff;">💸 Withdrawal Control <span id="wdl-status-badge" style="font-size:.6rem;padding:3px 10px;border-radius:99px;background:rgba(16,185,129,.1);color:var(--success);font-family:'DM Sans',sans-serif;letter-spacing:0;">ON</span></div>
+      <div class="frow">
+        <div>
+          <div style="font-size:.8rem;color:var(--mid);line-height:1.6;margin-bottom:10px;">Turn off to temporarily stop users from submitting new withdrawal requests. (Puraane requests safe rahenge).</div>
+        </div>
+        <div>
+          <div style="display:flex;gap:8px;flex-direction:column;">
+            <button class="fbtn" style="background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.2);width:100%;" onclick="toggleWithdrawal(true)">🟢 ENABLE WITHDRAWALS</button>
+            <button class="fbtn" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);width:100%;" onclick="toggleWithdrawal(false)">🔴 PAUSE WITHDRAWALS</button>
           </div>
         </div>
       </div>
@@ -1402,18 +1454,67 @@ async function unlockDevice(uid) {
 
 // TASKS
 function loadTasks() {
-  db.ref('tasks').on('value',s=>{ allTasks=[]; s.forEach(c=>allTasks.push({tid:c.key,...c.val()})); renderTasks(); });
+  db.ref('tasks').on('value',s=>{ allTasks=[]; s.forEach(c=>allTasks.push({tid:c.key,...c.val()})); renderTasksFiltered(); });
 }
-function renderTasks() {
-  let list=allTasks;
-  if(tFilter!=='all') list=list.filter(t=>t.category===tFilter);
+function renderTasksFiltered() {
+  // Handle live/hidden special filters
+  let list = allTasks;
+  if (tFilter === '__live') {
+    list = allTasks.filter(t => (t.status||'live') === 'live');
+  } else if (tFilter === '__hidden') {
+    list = allTasks.filter(t => (t.status||'live') === 'hidden');
+  } else if (tFilter !== 'all') {
+    list = allTasks.filter(t => t.category === tFilter);
+  }
+  renderTasksList(list);
+}
+
+function renderTasks() { renderTasksFiltered(); }
+
+function renderTasksList(list) {
   const tbody=document.getElementById('tasks-body'); tbody.innerHTML='';
   const ci={simple:'⚡',download:'📥',shopping:'🛍️'};
+  if(!list.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px;">No tasks. Add one!</td></tr>'; return; }
   list.forEach(t=>{
     const rew=t.reward_type==='percent'?t.reward+'%':'₹'+t.reward;
-    tbody.innerHTML+=`<tr><td><div style="display:flex;align-items:center;gap:9px;"><img src="${t.icon||''}" style="width:28px;height:28px;border-radius:7px;object-fit:cover;background:var(--s2);" onerror="this.style.display='none'"><strong>${t.name}</strong></div></td><td><span class="badge b-ok">${ci[t.category]||''} ${t.category}</span></td><td style="color:var(--g1);font-weight:700;">${rew}</td><td style="font-size:.72rem;color:var(--mid);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(t.link||'').substring(0,30)}${t.link&&t.link.length>30?'...':''}</td><td style="display:flex;gap:5px;"><button class="act-btn ab-y" onclick="openEditTask('${t.tid}')">Edit</button><button class="act-btn ab-r" onclick="deleteTask('${t.tid}')">Del</button></td></tr>`;
+    const isLive = (t.status||'live') === 'live';
+    const userLim = t.user_limit || 0;
+    const totalLim = t.total_limit || 0;
+    const totalDone = t.total_completions || 0;
+    const isExhausted = totalLim > 0 && totalDone >= totalLim;
+    tbody.innerHTML+=`<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px;">
+          <img src="${t.icon||''}" style="width:28px;height:28px;border-radius:7px;object-fit:cover;background:var(--s2);" onerror="this.style.display='none'">
+          <div>
+            <div style="font-weight:700;font-size:.82rem;">${t.name}</div>
+            <div style="font-size:.62rem;color:var(--dim);margin-top:2px;">${(t.link||'').substring(0,35)}${(t.link||'').length>35?'...':''}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge b-ok">${ci[t.category]||''} ${t.category}</span></td>
+      <td style="color:var(--g1);font-weight:700;">${rew}</td>
+      <td>
+        <span class="badge ${isLive&&!isExhausted?'b-ok':'b-block'}" style="cursor:pointer;" onclick="toggleTaskStatus('${t.tid}','${t.status||'live'}')">
+          ${isExhausted?'🔴 Exhausted':isLive?'🟢 Live':'🔴 Hidden'}
+        </span>
+      </td>
+      <td>
+        <div style="font-size:.72rem;">
+          <div style="color:var(--mid);">👤 Per User: <strong>${userLim===0?'∞':userLim+'x'}</strong></div>
+          <div style="color:var(--mid);margin-top:2px;">🌐 Total: <strong>${totalLim===0?'∞':totalDone+'/'+totalLim}</strong></div>
+        </div>
+      </td>
+      <td style="font-size:.72rem;color:var(--mid);">${totalDone} done</td>
+      <td>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          <button class="act-btn ab-y" onclick="openEditTask('${t.tid}')">✏️ Edit</button>
+          <button class="act-btn ${isLive?'ab-r':'ab-g'}" onclick="toggleTaskStatus('${t.tid}','${t.status||'live'}')">${isLive?'🔴 Hide':'🟢 Show'}</button>
+          <button class="act-btn ab-r" onclick="deleteTask('${t.tid}')" style="background:rgba(239,68,68,.15);">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
   });
-  if(!list.length) tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--dim);padding:20px;">No tasks. Add one!</td></tr>';
 }
 function openAddTask() {
   editingTaskId=null;
@@ -1422,6 +1523,11 @@ function openAddTask() {
   document.getElementById('t-reward').value='';
   document.getElementById('t-cat').value='simple';
   document.getElementById('t-rtype').value='fixed';
+  document.getElementById('t-user-limit').value='0';
+  document.getElementById('t-total-limit').value='0';
+  document.getElementById('t-status').value='live';
+  const info=document.getElementById('t-completion-info');
+  if(info) info.textContent='';
   openModal('modal-task');
 }
 function openEditTask(tid) {
@@ -1434,6 +1540,11 @@ function openEditTask(tid) {
   document.getElementById('t-rtype').value=t.reward_type||'fixed';
   document.getElementById('t-link').value=t.link||'';
   document.getElementById('t-icon').value=t.icon||'';
+  document.getElementById('t-user-limit').value=t.user_limit||0;
+  document.getElementById('t-total-limit').value=t.total_limit||0;
+  document.getElementById('t-status').value=t.status||'live';
+  const info=document.getElementById('t-completion-info');
+  if(info) info.textContent='Total completions so far: '+(t.total_completions||0);
   openModal('modal-task');
 }
 async function saveTask() {
@@ -1443,15 +1554,38 @@ async function saveTask() {
   const rtype=document.getElementById('t-rtype').value;
   const link=document.getElementById('t-link').value.trim();
   const icon=document.getElementById('t-icon').value.trim();
+  const userLim=parseInt(document.getElementById('t-user-limit').value)||0;
+  const totalLim=parseInt(document.getElementById('t-total-limit').value)||0;
+  const status=document.getElementById('t-status').value;
   if(!name||isNaN(reward)||!link) return toast('Fill required fields!','err');
-  const data={name,category:cat,reward,reward_type:rtype,link,icon};
-  if(editingTaskId){ await db.ref('tasks/'+editingTaskId).update(data); toast('Task updated!','ok'); }
-  else { await db.ref('tasks').push(data); toast('Task added!','ok'); }
+  const data={name,category:cat,reward,reward_type:rtype,link,icon,user_limit:userLim,total_limit:totalLim,status};
+  if(editingTaskId){
+    await db.ref('tasks/'+editingTaskId).update(data);
+    toast('Task updated!','ok');
+  } else {
+    await db.ref('tasks').push({...data, total_completions:0});
+    toast('Task added!','ok');
+  }
   closeModal('modal-task'); editingTaskId=null;
 }
+async function toggleTaskStatus(tid, currentStatus) {
+  const newStatus = currentStatus === 'live' ? 'hidden' : 'live';
+  await db.ref('tasks/'+tid).update({ status: newStatus });
+  toast(newStatus === 'live' ? '🟢 Task live kar diya!' : '🔴 Task hide kar diya!', 'ok');
+}
+
+async function resetTaskCompletions(tid) {
+  if(!confirm('Reset this task completions to 0?')) return;
+  await db.ref('tasks/'+tid).update({ total_completions: 0 });
+  await db.ref('task_completions/'+tid).remove();
+  toast('✅ Completions reset!', 'ok');
+}
+
 async function deleteTask(tid) {
   if(!confirm('Delete this task?')) return;
-  await db.ref('tasks/'+tid).remove(); toast('Deleted!','warn');
+  await db.ref('tasks/'+tid).remove();
+  await db.ref('task_completions/'+tid).remove();
+  toast('Deleted!','warn');
 }
 
 // WITHDRAWALS
@@ -1615,7 +1749,21 @@ function loadSettings() {
       const el = document.getElementById('sp'+(i+1));
       if(el) el.value = val;
     });
-    updateSpinPreview(sp);
+   updateSpinPreview(sp);
+
+    // Spin Wheel Data Load
+    const spinData = v.spin || {};
+    const spLimEl = document.getElementById('set-spinlimit');
+    const spAdEl = document.getElementById('set-spinadlink');
+    if(spLimEl) spLimEl.value = spinData.daily_limit || 1;
+    if(spAdEl) spAdEl.value = spinData.ad_link || '';
+
+    // Scratch Card Data Load
+    const sc = v.scratch || {};
+    document.getElementById('set-sclimit').value = sc.limit || 3;
+    document.getElementById('set-scmin').value = sc.min || 5;
+    document.getElementById('set-scmax').value = sc.max || 20;
+    document.getElementById('set-scadlink').value = sc.ad_link || '';
   });
   db.ref('social_links').once('value',s=>{
     const v=s.val()||{};
@@ -1637,6 +1785,16 @@ function loadSettings() {
         badge.textContent='🔴 ON'; badge.style.background='rgba(239,68,68,.15)'; badge.style.color='var(--danger)';
       } else {
         badge.textContent='🟢 OFF'; badge.style.background='rgba(16,185,129,.1)'; badge.style.color='var(--success)';
+      }
+    }
+    
+    // Withdrawal status update
+    const wdlBadge = document.getElementById('wdl-status-badge');
+    if (wdlBadge) {
+      if (v.withdrawal_status === false) {
+        wdlBadge.textContent = '🔴 PAUSED'; wdlBadge.style.background = 'rgba(239,68,68,.15)'; wdlBadge.style.color = 'var(--danger)';
+      } else {
+        wdlBadge.textContent = '🟢 ON'; wdlBadge.style.background = 'rgba(16,185,129,.1)'; wdlBadge.style.color = 'var(--success)';
       }
     }
   });
@@ -1669,6 +1827,14 @@ async function saveSettings(type) {
     const slink = document.getElementById('set-spinadlink').value.trim();
     await db.ref('settings/spin').update({ daily_limit: sl, ad_link: slink });
     toast('✅ Spin settings saved!', 'ok');
+  }
+  else if (type === 'scratch') {
+    const lim = parseInt(document.getElementById('set-sclimit').value) || 3;
+    const min = parseInt(document.getElementById('set-scmin').value) || 5;
+    const max = parseInt(document.getElementById('set-scmax').value) || 20;
+    const adlink = document.getElementById('set-scadlink').value.trim();
+    await db.ref('settings/scratch').update({ limit: lim, min: min, max: max, ad_link: adlink });
+    toast('✅ Scratch Card settings saved!', 'ok');
   }
 }
 async function saveSocial() {
@@ -1713,6 +1879,17 @@ async function toggleMaintenance(enable) {
   }
 }
 
+async function toggleWithdrawal(enable) {
+  if (!enable) {
+    if (!confirm('Are you sure? Users will NOT be able to request withdrawals!')) return;
+    await db.ref('app_control').update({ withdrawal_status: false });
+    toast('🔴 Withdrawals PAUSED!','warn');
+  } else {
+    await db.ref('app_control').update({ withdrawal_status: true });
+    toast('🟢 Withdrawals ENABLED!','ok');
+  }
+}
+
 // REDEEM
 function loadRedeem() {
   db.ref('admin/redeem_config').on('value',s=>{
@@ -1734,7 +1911,7 @@ async function clearRedeem() { await db.ref('admin/redeem_config').remove(); doc
 function setFilter(type,val,el) {
   if(type==='u'){ uFilter=val; document.querySelectorAll('#pg-users .filt-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderUsers(); }
   else if(type==='w'){ wFilter=val; document.querySelectorAll('#pg-withdraw .filt-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderWithdrawals(); }
-  else if(type==='t'){ tFilter=val; document.querySelectorAll('#pg-tasks .filt-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasks(); }
+  else if(type==='t'){ tFilter=val; document.querySelectorAll('#pg-tasks .filt-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTasksFiltered(); }
 }
 function gp(id,btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1745,6 +1922,17 @@ function gp(id,btn) {
 }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// Toast Message Function (Jo delete ho gaya tha)
+function toast(msg, type) {
+  if (!type) type = 'ok';
+  const t = document.getElementById('toast');
+  if(t) {
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(function() { t.className = ''; }, 3200);
+  }
+}
 
 
 // ══════════════════════════════════════════════════════
@@ -1969,14 +2157,7 @@ function updateSpinPreview(sp) {
 function loadTasksAdmin()  { loadTasks(); }
 function loadNoticesAdmin(){ loadNotices(); }
 function loadRedeemConfig(){ loadRedeem(); }
-function toast(msg, type) {
-  if (!type) type = 'ok';
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  setTimeout(function() { t.className = ''; }, 3200);
-}
+
 </script>
 </body>
 </html>
