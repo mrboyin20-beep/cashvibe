@@ -1458,20 +1458,25 @@ async function unlockDevice(uid) {
 // TASKS
 // TASKS
 function loadTasks() {
-  db.ref('tasks').on('value',s=>{ allTasks=[]; s.forEach(c=>allTasks.push({tid:c.key,...c.val()})); renderTasksFiltered(); });
+  db.ref('tasks').on('value', s => { 
+    allTasks = []; 
+    s.forEach(c => allTasks.push({tid: c.key, ...c.val()})); 
+    renderTasksFiltered(); 
+  });
 }
 
 function renderTasksFiltered() {
-  let list = allTasks;
+  let list = [...allTasks]; // Naya copy banaya taaki data crash na ho
+  
   if (tFilter === '__live') {
-    list = allTasks.filter(t => (t.status || 'live') === 'live');
+    list = list.filter(t => (t.status || 'live') === 'live');
   } else if (tFilter === '__hidden') {
-    list = allTasks.filter(t => (t.status || 'live') === 'hidden');
+    list = list.filter(t => (t.status || 'live') === 'hidden');
   } else if (tFilter !== 'all') {
-    list = allTasks.filter(t => t.category === tFilter);
+    list = list.filter(t => t.category === tFilter);
   }
   
-  // Sort by latest added
+  // Sort by Newest Task First
   list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   
   renderTasksList(list);
@@ -1481,31 +1486,34 @@ function renderTasks() { renderTasksFiltered(); }
 
 function renderTasksList(list) {
   const tbody = document.getElementById('tasks-body'); 
-  tbody.innerHTML = '';
-  
   const ci = { simple:'⚡', download:'📥', shopping:'🛍️', offerwall:'🎁' };
   
   if (!list.length) { 
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px;">No tasks found!</td></tr>'; 
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:20px;">No tasks found! Add one to see here.</td></tr>'; 
     return; 
   }
   
-  list.forEach((t, index) => {
+  // HTML tootne se bachane ke liye Map use kiya gaya hai
+  const rows = list.map((t, index) => {
     const rew = t.reward_type === 'percent' ? t.reward + '%' : '🪙' + t.reward;
     const isLive = (t.status || 'live') === 'live';
     const userLim = t.user_limit || 0;
     const totalLim = t.total_limit || 0;
     const totalDone = t.total_completions || 0;
     const isExhausted = totalLim > 0 && totalDone >= totalLim;
+    
+    // Link me koi ajeeb character aane se page ko bachaane ke liye
+    const safeLink = (t.link || '').replace(/"/g, '&quot;');
+    const safeName = (t.name || 'Task').replace(/"/g, '&quot;');
 
-    tbody.innerHTML += `<tr>
+    return `<tr>
       <td>
         <div style="display:flex;align-items:center;gap:9px;">
           <div style="font-size:0.65rem;color:var(--dim);font-weight:700;min-width:16px;">#${index + 1}</div>
           <img src="${t.icon || ''}" style="width:28px;height:28px;border-radius:7px;object-fit:cover;background:var(--s2);" onerror="this.style.display='none'">
           <div>
-            <div style="font-weight:700;font-size:.82rem;">${t.name}</div>
-            <div style="font-size:.62rem;color:var(--dim);margin-top:2px;">${(t.link || '').substring(0,35)}${(t.link || '').length > 35 ? '...' : ''}</div>
+            <div style="font-weight:700;font-size:.82rem;">${safeName}</div>
+            <div style="font-size:.62rem;color:var(--dim);margin-top:2px;">${safeLink.substring(0,35)}${safeLink.length > 35 ? '...' : ''}</div>
           </div>
         </div>
       </td>
@@ -1532,59 +1540,78 @@ function renderTasksList(list) {
       </td>
     </tr>`;
   });
+  
+  tbody.innerHTML = rows.join('');
 }
+
 function openAddTask() {
-  editingTaskId=null;
-  document.getElementById('task-modal-title').textContent='Add Task';
-  ['t-name','t-link','t-icon'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('t-reward').value='';
-  document.getElementById('t-cat').value='simple';
-  document.getElementById('t-rtype').value='fixed';
-  document.getElementById('t-user-limit').value='0';
-  document.getElementById('t-total-limit').value='0';
-  document.getElementById('t-status').value='live';
-  const info=document.getElementById('t-completion-info');
-  if(info) info.textContent='';
+  editingTaskId = null;
+  document.getElementById('task-modal-title').textContent = 'Add Task';
+  ['t-name','t-link','t-icon'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('t-reward').value = '';
+  document.getElementById('t-cat').value = 'simple';
+  document.getElementById('t-rtype').value = 'fixed';
+  document.getElementById('t-user-limit').value = '0';
+  document.getElementById('t-total-limit').value = '0';
+  document.getElementById('t-status').value = 'live';
+  const info = document.getElementById('t-completion-info');
+  if(info) info.textContent = '';
   openModal('modal-task');
 }
+
 function openEditTask(tid) {
-  const t=allTasks.find(x=>x.tid===tid); if(!t) return;
-  editingTaskId=tid;
-  document.getElementById('task-modal-title').textContent='Edit Task';
-  document.getElementById('t-name').value=t.name||'';
-  document.getElementById('t-cat').value=t.category||'simple';
-  document.getElementById('t-reward').value=t.reward||'';
-  document.getElementById('t-rtype').value=t.reward_type||'fixed';
-  document.getElementById('t-link').value=t.link||'';
-  document.getElementById('t-icon').value=t.icon||'';
-  document.getElementById('t-user-limit').value=t.user_limit||0;
-  document.getElementById('t-total-limit').value=t.total_limit||0;
-  document.getElementById('t-status').value=t.status||'live';
-  const info=document.getElementById('t-completion-info');
-  if(info) info.textContent='Total completions so far: '+(t.total_completions||0);
+  const t = allTasks.find(x => x.tid === tid); 
+  if(!t) return;
+  editingTaskId = tid;
+  document.getElementById('task-modal-title').textContent = 'Edit Task';
+  document.getElementById('t-name').value = t.name || '';
+  document.getElementById('t-cat').value = t.category || 'simple';
+  document.getElementById('t-reward').value = t.reward || '';
+  document.getElementById('t-rtype').value = t.reward_type || 'fixed';
+  document.getElementById('t-link').value = t.link || '';
+  document.getElementById('t-icon').value = t.icon || '';
+  document.getElementById('t-user-limit').value = t.user_limit || 0;
+  document.getElementById('t-total-limit').value = t.total_limit || 0;
+  document.getElementById('t-status').value = t.status || 'live';
+  const info = document.getElementById('t-completion-info');
+  if(info) info.textContent = 'Total completions so far: ' + (t.total_completions || 0);
   openModal('modal-task');
 }
+
 async function saveTask() {
-  const name=document.getElementById('t-name').value.trim();
-  const cat=document.getElementById('t-cat').value;
-  const reward=parseFloat(document.getElementById('t-reward').value);
-  const rtype=document.getElementById('t-rtype').value;
-  const link=document.getElementById('t-link').value.trim();
-  const icon=document.getElementById('t-icon').value.trim();
-  const userLim=parseInt(document.getElementById('t-user-limit').value)||0;
-  const totalLim=parseInt(document.getElementById('t-total-limit').value)||0;
-  const status=document.getElementById('t-status').value;
-  if(!name||isNaN(reward)||!link) return toast('Fill required fields!','err');
-  const data={name,category:cat,reward,reward_type:rtype,link,icon,user_limit:userLim,total_limit:totalLim,status};
-  if(editingTaskId){
-    await db.ref('tasks/'+editingTaskId).update(data);
-    toast('Task updated!','ok');
+  const name = document.getElementById('t-name').value.trim();
+  const cat = document.getElementById('t-cat').value;
+  const reward = parseFloat(document.getElementById('t-reward').value);
+  const rtype = document.getElementById('t-rtype').value;
+  const link = document.getElementById('t-link').value.trim();
+  const icon = document.getElementById('t-icon').value.trim();
+  const userLim = parseInt(document.getElementById('t-user-limit').value) || 0;
+  const totalLim = parseInt(document.getElementById('t-total-limit').value) || 0;
+  const status = document.getElementById('t-status').value;
+  
+  if(!name || isNaN(reward) || !link) return toast('Fill required fields!', 'err');
+  
+  // Ab Naye task me "timestamp" save hoga, taaki system ko pata chale kab add hua tha
+  const data = {
+    name, category: cat, reward, reward_type: rtype, 
+    link, icon, user_limit: userLim, total_limit: totalLim, 
+    status, timestamp: Date.now()
+  };
+  
+  if (editingTaskId) {
+    const oldTask = allTasks.find(x => x.tid === editingTaskId);
+    if (oldTask && oldTask.timestamp) data.timestamp = oldTask.timestamp;
+    
+    await db.ref('tasks/' + editingTaskId).update(data);
+    toast('Task updated!', 'ok');
   } else {
-    await db.ref('tasks').push({...data, total_completions:0});
-    toast('Task added!','ok');
+    await db.ref('tasks').push({...data, total_completions: 0});
+    toast('Task added!', 'ok');
   }
-  closeModal('modal-task'); editingTaskId=null;
+  closeModal('modal-task'); 
+  editingTaskId = null;
 }
+
 async function toggleTaskStatus(tid, currentStatus) {
   const newStatus = currentStatus === 'live' ? 'hidden' : 'live';
   await db.ref('tasks/'+tid).update({ status: newStatus });
