@@ -568,6 +568,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <div class="ttab active" onclick="loadTasks('simple',this)">⚡ Simple</div>
       <div class="ttab" onclick="loadTasks('download',this)">📥 Download</div>
       <div class="ttab" onclick="loadTasks('shopping',this)">🛍️ Shopping</div>
+      <div class="ttab" onclick="loadTasks('offerwall',this)" style="color:var(--g3);border-color:rgba(245,166,35,.3);background:rgba(245,166,35,.05);">🎁 Offerwalls</div>
     </div>
     <div id="task-box"></div>
   </div>
@@ -916,6 +917,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <button onclick="closeGameResult()" class="btn-main" style="font-size:.86rem;padding:13px;margin-bottom:10px;">Play Again 🎮</button>
       <button onclick="closeGameResult();gp('pg-game',null);" style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--border);border-radius:99px;color:var(--mid);font-weight:700;cursor:pointer;font-size:.82rem;">← Back to Dashboard</button>
     </div>
+    <!-- OFFERWALL EMBED FULLSCREEN MODAL -->
+  <div id="ow-embed-modal" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99999;flex-direction:column;">
+    <div style="padding:14px 18px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--g1);letter-spacing:1px;">🎁 OFFERWALL</div>
+      <button onclick="closeOfferwallEmbed()" style="background:rgba(239,68,68,.1);color:var(--danger);border:none;padding:8px 16px;border-radius:10px;font-weight:800;font-size:.75rem;cursor:pointer;">✕ Close</button>
+    </div>
+    <div id="ow-embed-content" style="flex:1;overflow:auto;background:#fff;width:100%;height:100%;">
+      <!-- Script/Iframe yahan automatic aayega -->
+    </div>
+  </div>
   </div>
 
 </div><!-- /main -->
@@ -1462,45 +1473,80 @@ function renderTask(t, box) {
   const el = document.createElement('div');
   el.className = 'ti';
 
-  let taskLink = t.link || '#';
+  let rawLink = (t.link || '#').trim();
   const uid = curUser ? curUser.uid : '';
+  
+  // Pata lagao ki yeh Link hai ya Embed Code (Iframe/Script)
+  let isEmbed = rawLink.startsWith('<iframe') || rawLink.startsWith('<script');
+  let finalLink = rawLink;
 
-  if (taskLink !== '#') {
-    // TRICK 1: Agar aapne Admin Panel me link ke aage khud {uid} likh diya hai 
-    // Example: https://smrturl.co/12345?tracking_id={uid}
-    if (taskLink.includes('{uid}')) {
-      taskLink = taskLink.replace(/{uid}/g, uid);
-    } 
-    // TRICK 2: UNIVERSAL TRACKING (Agar aapne simple link daala hai)
-    // Yeh CPAGrip, vCommission aur baaki sabhi networks ke parameters ek sath laga dega.
-    // Jisko jo parameter chahiye hoga, wo network khud pick kar lega.
-    else {
+  if (isEmbed) {
+    // Agar Script/Iframe hai, toh usme jahan bhi {uid} likha hoga wahan asli UID daal do
+    finalLink = rawLink.replace(/{uid}/gi, uid).replace(/\[USER_ID\]/gi, uid);
+  } else if (rawLink !== '#') {
+    // Agar Link hai, toh pehle wali Tracking ID lagao
+    if (rawLink.includes('{uid}')) {
+      finalLink = rawLink.replace(/{uid}/g, uid);
+    } else {
       try {
-        let urlObj = new URL(taskLink);
-        
-        // CPAGrip (Smart Links, Lockers, Direct Offers) ke liye
+        let urlObj = new URL(rawLink);
         urlObj.searchParams.set('tracking_id', uid);
-        
-        // vCommission aur Indian Networks ke liye
-        urlObj.searchParams.set('sub_id', uid);
-        
-        // AdGate, AdGem, CPALead jaise baaki Global Networks ke liye
+        urlObj.searchParams.set('subid', uid);
+        urlObj.searchParams.set('uid', uid);
         urlObj.searchParams.set('aff_sub', uid);
         urlObj.searchParams.set('s1', uid);
-        
-        taskLink = urlObj.toString();
+        finalLink = urlObj.toString();
       } catch(e) {
-        // Agar URL theek se load na ho, toh simple tarike se attach karo
-        const sep = taskLink.includes('?') ? '&' : '?';
-        taskLink = taskLink + sep + 'tracking_id=' + uid + '&sub_id=' + uid;
+        const sep = rawLink.includes('?') ? '&' : '?';
+        finalLink = rawLink + sep + 'tracking_id=' + uid + '&subid=' + uid;
       }
     }
   }
 
-  el.innerHTML = `<img class="ti-img" src="${t.icon||''}" onerror="this.style.background='var(--s3)';this.style.display='block';">
-    <div class="ti-info"><div class="ti-name">${t.name}</div><div class="ti-rew">${rew}</div></div>
-    <button class="ti-btn" onclick="window.open('${taskLink}','_blank')">START →</button>`;
+  // Task ka Design
+  el.innerHTML = `
+    <img class="ti-img" src="${t.icon||''}" onerror="this.style.background='var(--s3)';this.style.display='block';">
+    <div class="ti-info">
+      <div class="ti-name">${t.name}</div>
+      <div class="ti-rew">${rew}</div>
+    </div>
+  `;
+
+  // Start Button Logic
+  const btn = document.createElement('button');
+  btn.className = 'ti-btn';
+  btn.textContent = 'START →';
+  
+  if (isEmbed) {
+    // Iframe/Script ko app ke andar kholo
+    btn.onclick = () => openOfferwallEmbed(finalLink);
+  } else {
+    // Normal Link ko naye tab me kholo
+    btn.onclick = () => window.open(finalLink, '_blank');
+  }
+  
+  el.appendChild(btn);
   box.appendChild(el);
+}
+
+// ══ Iframe/Script App ke andar chalane ka Engine ══
+function openOfferwallEmbed(htmlCode) {
+  const modal = document.getElementById('ow-embed-modal');
+  const content = document.getElementById('ow-embed-content');
+  
+  // Code ko full-screen box mein daalo
+  content.innerHTML = htmlCode;
+  
+  // Agar iframe hai, toh usko full width/height de do
+  const iframe = content.querySelector('iframe');
+  if(iframe) { iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = 'none'; }
+  
+  modal.style.display = 'flex';
+}
+
+function closeOfferwallEmbed() {
+  document.getElementById('ow-embed-modal').style.display = 'none';
+  document.getElementById('ow-embed-content').innerHTML = ''; // Code clear kar do
 }
 
 // LEADERBOARD
