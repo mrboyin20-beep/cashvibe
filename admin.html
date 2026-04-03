@@ -576,6 +576,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <input class="finp" type="text" id="set-scadlink" placeholder="https://...">
         <button class="fbtn fbtn-p" style="width:100%;margin-top:10px;" onclick="saveSettings('scratch')">💾 Save Scratch Settings</button>
       </div>
+      <!-- BANNERS SETTING -->
+      <div class="set-card" style="grid-column:1/-1; border-top:3px solid var(--g1);">
+        <div class="set-card-title">🖼️ Dashboard Banners (Max 3)</div>
+        <div class="frow" style="grid-template-columns:1fr 1fr 1fr;">
+          <!-- Banner 1 -->
+          <div style="background:rgba(255,255,255,0.02);padding:14px;border-radius:12px;border:1px dashed var(--border);">
+            <label class="flabel" style="color:var(--g1);">Banner 1 Image URL</label>
+            <input class="finp" type="text" id="set-b1-img" placeholder="https://image.jpg">
+            <label class="flabel">Banner 1 Click Link</label>
+            <input class="finp" type="text" id="set-b1-link" placeholder="https://...">
+          </div>
+          <!-- Banner 2 -->
+          <div style="background:rgba(255,255,255,0.02);padding:14px;border-radius:12px;border:1px dashed var(--border);">
+            <label class="flabel" style="color:var(--g1);">Banner 2 Image URL</label>
+            <input class="finp" type="text" id="set-b2-img" placeholder="https://image.jpg">
+            <label class="flabel">Banner 2 Click Link</label>
+            <input class="finp" type="text" id="set-b2-link" placeholder="https://...">
+          </div>
+          <!-- Banner 3 -->
+          <div style="background:rgba(255,255,255,0.02);padding:14px;border-radius:12px;border:1px dashed var(--border);">
+            <label class="flabel" style="color:var(--g1);">Banner 3 Image URL</label>
+            <input class="finp" type="text" id="set-b3-img" placeholder="https://image.jpg">
+            <label class="flabel">Banner 3 Click Link</label>
+            <input class="finp" type="text" id="set-b3-link" placeholder="https://...">
+          </div>
+        </div>
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:14px;" onclick="saveSettings('banners')">💾 Save Banners</button>
+      </div>
       <div class="set-card">
         <div class="set-card-title">Social Links</div>
         <label class="flabel">Instagram</label><input class="finp" id="sl-insta" placeholder="https://instagram.com/...">
@@ -1828,6 +1856,11 @@ function loadSettings() {
     document.getElementById('set-scmax').value = sc.max || 20;
     document.getElementById('set-scadlink').value = sc.ad_link || '';
   });
+  // Banners Data Load
+    const bn = v.banners || [];
+    if(bn[0]) { document.getElementById('set-b1-img').value = bn[0].img||''; document.getElementById('set-b1-link').value = bn[0].link||''; }
+    if(bn[1]) { document.getElementById('set-b2-img').value = bn[1].img||''; document.getElementById('set-b2-link').value = bn[1].link||''; }
+    if(bn[2]) { document.getElementById('set-b3-img').value = bn[2].img||''; document.getElementById('set-b3-link').value = bn[2].link||''; }
   db.ref('social_links').once('value',s=>{
     const v=s.val()||{};
     document.getElementById('sl-insta').value=v.insta||'';
@@ -1899,14 +1932,15 @@ async function saveSettings(type) {
     await db.ref('settings/scratch').update({ limit: lim, min: min, max: max, ad_link: adlink });
     toast('✅ Scratch Card settings saved!', 'ok');
   }
-}
-async function saveSocial() {
-  await db.ref('social_links').set({
-    insta:document.getElementById('sl-insta').value.trim(),
-    tele:document.getElementById('sl-tele').value.trim(),
-    wa:document.getElementById('sl-wa').value.trim()
-  });
-  toast('Social links saved!','ok');
+  else if (type === 'banners') {
+    const banners = [
+      { img: document.getElementById('set-b1-img').value.trim(), link: document.getElementById('set-b1-link').value.trim() },
+      { img: document.getElementById('set-b2-img').value.trim(), link: document.getElementById('set-b2-link').value.trim() },
+      { img: document.getElementById('set-b3-img').value.trim(), link: document.getElementById('set-b3-link').value.trim() }
+    ];
+    await db.ref('app_control/banners').set(banners);
+    toast('✅ Dashboard Banners updated successfully!', 'ok');
+  }
 }
 
 async function saveSupportSettings() {

@@ -124,8 +124,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 /* CARD */
 .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;}
 
-/* BALANCE HERO */
-.bal-hero{background:linear-gradient(135deg,#070b1a,#0d0a20);border:1px solid rgba(0,245,196,0.12);border-radius:22px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden;}
+/* BALANCE HERO & SLIDER */
+.bal-hero{background:linear-gradient(135deg,#070b1a,#0d0a20);border:1px solid rgba(0,245,196,0.12);border-radius:22px;padding:24px;margin-bottom:14px;position:relative;overflow:hidden; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px;}
+.bal-hero-content{flex:1; min-width:200px;}
+.bal-hero-slider{width:200px; height:110px; border-radius:14px; border:1px solid var(--border); overflow:hidden; position:relative; flex-shrink:0; box-shadow:0 8px 20px rgba(0,0,0,0.4); display:none;}
+.slider-track{display:flex; height:100%; transition:transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);}
+.slider-slide{min-width:100%; height:100%; cursor:pointer; background:var(--s2);}
+.slider-slide img{width:100%; height:100%; object-fit:cover;}
+.slider-dots{position:absolute; bottom:6px; left:0; right:0; display:flex; justify-content:center; gap:5px; z-index:10;}
+.s-dot{width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:0.3s;}
+.s-dot.active{background:var(--g1); width:14px; box-shadow:0 0 8px var(--g1);}
+@media(max-width:600px) { .bal-hero-slider{width:100%; height:120px;} }
 .bal-hero::after{content:'';position:absolute;top:-80px;right:-80px;width:220px;height:220px;background:radial-gradient(circle,rgba(0,245,196,0.08),transparent);border-radius:50%;}
 .bal-lbl{font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
 .bal-amt{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:2px;line-height:1;}
@@ -539,18 +548,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <span class="tick-msg" id="tick-msg">Loading live payouts...</span>
     </div>
     <div class="bal-hero">
-      <div class="bal-lbl">Total Coins</div>
-      <div class="bal-amt"><span class="cur"><span class="cv-coin xl"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span></span><span id="bal-main">0</span></div>
-      <div style="font-size:.95rem;color:var(--g1);font-weight:700;margin:4px 0 8px;">= ₹<span id="bal-rupees-hero">0.00</span></div>
-      <div class="bal-tags">
-        <span class="tag g" id="level-tag">🥉 Bronze</span>
-        <span class="tag g">UID: <span id="uid-tag">...</span></span>
-        <span class="tag" id="streak-tag">🔥 0 Day Streak</span>
-        <span class="tag" id="pending-tag" style="display:none;background:rgba(245,166,35,.15);color:#f5a623;border-color:rgba(245,166,35,.3);">⏳ <span id="pending-tag-coins">0</span> Pending</span>
+      <!-- LEFT SIDE: BALANCE INFO -->
+      <div class="bal-hero-content">
+        <div class="bal-lbl">Total Coins</div>
+        <div class="bal-amt"><span class="cur"><span class="cv-coin xl"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span></span><span id="bal-main">0</span></div>
+        <div style="font-size:.95rem;color:var(--g1);font-weight:700;margin:4px 0 8px;">= ₹<span id="bal-rupees-hero">0.00</span></div>
+        <div class="bal-tags">
+          <span class="tag g" id="level-tag">🥉 Bronze</span>
+          <span class="tag g">UID: <span id="uid-tag">...</span></span>
+          <span class="tag" id="streak-tag">🔥 0 Day Streak</span>
+          <span class="tag" id="pending-tag" style="display:none;background:rgba(245,166,35,.15);color:#f5a623;border-color:rgba(245,166,35,.3);">⏳ <span id="pending-tag-coins">0</span> Pending</span>
+        </div>
+        <div class="xp-row">
+          <div class="xp-lbl">Level Progress <span id="xp-txt">0 / 2000 Coins</span></div>
+          <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+        </div>
       </div>
-      <div class="xp-row">
-        <div class="xp-lbl">Level Progress <span id="xp-txt">0 / 2000 Coins</span></div>
-        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      
+      <!-- RIGHT SIDE: BANNER SLIDER -->
+      <div class="bal-hero-slider" id="hero-slider-wrap">
+        <div class="slider-track" id="slider-track">
+          <!-- Banners aayenge yahan -->
+        </div>
+        <div class="slider-dots" id="slider-dots"></div>
       </div>
     </div>
     <div class="sec-title">Daily Streak <small id="streak-days">0 days</small></div>
@@ -1090,6 +1110,12 @@ db.ref('app_control').on('value', s => {
     appCfg.refer_reward = ac.refer_reward || 500;
     appCfg.withdrawal_status = ac.withdrawal_status !== false;
     
+    // ══ BANNER SLIDER ENGINE ══
+    if (ac.banners && ac.banners.length > 0) {
+      initBannerSlider(ac.banners);
+    } else {
+      document.getElementById('hero-slider-wrap').style.display = 'none';
+    }
     // Withdrawal Button On/Off Logic
     const wBtn = document.getElementById('btn-withdraw');
     if (wBtn) {
@@ -1941,40 +1967,55 @@ function doLogout(){ auth.signOut().then(()=>window.location.replace('auth.html'
 
 // ══ REFER ACTIVITY SYSTEM ══
 // Friend activity track karo aur referrer ko auto-credit karo
+let isReferCreditRunning = false; // ⚠️ Naya Lock (Double Credit Rokne Ke Liye)
+
 async function checkReferralReward() {
-  if (!curUser || !U.referredBy || U.referredBy === 'DIRECT') return;
+  if (!curUser || !U.referredBy || U.referredBy === 'DIRECT' || isReferCreditRunning) return;
+  
   try {
     const refSnap = await db.ref('refer_logs/' + curUser.uid).once('value');
     if (!refSnap.exists()) return;
     const ref = refSnap.val();
-    if (ref.rewardCredited) return; // Pehle hi mil chuka hai
+    
+    // Agar reward pehle hi mil chuka hai, toh yahin ruk jao
+    if (ref.rewardCredited === true) return; 
 
-    // Progress Calculate karo (Instant check)
+    // Progress Calculate karo
     let pts = 0;
     if (U.lastCheckIn) pts += 40;
     if (U.lastSpinDate) pts += 30;
     if (U.adDone || U.lastAdDate) pts += 30;
     const prog = Math.min(pts, 100);
 
-    // Firebase me progress update karo
+    // Firebase mein naya progress save karo
     if (prog !== (ref.progress || 0)) {
       await db.ref('refer_logs/' + curUser.uid).update({ progress: prog });
     }
 
-    // 100% Complete? Referrer ko INSTANT Coins do!
+    // 100% Complete? Referrer ko INSTANT Coins do (SIRF EK BAAR)
     if (prog >= 100 && !ref.rewardCredited) {
-      const reward = ref.rewardAmount || 500;
+      isReferCreditRunning = true; // Lock lagaya
+      
+      // Safety check: dobara check karo ki kahin kisi aur tab se credit toh nahi ho gaya
+      const doubleCheck = (await db.ref('refer_logs/' + curUser.uid + '/rewardCredited').once('value')).val();
+      if (doubleCheck === true) {
+        isReferCreditRunning = false;
+        return;
+      }
+
+      // Mark as credited PEHLE karo (taaki doosri baar chalne ka chance khatam ho jaye)
+      await db.ref('refer_logs/' + curUser.uid).update({
+        rewardCredited: true,
+        creditedAt: Date.now(),
+        progress: 100
+      });
+
+      const reward = Number(ref.rewardAmount) || 500; // Asli amount (Number mein)
       const referrerUid = ref.from;
+
       if (referrerUid) {
-        // Referrer ke account me paise daalo
+        // Referrer ke account me paise daalo (Transaction)
         await db.ref('users/' + referrerUid + '/balance').transaction(b => (b || 0) + reward);
-        
-        // Mark as credited
-        await db.ref('refer_logs/' + curUser.uid).update({
-          rewardCredited: true,
-          creditedAt: Date.now(),
-          progress: 100
-        });
         
         // Referrer ko Notification bhejo
         await db.ref('notices_list').push({
@@ -1983,10 +2024,15 @@ async function checkReferralReward() {
           forUser: referrerUid,
           type: 'reward'
         });
-        console.log('Referral reward auto-credited!', reward);
+        console.log('Referral reward auto-credited Successfully!', reward);
       }
+      
+      isReferCreditRunning = false; // Lock khola
     }
-  } catch(e) { console.log('checkReferralReward error:', e); }
+  } catch(e) { 
+    isReferCreditRunning = false;
+    console.log('checkReferralReward error:', e); 
+  }
 }
 
 function calcReferProgress() {
@@ -2957,6 +3003,49 @@ async function deleteMyAccount() {
     } else {
       alert("Error deleting account: " + e.message);
     }
+  }
+}
+
+// ══ BANNER SLIDER LOGIC ══
+let slideInterval;
+function initBannerSlider(banners) {
+  const wrap = document.getElementById('hero-slider-wrap');
+  const track = document.getElementById('slider-track');
+  const dotsWrap = document.getElementById('slider-dots');
+
+  wrap.style.display = 'block';
+  track.innerHTML = '';
+  dotsWrap.innerHTML = '';
+
+  let validBanners = banners.filter(b => b.img && b.img.trim() !== '');
+  if (validBanners.length === 0) { wrap.style.display = 'none'; return; }
+
+  validBanners.forEach((b, i) => {
+    // Slide Banayein
+    const div = document.createElement('div');
+    div.className = 'slider-slide';
+    div.innerHTML = `<img src="${b.img}" onerror="this.style.display='none'">`;
+    if (b.link) div.onclick = () => window.open(b.link, '_blank');
+    track.appendChild(div);
+
+    // Dot Banayein
+    const dot = document.createElement('div');
+    dot.className = `s-dot ${i === 0 ? 'active' : ''}`;
+    dotsWrap.appendChild(dot);
+  });
+
+  clearInterval(slideInterval);
+  let currentSlide = 0;
+  
+  if (validBanners.length > 1) {
+    slideInterval = setInterval(() => {
+      currentSlide = (currentSlide + 1) % validBanners.length;
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+      
+      document.querySelectorAll('.s-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === currentSlide);
+      });
+    }, 4000); // 4 Second me slide badlega
   }
 }
 </script>
