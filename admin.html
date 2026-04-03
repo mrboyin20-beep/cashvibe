@@ -696,6 +696,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <button class="fbtn fbtn-p" style="width:100%;margin-top:6px;" onclick="saveGameSettings('quiz')">💾 SAVE QUIZ SETTINGS</button>
       </div>
 
+      <!-- Fast Tap Settings -->
+      <div class="set-card" style="border-top:3px solid #ec4899;">
+        <div class="set-card-title">⚡ Fast Tap Settings</div>
+        <label class="flabel">Entry Fee (Coins)</label>
+        <input class="finp" type="number" id="g-tap-fee" placeholder="e.g. 15" min="1" oninput="calcPF('tap')">
+        <label class="flabel">Prize Pool (Coins)</label>
+        <input class="finp" type="number" id="g-tap-prize" placeholder="e.g. 26" min="1" oninput="calcPF('tap')">
+        <label class="flabel">Platform Fee (Auto-calculate)</label>
+        <input class="finp" type="number" id="g-tap-platform" placeholder="Auto" readonly style="opacity:.5;cursor:not-allowed;">
+        <label class="flabel">Max Wait Time (Seconds)</label>
+        <input class="finp" type="number" id="g-tap-timeout" placeholder="5" min="3" max="10">
+        <label class="flabel">Status</label>
+        <select class="fselect" id="g-tap-status">
+          <option value="active">✅ Active</option>
+          <option value="inactive">❌ Disabled</option>
+        </select>
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:6px;background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;" onclick="saveGameSettings('tap')">💾 SAVE FAST TAP SETTINGS</button>
+      </div>
+
       <!-- Global Settings -->
       <div class="set-card" style="border-top:3px solid var(--g1);grid-column:span 2;">
         <div class="set-card-title">⚙️ Global Game Settings</div>
@@ -2021,6 +2040,18 @@ function loadGameSettings() {
     if (qs) qs.value = quiz.status    || 'active';
     calcPF('quiz');
 
+    // Fast Tap
+    const tap = cfg.tap || {};
+    const tf2 = document.getElementById('g-tap-fee');
+    const tp2 = document.getElementById('g-tap-prize');
+    const tt2 = document.getElementById('g-tap-timeout');
+    const ts2 = document.getElementById('g-tap-status');
+    if (tf2) tf2.value = tap.fee     || 15;
+    if (tp2) tp2.value = tap.prize   || 26;
+    if (tt2) tt2.value = tap.timeout || 5; // Kitni der me Green hoga
+    if (ts2) ts2.value = tap.status  || 'active';
+    calcPF('tap');
+
     // Global
     const gm  = document.getElementById('g-mm-timeout');
     const ga  = document.getElementById('g-arena-status');
@@ -2060,6 +2091,15 @@ async function saveGameSettings(type) {
       if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
       await db.ref('game_config/quiz').set({ fee, prize, platform: (fee*2)-prize, questions, status });
       toast('✅ Quiz Battle settings saved!', 'ok');
+    }
+    else if (type === 'tap') {
+      const fee     = parseInt(document.getElementById('g-tap-fee').value)     || 15;
+      const prize   = parseInt(document.getElementById('g-tap-prize').value)   || 26;
+      const timeout = parseInt(document.getElementById('g-tap-timeout').value) || 5;
+      const status  = document.getElementById('g-tap-status').value;
+      if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
+      await db.ref('game_config/tap').set({ fee, prize, platform: (fee*2)-prize, timeout, status });
+      toast('✅ Fast Tap settings saved!', 'ok');
     }
     else if (type === 'global') {
       const mm_timeout   = parseInt(document.getElementById('g-mm-timeout').value) || 60;
@@ -2143,7 +2183,7 @@ function loadActiveRooms() {
       const sCol = r.status === 'active' ? 'var(--success)' : r.status === 'waiting' ? 'var(--g3)' : 'var(--dim)';
       html += `<div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <div>
-          <span style="font-weight:700;font-size:.8rem;">${r.gameType === 'ttt' ? '⚔️ TTT' : '🧠 Quiz'}</span>
+          <span style="font-weight:700;font-size:.8rem;">${r.gameType === 'ttt' ? '⚔️ TTT' : r.gameType === 'quiz' ? '🧠 Quiz' : '⚡ Fast Tap'}</span>
           <span style="background:rgba(255,255,255,.04);color:${sCol};font-size:.62rem;padding:2px 8px;border-radius:99px;margin-left:6px;font-weight:700;">${(r.status||'?').toUpperCase()}</span>
           <div style="font-size:.7rem;color:var(--dim);margin-top:3px;">
             A: ${(r.playerA||'?').substring(0,10)}...

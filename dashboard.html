@@ -858,6 +858,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         </div>
       </div>
     </div>
+    <!-- Fast Tap Card -->
+    <div class="g-card" id="g-tap-card" onclick="joinGame('tap')">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;background:rgba(236,72,153,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">⚡</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.92rem;color:#ec4899;">Fast Tap Battle</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">Green hote hi tap karo. Fastest jeetega!</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <span style="background:rgba(236,72,153,.1);color:#f472b6;font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">VS Player</span>
+            <span style="background:rgba(236,72,153,.1);color:#f472b6;font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">~10 sec</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="background:rgba(236,72,153,.15);color:#ec4899;padding:5px 12px;border-radius:99px;font-size:.7rem;font-weight:800;white-space:nowrap;" id="g-tap-fee-lbl">15 coins</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:4px;">🏆 <span id="g-tap-prize-lbl">26 coins</span></div>
+        </div>
+      </div>
+    </div>
 
     <!-- Game History -->
     <div class="sec-title" style="margin-top:6px;">Recent Games</div>
@@ -924,6 +942,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <span>Aap: <b style="color:var(--g1);" id="g-q-me">0</b></span>
         <span>Opponent: <b style="color:var(--g2);" id="g-q-opp">?</b></span>
       </div>
+    </div>
+    <!-- Fast Tap Board -->
+    <div id="g-tap-wrap" style="display:none;width:100%;max-width:480px;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:.85rem;color:var(--mid);font-weight:700;">Wait for Green Color!</div>
+        <div style="font-size:.65rem;color:var(--dim);margin-top:4px;">Pehle mat dabana, warna haar jaoge!</div>
+      </div>
+      <button id="g-tap-box" onclick="doFastTap()" style="width:100%;aspect-ratio:1.2;background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);border-radius:24px;font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:4px;color:var(--danger);cursor:pointer;transition:background 0.1s, border 0.1s, transform 0.1s;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:inset 0 0 40px rgba(0,0,0,.5);">
+        <span id="g-tap-txt">WAIT...</span>
+        <span id="g-tap-time" style="font-size:1rem;color:#fff;font-family:'DM Sans',sans-serif;letter-spacing:1px;margin-top:10px;display:none;"></span>
+      </button>
     </div>
   </div>
 
@@ -2170,7 +2199,10 @@ function toast(msg, type) {
 let GCFG = {
   ttt:  { name:'Tic Tac Toe', fee:10, prize:18, platform:2, status:'active', timeout:30 },
   quiz: { name:'Quiz Battle', fee:20, prize:36, platform:4, status:'active', questions:5 },
+  tap:  { name:'Fast Tap', fee:15, prize:26, platform:4, status:'active', timeout:5 },
 };
+let gTapStart = 0; // Tap timer start time
+let gTapClicked = false;
 let gArenaStatus = 'active', gMaintMsg = '';
 let gType=null, gRoom=null, gRole=null, gMark=null;
 let gBoardStarted=false, gGameEnded=false;
@@ -2344,7 +2376,102 @@ async function startGameBoard(room) {
   document.getElementById('g-board-ov').style.display  = 'flex';
 
   if (gType === 'ttt') initTTT(isA);
-  else initQuiz();
+  else if (gType === 'quiz') initQuiz();
+  else initTap();
+}
+// ── FAST TAP BATTLE ──
+function initTap() {
+  document.getElementById('g-ttt-wrap').style.display  = 'none';
+  document.getElementById('g-quiz-wrap').style.display = 'none';
+  document.getElementById('g-tap-wrap').style.display  = 'block';
+
+  gTapClicked = false;
+  gTapStart = 0;
+  const box = document.getElementById('g-tap-box');
+  const txt = document.getElementById('g-tap-txt');
+  const timeTxt = document.getElementById('g-tap-time');
+  
+  box.style.background = 'rgba(239,68,68,.1)';
+  box.style.borderColor = 'rgba(239,68,68,.3)';
+  box.style.color = 'var(--danger)';
+  txt.textContent = 'WAIT...';
+  timeTxt.style.display = 'none';
+
+  document.getElementById('g-board-status').textContent = 'Get Ready...';
+
+  // Random Delay before Green (3 to 6 seconds) + Firebase sync buffer
+  const delay = Math.floor(Math.random() * 3000) + 3000;
+  
+  setTimeout(() => {
+    if (gGameEnded) return;
+    box.style.background = 'rgba(16,185,129,.2)';
+    box.style.borderColor = 'rgba(16,185,129,.5)';
+    box.style.color = 'var(--success)';
+    txt.textContent = 'TAP NOW!';
+    gTapStart = Date.now();
+    document.getElementById('g-board-status').textContent = 'TAP FAST! ⚡';
+  }, delay);
+
+  // Opponent ka tap dekhne ke liye listener
+  const oppK = gRole === 'playerA' ? 'B' : 'A';
+  db.ref('game_rooms/' + gRoom + '/taps/' + oppK).on('value', s => {
+    if (s.exists() && !gGameEnded) {
+      document.getElementById('g-board-status').textContent = 'Calculating Result...';
+      checkTapWinner();
+    }
+  });
+}
+
+async function doFastTap() {
+  if (gTapClicked || gGameEnded) return;
+  gTapClicked = true;
+
+  const box = document.getElementById('g-tap-box');
+  const txt = document.getElementById('g-tap-txt');
+  const timeTxt = document.getElementById('g-tap-time');
+
+  let myTime = 0;
+
+  if (gTapStart === 0) {
+    // Foul Play! Green hone se pehle dabaya
+    myTime = 99999; // Penalty time
+    box.style.background = 'rgba(245,166,35,.2)';
+    box.style.borderColor = 'rgba(245,166,35,.5)';
+    box.style.color = 'var(--g3)';
+    txt.textContent = 'TOO EARLY!';
+    timeTxt.textContent = '+99.9s Penalty';
+  } else {
+    // Sahi time par dabaya
+    myTime = Date.now() - gTapStart;
+    box.style.background = 'rgba(0,245,196,.15)';
+    box.style.borderColor = 'rgba(0,245,196,.4)';
+    box.style.color = 'var(--g1)';
+    txt.textContent = 'TAPPED!';
+    timeTxt.textContent = (myTime / 1000).toFixed(3) + 's';
+  }
+  
+  timeTxt.style.display = 'block';
+
+  // Apni tap timing Firebase mein daalo
+  const mk = gRole === 'playerA' ? 'A' : 'B';
+  await db.ref('game_rooms/' + gRoom + '/taps/' + mk).set(myTime);
+
+  document.getElementById('g-board-status').textContent = 'Waiting for opponent...';
+  checkTapWinner();
+}
+
+async function checkTapWinner() {
+  const taps = (await db.ref('game_rooms/' + gRoom + '/taps').once('value')).val() || {};
+  if (taps.A && taps.B) {
+    let winner = 'draw';
+    if (taps.A < taps.B) winner = 'A';
+    else if (taps.B < taps.A) winner = 'B';
+    
+    // Agar dono jaldi dabaye toh dono haarenge (Foul play prevent)
+    if (taps.A === 99999 && taps.B === 99999) winner = 'none';
+
+    await db.ref('game_rooms/' + gRoom).update({ status: 'finished', winner, finishedAt: Date.now() });
+  }
 }
 
 // ── TTT ──
