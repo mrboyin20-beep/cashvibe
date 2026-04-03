@@ -235,6 +235,26 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           Continue with Google
         </button>
       </div>
+      <!-- GOOGLE COMPLETE PROFILE -->
+      <div class="slide" id="frm-g-complete" style="display:none; padding:20px 2px;">
+        <div style="text-align:center;margin-bottom:18px;">
+          <div style="font-size:2.5rem;margin-bottom:6px;">🚀</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--g1);">Almost Done!</div>
+          <p style="font-size:.75rem;color:var(--dim);line-height:1.6;">Please complete your profile to continue.</p>
+        </div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-phone icon"></i>
+          <input type="tel" id="g-phone" placeholder="Mobile Number (10 digits)" maxlength="10">
+        </div>
+        <div class="refer-tag"><i class="fa-solid fa-gift"></i> Referral code? Get extra joining bonus!</div>
+        <div class="inp-wrap">
+          <i class="fa-solid fa-ticket icon"></i>
+          <input type="text" id="g-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
+        </div>
+        <button class="auth-btn" id="g-complete-btn" onclick="completeGoogleProfile()">
+          <i class="fa-solid fa-check-circle"></i> FINISH SIGNUP
+        </button>
+      </div>
 
     </div>
   </div>
@@ -620,67 +640,156 @@ async function doLogin() {
 }
 
 // ══════════════════════════════════════════════
-// 🌐 GOOGLE LOGIN
+// 🌐 GOOGLE LOGIN (With Profile Completion)
 // ══════════════════════════════════════════════
+let tempGoogleUser = null;
+
 async function doGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   setLoading(true);
+  
+  otpVerifyInProgress = true; 
+  
   try {
     const res = await auth.signInWithPopup(provider);
-    const uid = res.user.uid;
+    const user = res.user;
+    const uid = user.uid;
+    
     const snap = await db.ref('users/' + uid).once('value');
-    if (!snap.exists()) {
-      await db.ref('users/' + uid).set({
-        name: res.user.displayName || 'User',
-        email: res.user.email,
-        mobile: 'Not Linked',
-        balance: 0, streak: 0, xp: 0,
-        referredBy: 'GOOGLE', status: 'active',
-        emailVerified: true,
-        deviceId: DEVICE_ID,
-        joinDate: new Date().toLocaleDateString('en-IN'),
-        joinedAt: Date.now()
+    
+    if (snap.exists()) {
+      // Purana user hai, seedha dashboard par bhejo
+      await registerDevice(uid);
+      toast('Welcome back! 🎉', 'ok');
+      setTimeout(() => {
+        otpVerifyInProgress = false;
+        window.location.replace('dashboard.html');
+      }, 800);
+    } else {
+      // Naya user hai, form dikhao!
+      tempGoogleUser = user;
+      
+      // Slides ko chupao aur form dikhao
+      document.querySelector('.slides .slide-track').style.display = 'none';
+      document.getElementById('toggle').style.display = 'none';
+      document.getElementById('frm-g-complete').style.display = 'block';
+      
+      setLoading(false);
+      toast('Please complete your profile!', 'ok');
+    }
+
+  } catch(e) {
+    otpVerifyInProgress = false;
+    setLoading(false);
+    if (e.code !== 'auth/popup-closed-by-user') {
+      toast('Google login failed: ' + e.message, 'err');
+    }
+  }
+}
+// ══════════════════════════════════════════════
+// 📝 COMPLETE GOOGLE PROFILE (Save Data & Bonus)
+// ══════════════════════════════════════════════
+async function completeGoogleProfile() {
+  if (!tempGoogleUser) return;
+  
+  const phone = document.getElementById('g-phone').value.trim().replace(/\D/g, '');
+  const refer = document.getElementById('g-refer').value.trim().toUpperCase();
+
+  if (phone.length !== 10) return toast('Enter valid 10-digit mobile number!', 'err');
+
+  const btn = document.getElementById('g-complete-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+
+  try {
+    const uid = tempGoogleUser.uid;
+    const name = tempGoogleUser.displayName || 'Google User';
+    const email = tempGoogleUser.email || '';
+
+    // Mobile number duplicate check
+    let phoneTaken = false;
+    let referrerUid = null;
+    
+    const usersSnap = await db.ref('users').once('value');
+    if (usersSnap.exists()) {
+      usersSnap.forEach(u => {
+        if ((u.val().mobile || '') === phone) phoneTaken = true;
+        if (refer && u.key.substring(0, 6).toUpperCase() === refer) referrerUid = u.key;
       });
     }
-    await registerDevice(uid);
-    toast('Logged in with Google! 🎉', 'ok');
-    setTimeout(() => window.location.replace('dashboard.html'), 800);
-  } catch(e) {
-    const msgs = {
-      'auth/popup-closed-by-user': 'Google popup closed.',
-      'auth/cancelled-popup-request': '',
-      'auth/network-request-failed': 'Network error!'
-    };
-    if (msgs[e.code] !== '') toast(msgs[e.code] || e.message, 'err');
-  } finally { setLoading(false); }
-}
+    
+    if (phoneTaken) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> FINISH SIGNUP';
+      return toast('Phone number already registered!', 'err');
+    }
+    
+    if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
 
+    // Admin Settings load karo (Bonus ke liye)
+    let cfg = { signup_bonus: 0, refer_reward: 0 };
+    const cfgSnap = await db.ref('app_control').once('value');
+    if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
+
+    // Sirf tabhi bonus do agar Referral Code sahi hai
+    const joinBonus = referrerUid ? (cfg.signup_bonus || 400) : 0;
+    const now = Date.now();
+
+    // Data ko Firebase (Admin Panel) mein save karo
+    await db.ref('users/' + uid).set({
+      name: name,
+      email: email,
+      mobile: phone, // Number yahan save hoga
+      balance: joinBonus, // Agar refer code sahi hai toh bonus milega, warna 0
+      streak: 0, 
+      xp: 0,
+      referredBy: referrerUid || 'DIRECT', 
+      status: 'active',
+      emailVerified: true,
+      deviceId: DEVICE_ID,
+      joinDate: new Date().toLocaleDateString('en-IN'),
+      joinedAt: now,
+      pendingReferral: referrerUid ? {
+        referrerUid,
+        reward: cfg.refer_reward || 500,
+        joinedAt: now,
+        credited: false
+      } : null
+    });
+
+    await registerDevice(uid);
+
+    // Referral log (Referrer ko bonus dene ke liye)
+    if (referrerUid) {
+      await db.ref('refer_logs/' + uid).set({
+        from: referrerUid,
+        joinedAt: now,
+        rewardCredited: false,
+        rewardAmount: cfg.refer_reward || 500
+      });
+      toast('Welcome! 🎉 Bonus credited. Refer bonus in 2 days.', 'ok');
+    } else {
+      toast('Account created! Welcome to CashVibe 🚀', 'ok');
+    }
+
+    // Dashboard par bhejo!
+    setTimeout(() => {
+      otpVerifyInProgress = false;
+      window.location.replace('dashboard.html');
+    }, 1000);
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> FINISH SIGNUP';
+    toast('Error saving profile: ' + e.message, 'err');
+  }
+}
 // ══════════════════════════════════════════════
-// 🎁 2-DAY REFERRAL REWARD CHECK
+// 🎁 REFERRAL REWARD CHECK (Moved to Dashboard)
 // ══════════════════════════════════════════════
 async function checkReferralReward(uid) {
-  try {
-    const logSnap = await db.ref('refer_logs/' + uid).once('value');
-    const log = logSnap.val();
-    if (!log || log.rewardCredited) return;
-    const daysSince = (Date.now() - log.joinedAt) / (1000 * 60 * 60 * 24);
-    if (daysSince >= 2) {
-      const refBalSnap = await db.ref('users/' + log.from + '/balance').once('value');
-      const refBal = refBalSnap.val() || 0;
-      await db.ref('users/' + log.from).update({
-        balance: refBal + (log.rewardAmount || 0),
-        refer_bonus: firebase.database.ServerValue.increment(log.rewardAmount || 0)
-      });
-      await db.ref('refer_logs/' + uid).update({ rewardCredited: true, creditedAt: Date.now() });
-      await db.ref('notices_list').push({
-        text: '🎉 Referral reward of ' + (log.rewardAmount || 0) + ' coins credited! Your referred user has been active for 2 days.',
-        timestamp: Date.now(),
-        targetUid: log.from
-      });
-    }
-  } catch(e) { /* silent */ }
+  // Purana 2-Day system hata diya gaya hai. Ab Dashboard 100% live track karega!
 }
-
 // ══════════════════════════════════════════════
 // 🔑 RESET PASSWORD
 // ══════════════════════════════════════════════

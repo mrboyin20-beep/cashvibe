@@ -46,14 +46,37 @@
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;}
 
-/* LOADER */
-#loader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-#loader.hide{display:none;}
-.ld-brand{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.ld-bar{width:150px;height:2px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;}
-.ld-fill{height:100%;background:linear-gradient(90deg,var(--g1),var(--g2));animation:ldfill 2s ease forwards;}
-@keyframes ldfill{from{width:0}to{width:100%}}
+/* 🔥 ADVANCED CINEMATIC LOADER */
+#loader { position:fixed; inset:0; background:var(--bg); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; transition:opacity 0.6s ease, visibility 0.6s ease; }
+#loader.hide { opacity:0; visibility:hidden; pointer-events:none; }
 
+.ld-icon { font-size:3rem; animation: floatZoom 2s ease-in-out infinite alternate, glowDrop 2s infinite alternate; }
+
+.ld-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.2rem;
+  background: linear-gradient(135deg, #00f5c4 20%, #7b5ea7 50%, #00f5c4 80%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: cinematicReveal 1.2s cubic-bezier(0.2, 1, 0.3, 1) forwards, shimmerText 3s linear infinite;
+}
+
+.ld-bar { width:180px; height:3px; background:rgba(255,255,255,0.05); border-radius:99px; overflow:hidden; position:relative; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5); }
+.ld-fill { height:100%; background:linear-gradient(90deg, transparent, var(--g1), transparent); width:50%; position:absolute; border-radius:99px; animation:scanBar 1.2s infinite linear; }
+
+.ld-text { font-size:.7rem; color:var(--g1); letter-spacing:5px; text-transform:uppercase; font-weight:700; animation:pulseText 1.5s infinite; }
+
+/* ANIMATION KEYFRAMES */
+@keyframes cinematicReveal { 
+  0% { opacity:0; transform:scale(1.8); letter-spacing:-10px; filter:blur(15px); } 
+  100% { opacity:1; transform:scale(1); letter-spacing:6px; filter:blur(0); } 
+}
+@keyframes shimmerText { to { background-position: 200% center; } }
+@keyframes scanBar { 0% { left:-50%; } 100% { left:100%; } }
+@keyframes pulseText { 0%, 100% { opacity:0.3; } 50% { opacity:1; text-shadow:0 0 10px rgba(0,245,196,0.8); } }
+@keyframes floatZoom { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(-12px) scale(1.15); } }
+@keyframes glowDrop { 0% { filter: drop-shadow(0 0 5px rgba(0,245,196,0.3)); } 100% { filter: drop-shadow(0 0 25px rgba(0,245,196,0.9)); } }
 /* SIDEBAR */
 .sidebar{width:var(--sw);background:var(--s1);border-right:1px solid var(--border);height:100vh;display:flex;flex-direction:column;padding:24px 14px;flex-shrink:0;overflow-y:auto;overflow-x:hidden;}
 .sidebar::-webkit-scrollbar{width:0;}
@@ -187,10 +210,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--g2),var(--g1));border-radius:99px;transition:width .5s;}
 
 /* AD OVERLAY */
-#ad-overlay{display:none;position:fixed;inset:0;background:#000;z-index:50000;flex-direction:column;align-items:center;justify-content:center;}
-.ad-timer{position:absolute;top:18px;right:18px;background:var(--g1);color:#000;padding:9px 18px;border-radius:99px;font-weight:900;font-size:1.1rem;}
-#ad-frame{width:100%;max-height:58vh;border:none;}
-.ad-info-box{color:#fff;text-align:center;padding:18px;}
+#ad-overlay{display:none;position:fixed;inset:0;background:#000;z-index:50000;}
+.ad-timer{position:absolute;top:20px;right:20px;background:var(--g1);color:#000;padding:8px 16px;border-radius:99px;font-weight:900;font-size:1.1rem;z-index:50002;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
+#ad-frame{width:100%;height:100%;border:none;position:absolute;inset:0;z-index:50001;background:#000;}
+.ad-info-box{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(6,6,16,0.85);backdrop-filter:blur(10px);border:1px solid rgba(0,245,196,0.4);color:#fff;text-align:center;padding:12px 20px;border-radius:16px;z-index:50002;width:90%;max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,0.6);}
 
 /* LEADERBOARD */
 .lb-item{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:14px;background:var(--s2);border:1px solid var(--border);margin-bottom:8px;}
@@ -337,11 +360,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 </head>
 <body>
 
-<!-- LOADER -->
+<!-- 🔥 ANIMATED LOADER -->
 <div id="loader">
-  <div class="ld-brand">⚡ CASHVIBE</div>
+  <div class="ld-icon">⚡</div>
+  <div class="ld-brand">CASHVIBE</div>
   <div class="ld-bar"><div class="ld-fill"></div></div>
-  <div style="font-size:.72rem;color:var(--dim);letter-spacing:2px;text-transform:uppercase;">Loading Dashboard...</div>
+  <div class="ld-text">Loading Securely...</div>
 </div>
 
 <!-- AD OVERLAY -->
@@ -770,11 +794,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         <div class="set-btn" onclick="window.open('privacy.html')"><i class="fa-solid fa-shield-halved" style="color:#60a5fa;"></i><span>Privacy</span></div>
         <div class="set-btn" onclick="window.open('terms.html')"><i class="fa-solid fa-file-contract" style="color:var(--mid);"></i><span>Terms</span></div>
         <div class="set-btn" onclick="window.open('refund.html')"><i class="fa-solid fa-rotate-left" style="color:var(--danger);"></i><span>Refund</span></div>
+        <div class="set-btn" onclick="deleteMyAccount()" style="border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.05);"><i class="fa-solid fa-trash" style="color:var(--danger);"></i><span style="color:var(--danger);">Delete Account</span></div>
       </div>
     </div>
     <button onclick="doLogout()" style="width:100%;padding:15px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:14px;color:var(--danger);font-weight:700;cursor:pointer;font-size:.9rem;margin-top:4px;"><i class="fa-solid fa-power-off"></i> LOGOUT</button>
   </div>
-
 
   <!-- ═══ GAME ARENA PAGE ═══ -->
   <div id="pg-game" class="page">
@@ -1145,7 +1169,7 @@ function updateUI(){
   renderStreak();
   updateAdUI();
   checkReferralReward();
-  // Refer stats — total + pending + earned
+ // ══ NEW LIVE REFERRAL TRACKING ══
   db.ref('refer_logs').orderByChild('from').equalTo(curUser.uid).on('value', s => {
     const allRefs = [];
     s.forEach(c => allRefs.push({ key: c.key, ...c.val() }));
@@ -1154,25 +1178,13 @@ function updateUI(){
     const pending = allRefs.filter(r => !r.rewardCredited);
     const earned = allRefs.filter(r => r.rewardCredited);
 
-    // rewardAmount jo signup time save tha — admin change kare tab bhi purana amount mile
     const pendingCoins = pending.reduce((sum, r) => sum + (r.rewardAmount || 500), 0);
     const earnedCoins = earned.reduce((sum, r) => sum + (r.rewardAmount || 500), 0);
 
     document.getElementById('ref-cnt').textContent = total;
     document.getElementById('ref-earn').textContent = earnedCoins;
     document.getElementById('ref-pending-cnt').textContent = pending.length;
-    // Avg progress
-    const avgEl = document.getElementById('ref-avg-prog');
-    if (avgEl) {
-      if (pending.length > 0) {
-        const avg = Math.round(pending.reduce((s,r) => s+(r.progress||0),0) / pending.length);
-        avgEl.textContent = avg + '%';
-      } else {
-        avgEl.textContent = total > 0 ? '100%' : '—';
-      }
-    }
 
-    // Pending banner
     const banner = document.getElementById('pending-banner');
     const pendingList = document.getElementById('pending-list');
     const pendingTotal = document.getElementById('pending-coins-total');
@@ -1183,23 +1195,38 @@ function updateUI(){
 
       if (pendingList) {
         pendingList.innerHTML = '';
+        let totalRealProg = 0; // Avg. progress nikalne ke liye
+        
         pending.forEach(r => {
-          const coins = r.rewardAmount || 500;
-          const prog = r.progress || 0;
-          const taskDone = prog >= 40;
-          const spinDone = prog >= 70;
-          const adDone   = prog >= 100;
-
-          // Color based on progress
-          const progColor = prog >= 100 ? '#00f5c4' : prog >= 60 ? '#f5a623' : '#818cf8';
-
-          db.ref('users/' + r.key).once('value', us => {
+          db.ref('users/' + r.key).on('value', us => {
             const ud = us.val() || {};
             const friendName = ud.name || 'Friend';
             const mobile = ud.mobile ? ud.mobile.slice(-4) : '';
+            
+            // Asli progress live current data se
+            let realProg = 0;
+            const taskDone = !!ud.lastCheckIn;
+            const spinDone = !!ud.lastSpinDate;
+            const adDone = !!(ud.adDone || ud.lastAdDate);
+            
+            if(taskDone) realProg += 40;
+            if(spinDone) realProg += 30;
+            if(adDone) realProg += 30;
+            
+            totalRealProg += realProg;
 
-            const row = document.createElement('div');
-            row.style.cssText = 'background:rgba(0,0,0,.25);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);';
+            const coins = r.rewardAmount || 500;
+            const progColor = realProg >= 100 ? '#00f5c4' : realProg >= 60 ? '#f5a623' : '#818cf8';
+
+            // Check if already exists to update instead of duplicate
+            let row = document.getElementById('ref-row-' + r.key);
+            if (!row) {
+              row = document.createElement('div');
+              row.id = 'ref-row-' + r.key;
+              row.style.cssText = 'background:rgba(0,0,0,.25);border-radius:14px;padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:8px;';
+              pendingList.appendChild(row);
+            }
+
             row.innerHTML = `
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                 <div style="display:flex;align-items:center;gap:9px;">
@@ -1211,14 +1238,12 @@ function updateUI(){
                 </div>
                 <div style="text-align:right;">
                   <div style="font-weight:800;color:#f5a623;font-size:.9rem;">🪙${coins}</div>
-                  <div style="font-size:.6rem;color:${progColor};font-weight:700;">${prog}% complete</div>
+                  <div style="font-size:.6rem;color:${progColor};font-weight:700;">${realProg}% complete</div>
                 </div>
               </div>
-              <!-- Progress bar -->
               <div style="background:rgba(255,255,255,.06);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px;position:relative;">
-                <div style="background:linear-gradient(90deg,#818cf8,#f5a623,#00f5c4);height:100%;border-radius:99px;width:${prog}%;transition:.6s;"></div>
+                <div style="background:linear-gradient(90deg,#818cf8,#f5a623,#00f5c4);height:100%;border-radius:99px;width:${realProg}%;transition:.6s;"></div>
               </div>
-              <!-- Activity steps -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
                 <div style="background:${taskDone?'rgba(0,245,196,.1)':'rgba(255,255,255,.04)'};border:1px solid ${taskDone?'rgba(0,245,196,.25)':'var(--border)'};border-radius:9px;padding:7px;text-align:center;">
                   <div style="font-size:.85rem;">${taskDone?'✅':'📅'}</div>
@@ -1233,29 +1258,28 @@ function updateUI(){
                   <div style="font-size:.58rem;color:${adDone?'var(--g1)':'var(--dim)'};font-weight:700;margin-top:2px;">Watch Ad<br>30%</div>
                 </div>
               </div>
-              ${prog >= 100 ? '<div style="margin-top:8px;text-align:center;color:var(--g1);font-size:.75rem;font-weight:700;background:var(--g1d);border-radius:8px;padding:6px;">🎉 Reward Credited!</div>' : ''}
+              ${realProg >= 100 ? '<div style="margin-top:8px;text-align:center;color:var(--g1);font-size:.75rem;font-weight:700;background:var(--g1d);border-radius:8px;padding:6px;">🎉 Reward Credited!</div>' : ''}
             `;
-            pendingList.appendChild(row);
+            
+            // Avg progress update karo
+            const avgEl = document.getElementById('ref-avg-prog');
+            if (avgEl) avgEl.textContent = Math.round(totalRealProg / pending.length) + '%';
           });
         });
       }
-      // Home page pending tag update
+      
       const ptag = document.getElementById('pending-tag');
       const ptagCoins = document.getElementById('pending-tag-coins');
       if (ptag && ptagCoins) {
-        if (pending.length > 0) {
-          const totalProg = Math.round(pending.reduce((s,r) => s+(r.progress||0),0) / pending.length);
-          ptag.style.display = 'inline-flex';
-          ptagCoins.textContent = pendingCoins + ' (' + totalProg + '%)';
-        } else {
-          ptag.style.display = 'none';
-        }
+        ptag.style.display = 'inline-flex';
+        ptagCoins.textContent = pendingCoins;
       }
-    } else if (banner) {
-      banner.style.display = 'none';
-      // Hide pending tag too
+    } else {
+      if (banner) banner.style.display = 'none';
       const ptag = document.getElementById('pending-tag');
       if (ptag) ptag.style.display = 'none';
+      const avgEl = document.getElementById('ref-avg-prog');
+      if (avgEl) avgEl.textContent = total > 0 ? '100%' : '—';
     }
   });
 }
@@ -1888,53 +1912,58 @@ function doLogout(){ auth.signOut().then(()=>window.location.replace('auth.html'
 
 // ══ REFER ACTIVITY SYSTEM ══
 // Friend activity track karo aur referrer ko auto-credit karo
-// Task complete = 40pts, Spin = 30pts, Ad = 30pts → 100% = reward!
-
 async function checkReferralReward() {
   if (!curUser || !U.referredBy || U.referredBy === 'DIRECT') return;
   try {
     const refSnap = await db.ref('refer_logs/' + curUser.uid).once('value');
     if (!refSnap.exists()) return;
     const ref = refSnap.val();
-    if (ref.rewardCredited) return; // already credited
+    if (ref.rewardCredited) return; // Pehle hi mil chuka hai
 
-    // Calculate current progress
-    const prog = calcReferProgress();
-    const prevProg = ref.progress || 0;
+    // Progress Calculate karo (Instant check)
+    let pts = 0;
+    if (U.lastCheckIn) pts += 40;
+    if (U.lastSpinDate) pts += 30;
+    if (U.adDone || U.lastAdDate) pts += 30;
+    const prog = Math.min(pts, 100);
 
-    // Update progress in Firebase
-    if (prog !== prevProg) {
+    // Firebase me progress update karo
+    if (prog !== (ref.progress || 0)) {
       await db.ref('refer_logs/' + curUser.uid).update({ progress: prog });
     }
 
-    // 100% complete? Auto-credit referrer!
+    // 100% Complete? Referrer ko INSTANT Coins do!
     if (prog >= 100 && !ref.rewardCredited) {
       const reward = ref.rewardAmount || 500;
       const referrerUid = ref.from;
       if (referrerUid) {
-        // Credit referrer
+        // Referrer ke account me paise daalo
         await db.ref('users/' + referrerUid + '/balance').transaction(b => (b || 0) + reward);
+        
         // Mark as credited
         await db.ref('refer_logs/' + curUser.uid).update({
           rewardCredited: true,
           creditedAt: Date.now(),
           progress: 100
         });
+        
+        // Referrer ko Notification bhejo
+        await db.ref('notices_list').push({
+          text: '🎉 Badhai ho! Aapke friend ne tasks poore kar liye. 🪙' + reward + ' Coins aapke wallet me add ho gaye!',
+          timestamp: Date.now(),
+          forUser: referrerUid,
+          type: 'reward'
+        });
         console.log('Referral reward auto-credited!', reward);
       }
     }
-  } catch(e) { console.log('checkReferralReward:', e); }
+  } catch(e) { console.log('checkReferralReward error:', e); }
 }
 
-// Progress calculate karo - task/spin/ad completion based
 function calcReferProgress() {
   let pts = 0;
-  // Task complete kiya? (40 pts) — lastCheckIn ya task history se check
   if (U.lastCheckIn) pts += 40;
-  // Spin kiya? (30 pts)
   if (U.lastSpinDate) pts += 30;
-  // Ad dekha? (30 pts)
-  // Check user_ads se - agar aaj ya pehle kabhi dekha
   if (U.adDone || U.lastAdDate) pts += 30;
   return Math.min(pts, 100);
 }
@@ -2726,6 +2755,81 @@ async function claimScratchReward() {
     showAd(scratchCfg.ad_link, 30, doCredit);
   } else {
     doCredit(); // Direct credit bina ad ke
+  }
+}
+// ══════════════════════════════════════════════
+// 🗑️ ACCOUNT DELETION ENGINE (Play Store Policy)
+// ══════════════════════════════════════════════
+async function deleteMyAccount() {
+  if (!curUser) return;
+  
+  // 1. Final Warning to User
+  const confirm1 = confirm("⚠️ DANGER: Are you sure you want to permanently delete your account?\n\nAll your coins, progress, and history will be lost forever. This action CANNOT be undone.");
+  if (!confirm1) return;
+  
+  const confirm2 = confirm("Final Confirmation! Do you want to proceed with deletion?");
+  if (!confirm2) return;
+
+  try {
+    // UI ko loading mein daalo taaki user kuch click na kare
+    document.getElementById('loader').classList.remove('hide');
+    document.querySelector('.ld-text').textContent = 'Deleting Account Data...';
+
+    const uid = curUser.uid;
+
+    // 2. Remove Device Link (Taaki user naya account bana sake agar chahe toh)
+    const deviceId = (U && U.deviceId) ? U.deviceId : DEVICE_ID;
+    if (deviceId) {
+      await db.ref('devices/' + deviceId + '/uids/' + uid).remove();
+    }
+
+    // 3. Remove user's data from all Firebase nodes
+    await Promise.all([
+      db.ref('users/' + uid).remove(),
+      db.ref('refer_logs/' + uid).remove(),
+      db.ref('user_ads/' + uid).remove(),
+      db.ref('game_history/' + uid).remove(),
+      db.ref('user_notifications/' + uid).remove(),
+      db.ref('withdrawals').orderByChild('uid').equalTo(uid).once('value').then(snap => {
+        if(snap.exists()){
+          const updates = {};
+          snap.forEach(child => { updates[child.key] = null; });
+          return db.ref('withdrawals').update(updates);
+        }
+      }),
+      db.ref('task_completions').once('value').then(snap => {
+        if(snap.exists()){
+          const updates = {};
+          snap.forEach(task => { 
+            if(task.val().users && task.val().users[uid]){
+              updates[task.key + '/users/' + uid] = null;
+            }
+          });
+          return db.ref('task_completions').update(updates);
+        }
+      })
+    ]);
+
+    // 4. Delete Firebase Auth Account
+    await curUser.delete();
+
+    // 5. Clear Local Storage and Logout
+    localStorage.removeItem('cv_device_id');
+    toast('Account permanently deleted.', 'ok');
+    
+    // Redirect to home/login
+    setTimeout(() => {
+      window.location.replace('auth.html');
+    }, 1500);
+
+  } catch(e) {
+    document.getElementById('loader').classList.add('hide');
+    // Agar security reason se token expire ho gaya ho toh user ko re-login karne ko bolo
+    if (e.code === 'auth/requires-recent-login') {
+      alert("⚠️ Security Verification Required!\n\nPlease LOGOUT and LOGIN again, then try deleting your account.");
+    } else {
+      alert("Error deleting account: " + e.message);
+    }
   }
 }
 </script>

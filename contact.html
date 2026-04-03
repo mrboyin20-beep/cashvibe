@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Support — CashVibe</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060610;--s1:#0c0c1e;--s2:#11112a;
+  --border:rgba(255,255,255,0.07);
+  --g1:#00f5c4;--g2:#7b5ea7;--danger:#ef4444;
+  --text:#eef0ff;--dim:#6b7280;--mid:#9ca3af;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'DM Sans',sans-serif;}
+body{background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;display:flex;flex-direction:column;}
+.header{padding:30px 20px;text-align:center;background:linear-gradient(180deg, var(--s2), var(--bg));border-bottom:1px solid var(--border);position:relative;}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.container{flex:1;max-width:900px;margin:0 auto;padding:30px 20px;width:100%;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:1px;margin-bottom:8px;text-align:center;}
+.sub-title{text-align:center;color:var(--mid);font-size:0.9rem;margin-bottom:30px;max-width:500px;margin-left:auto;margin-right:auto;}
+
+.contact-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:30px;}
+
+/* Info Cards */
+.info-col{display:flex;flex-direction:column;gap:14px;}
+.info-card{background:var(--s1);border:1px solid var(--border);border-radius:18px;padding:20px;display:flex;align-items:flex-start;gap:14px;transition:.3s;}
+.info-card:hover{border-color:rgba(0,245,196,0.3);transform:translateY(-3px);}
+.icon-box{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.ic-email{background:rgba(123,94,167,0.15);color:#b88fff;}
+.ic-wa{background:rgba(37,211,102,0.15);color:#25d366;}
+.ic-time{background:rgba(245,166,35,0.15);color:var(--g3);}
+.info-title{font-weight:700;font-size:.95rem;margin-bottom:2px;color:var(--text);}
+.info-desc{font-size:0.8rem;color:var(--dim);}
+
+/* Form */
+.form-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:28px;}
+.form-title{font-size:1.15rem;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.inp-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.inp-group{margin-bottom:14px;}
+.flabel{display:block;font-size:0.7rem;font-weight:700;color:var(--dim);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;}
+.finp{width:100%;padding:12px 14px;background:var(--s2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;transition:.2s;}
+.finp:focus{border-color:var(--g1);box-shadow:0 0 0 3px rgba(0,245,196,0.08);}
+.finp::placeholder{color:var(--dim);}
+
+/* Custom Radio Buttons */
+.radio-group{display:flex;gap:10px;}
+.radio-lbl{flex:1;padding:10px;background:var(--s2);border:1px solid var(--border);border-radius:10px;text-align:center;font-size:0.8rem;font-weight:700;color:var(--mid);cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.radio-inp{display:none;}
+.radio-inp:checked + .radio-lbl{border-color:var(--g1);background:rgba(0,245,196,0.08);color:var(--g1);}
+.radio-inp:checked + .radio-lbl.wa{border-color:#25d366;background:rgba(37,211,102,0.1);color:#25d366;}
+
+.fbtn{width:100%;padding:14px;background:linear-gradient(135deg,var(--g1),#00c49a);border:none;border-radius:12px;color:#000;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;transition:.2s;margin-top:6px;}
+.fbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,245,196,0.25);}
+
+.back-btn{position:absolute; left:20px; top:30px; color:var(--text); text-decoration:none; font-size:1.2rem; background:var(--s1); width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; border:1px solid var(--border); transition:.2s; box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.back-btn:hover{color:var(--g1);border-color:var(--g1);}
+
+/* Toast */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s1);border:1px solid var(--border);border-radius:99px;padding:11px 22px;font-size:0.8rem;font-weight:700;opacity:0;transition:.3s;z-index:9999;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.ok{border-color:rgba(0,245,196,0.3);color:var(--g1);}
+#toast.err{border-color:rgba(239,68,68,0.3);color:var(--danger);}
+
+@media(max-width:768px){
+  .contact-grid{grid-template-columns:1fr;}
+  .inp-row{grid-template-columns:1fr;}
+  .form-card{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="header">
+  <a href="dashboard.html" class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i></a>
+  <div class="brand">⚡ CASHVIBE</div>
+</div>
+
+<div class="container">
+  <h1>Get in Touch</h1>
+  <p class="sub-title">Need help with withdrawals or tasks? Fill the form below and we will contact you via your preferred method.</p>
+
+  <div class="contact-grid">
+    <!-- Left Column: Info -->
+    <div class="info-col">
+      <div class="info-card">
+        <div class="icon-box ic-wa"><i class="fa-brands fa-whatsapp"></i></div>
+        <div>
+          <div class="info-title">WhatsApp Support</div>
+          <div class="info-desc">Fastest way to get help regarding pending withdrawals.</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="icon-box ic-email"><i class="fa-solid fa-envelope"></i></div>
+        <div>
+          <div class="info-title">Email Support</div>
+          <div class="info-desc">For general queries, business, or account blocking issues.</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="icon-box ic-time"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <div class="info-title">Working Hours</div>
+          <div class="info-desc">Monday - Saturday<br>10:00 AM to 07:00 PM (IST)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Form -->
+    <div class="form-card">
+      <div class="form-title"><i class="fa-solid fa-headset" style="color:var(--g1);"></i> Support Ticket</div>
+      
+      <div class="inp-row">
+        <div class="inp-group">
+          <label class="flabel">Full Name</label>
+          <input type="text" id="f-name" class="finp" placeholder="Your name">
+        </div>
+        <div class="inp-group">
+          <label class="flabel">Mobile Number</label>
+          <input type="tel" id="f-phone" class="finp" placeholder="10-digit number" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+      </div>
+
+      <div class="inp-row">
+        <div class="inp-group">
+          <label class="flabel">Email Address</label>
+          <input type="email" id="f-email" class="finp" placeholder="user@email.com">
+        </div>
+        <div class="inp-group">
+          <label class="flabel">Your UID (Optional)</label>
+          <input type="text" id="f-uid" class="finp" placeholder="e.g. aB3xyz..." style="font-family:monospace;">
+        </div>
+      </div>
+
+      <div class="inp-group">
+        <label class="flabel">Select Subject</label>
+        <select id="f-subject" class="finp" style="cursor:pointer;">
+          <option value="Withdrawal Pending">Withdrawal Pending/Rejected</option>
+          <option value="Coins Not Added">Task Coins Not Added</option>
+          <option value="Account Blocked">Account Blocked Issue</option>
+          <option value="Report Bug">Report a Bug</option>
+          <option value="Other">Other Query</option>
+        </select>
+      </div>
+
+      <div class="inp-group">
+        <label class="flabel">Message / Problem</label>
+        <textarea id="f-msg" class="finp" rows="4" placeholder="Describe your issue in detail..." style="resize:vertical;"></textarea>
+      </div>
+
+      <div class="inp-group">
+        <label class="flabel">How should we reply?</label>
+        <div class="radio-group">
+          <label>
+            <input type="radio" name="contact_method" value="whatsapp" class="radio-inp" checked>
+            <span class="radio-lbl wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp</span>
+          </label>
+          <label>
+            <input type="radio" name="contact_method" value="email" class="radio-inp">
+            <span class="radio-lbl"><i class="fa-solid fa-envelope"></i> Email</span>
+          </label>
+        </div>
+      </div>
+
+      <button class="fbtn" id="submitBtn" onclick="sendMessage()">SUBMIT REQUEST</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Aapka fixed WhatsApp number (Country code ke saath, bina + ke)
+const ADMIN_WA_NUMBER = "919288678795"; 
+// Aapka Admin Email (jab ban jaye tab yahan daal dena)
+const ADMIN_EMAIL = "support@cashvibe.in"; 
+
+// Auto-fill UID agar user Dashboard se aaya ho
+const urlParams = new URLSearchParams(window.location.search);
+const urlUid = urlParams.get('uid');
+if (urlUid) {
+  document.getElementById('f-uid').value = urlUid;
+  document.getElementById('backBtn').href = 'dashboard.html';
+} else {
+  document.getElementById('backBtn').href = 'index.html';
+}
+
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3500);
+}
+
+function sendMessage() {
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const uid = document.getElementById('f-uid').value.trim();
+  const subject = document.getElementById('f-subject').value;
+  const msg = document.getElementById('f-msg').value.trim();
+  const method = document.querySelector('input[name="contact_method"]:checked').value;
+
+  // Validation
+  if (!name || !phone || !email || !msg) {
+    return toast('Please fill all required fields!', 'err');
+  }
+  if (phone.length !== 10) return toast('Enter a valid 10-digit mobile number!', 'err');
+  if (!email.includes('@')) return toast('Enter a valid email!', 'err');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Preparing...';
+
+  // Format the detailed message
+  let finalMessage = `*CashVibe Support Request*%0A`;
+  finalMessage += `━━━━━━━━━━━━━━━━━━%0A`;
+  finalMessage += `*Subject:* ${subject}%0A`;
+  finalMessage += `*Name:* ${name}%0A`;
+  finalMessage += `*Mobile:* ${phone}%0A`;
+  finalMessage += `*Email:* ${email}%0A`;
+  if (uid) finalMessage += `*UID:* ${uid}%0A`;
+  finalMessage += `*Reply via:* ${method.toUpperCase()}%0A`;
+  finalMessage += `━━━━━━━━━━━━━━━━━━%0A`;
+  finalMessage += `*Message:*%0A${encodeURIComponent(msg)}%0A`;
+
+  setTimeout(() => {
+    if (method === 'whatsapp') {
+      // Open WhatsApp with pre-filled message
+      window.location.href = `https://wa.me/${ADMIN_WA_NUMBER}?text=${finalMessage}`;
+    } else {
+      // Open Default Email App (Gmail)
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=CashVibe Support: ${subject}&body=${finalMessage.replace(/%0A/g, '%0D%0A')}`;
+    }
+
+    toast('✅ Request prepared! Please send the message.', 'ok');
+    btn.disabled = false;
+    btn.innerHTML = 'SUBMIT REQUEST';
+    
+    // Clear message box only
+    document.getElementById('f-msg').value = '';
+  }, 600);
+}
+</script>
+</body>
+</html>
