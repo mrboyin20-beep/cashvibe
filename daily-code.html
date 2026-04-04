@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wait for Reward - CashVibe</title>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Arial', sans-serif; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 50px auto; background: #1e293b; padding: 30px; border-radius: 20px; border: 2px solid #00d2ff; }
+        .timer-circle { width: 120px; height: 120px; border: 5px solid #334155; border-top: 5px solid #00d2ff; border-radius: 50%; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .timer-text { font-size: 24px; color: #fbbf24; margin: 10px 0; }
+        .ad-box { background: rgba(255,255,255,0.05); border: 1px dashed #475569; margin: 20px 0; padding: 15px; min-height: 250px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .status { color: #94a3b8; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🎁 Preparing Your Reward</h2>
+        <p class="status">Please wait while we verify your request...</p>
+
+        <div class="ad-box">
+            [ADS UNIT 1]
+        </div>
+
+        <div class="timer-text" id="msg">Wait <span id="timer">30</span> Seconds...</div>
+        
+        <div class="timer-circle" id="spinner">
+            <span id="countdown-num">30</span>
+        </div>
+
+        <div class="ad-box">
+            [ADS UNIT 2]
+        </div>
+
+        <p style="color: #ef4444; font-size: 12px;">⚠ Do not Close or Refresh this page!</p>
+    </div>
+
+    <script>
+        let seconds = 30; // Time set karein
+        let countdown = document.getElementById('timer');
+        let countdownNum = document.getElementById('countdown-num');
+        let msg = document.getElementById('msg');
+        let spinner = document.getElementById('spinner');
+
+        // Target URL: Jahan code likha hai (Apna 2nd page link yahan daalein)
+        let targetURL = "https://cashvibe.in/redeem.html"; 
+
+        let timer = setInterval(function() {
+            seconds--;
+            countdown.textContent = seconds;
+            countdownNum.textContent = seconds;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                msg.innerHTML = "✅ Redirecting Now...";
+                spinner.style.borderColor = "#4ade80";
+                
+                // 30 second baad automatic redirect
+                window.location.href = targetURL;
+            }
+        }, 1000);
+
+        // Anti-Adblock / Extra Earning: 
+        // Agar user screen par kahin bhi click kare toh direct link khule
+        document.body.addEventListener('click', function() {
+            // window.open('https://www.profitablecpmratenetwork.com/p6ac5u0v0c?key=11a2809f58fba6f1b024c21fde12f008', '_blank'); 
+        }, {once: true}); // Sirf pehli click par khulega
+    </script>
+
+</body>
+</html>
