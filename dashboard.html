@@ -495,6 +495,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="nb" onclick="gp('pg-refer',this)"><i class="fa-solid fa-share-nodes"></i> Refer & Earn</button>
   <button class="nb" onclick="gp('pg-lb',this);loadLb()"><i class="fa-solid fa-trophy"></i> Leaderboard</button>
   <button class="nb" onclick="gp('pg-redeem',this)"><i class="fa-solid fa-parachute-box"></i> Redeem Code</button>
+  <div class="sb-section">Shopping</div>
+<button class="nb" onclick="gp('pg-shop',this)"><i class="fa-solid fa-bag-shopping"></i> Shopping Cashback <span class="nb-badge" style="background:var(--g3);color:#000;">NEW</span></button>
+<button class="bn" onclick="gp('pg-shop',this)"><i class="fa-solid fa-bag-shopping"></i>Shop</button>
   <div class="sb-section">Account</div>
   <button class="nb" onclick="gp('pg-withdraw',this)"><i class="fa-solid fa-wallet"></i> Cash Out</button>
   <button class="nb" onclick="gp('pg-profile',this)"><i class="fa-solid fa-user"></i> Profile</button>
@@ -819,6 +822,114 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
     <button onclick="doLogout()" style="width:100%;padding:15px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:14px;color:var(--danger);font-weight:700;cursor:pointer;font-size:.9rem;margin-top:4px;"><i class="fa-solid fa-power-off"></i> LOGOUT</button>
   </div>
+
+
+  <!-- ═══ SHOPPING PAGE ═══ -->
+<div id="pg-shop" class="page">
+  <div class="sec-title">Shopping Cashback 🛍️ <small>earn per order</small></div>
+
+  <!-- EARN BANNER -->
+  <div style="background:linear-gradient(135deg,rgba(0,245,196,.12),rgba(123,94,167,.08));border:1px solid rgba(0,245,196,.18);border-radius:18px;padding:18px 20px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
+    <div style="width:48px;height:48px;border-radius:14px;background:var(--g1d);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🛍️</div>
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;">Shopping Cashback Arena</div>
+      <div style="font-size:.72rem;color:var(--mid);margin-top:2px;">Kisi bhi platform pe shopping karo, screenshot upload karo, coins pao!</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="ttabs" id="shop-tabs">
+    <div class="ttab active" onclick="shopTab('platforms',this)">🏪 Platforms</div>
+    <div class="ttab" onclick="shopTab('submit',this)">📤 Submit Proof</div>
+    <div class="ttab" onclick="shopTab('history',this)">📋 My Submissions</div>
+    <div class="ttab" onclick="shopTab('howitworks',this)">❓ How It Works</div>
+  </div>
+
+  <!-- SUB-TAB: PLATFORMS -->
+  <div id="shop-platforms" class="shop-subtab">
+    <div class="sec-title">Top Shopping Platforms <small>tap to visit</small></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;" id="plat-grid-main"></div>
+    <div class="card" style="padding:16px 18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="sec-title" style="margin-bottom:0;font-size:.9rem;">Commission Rates</div>
+        <span style="font-size:.65rem;color:var(--dim);">Admin set karta hai</span>
+      </div>
+      <div id="comm-table-main" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+
+  <!-- SUB-TAB: SUBMIT -->
+  <div id="shop-submit" class="shop-subtab" style="display:none;">
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:4px;">📤 Submit Shopping Proof</div>
+      <p style="font-size:.75rem;color:var(--dim);margin-bottom:18px;line-height:1.7;">Apni shopping ka screenshot aur details bharo. Admin manually review karke coins dega.</p>
+      <label style="font-size:.7rem;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Platform Select Karo</label>
+      <select class="inp" id="shop-sel-plat" onchange="shopCalcComm()">
+        <option value="">-- Platform Chuniye --</option>
+      </select>
+      <label style="font-size:.7rem;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Product Name</label>
+      <input class="inp" type="text" id="shop-inp-prod" placeholder="e.g. OnePlus Nord CE 5G">
+      <label style="font-size:.7rem;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Order Amount (₹)</label>
+      <input class="inp" type="number" id="shop-inp-amt" placeholder="e.g. 1499" oninput="shopCalcComm()">
+      <div id="shop-comm-preview" style="display:none;background:rgba(0,245,196,.06);border:1px solid rgba(0,245,196,.18);border-radius:12px;padding:12px 16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:.65rem;color:var(--dim);font-weight:700;text-transform:uppercase;letter-spacing:1px;">Expected Commission</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--g1);margin-top:2px;">🪙 <span id="shop-comm-coins">0</span> Coins</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:.62rem;color:var(--dim);margin-bottom:2px;">Avg Rate</div>
+            <div style="font-size:.88rem;font-weight:800;color:var(--g3);" id="shop-comm-rate">0%</div>
+          </div>
+        </div>
+        <div style="font-size:.65rem;color:var(--dim);margin-top:6px;">⚠️ Final coins admin review ke baad milenge</div>
+      </div>
+      <label style="font-size:.7rem;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px;">Order Screenshot Upload Karo</label>
+      <div style="border:2px dashed rgba(0,245,196,.25);border-radius:18px;padding:24px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:14px;background:rgba(0,245,196,.02);position:relative;" id="shop-upload-zone" onclick="document.getElementById('shop-file-inp').click()" ondragover="shopDragOv(event)" ondragleave="shopDragLv(event)" ondrop="shopDropFn(event)">
+        <div style="font-size:2.2rem;margin-bottom:8px;">📸</div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:4px;">Screenshot yahan tap karo ya drag karo</div>
+        <div style="font-size:.68rem;color:var(--dim);">JPG, PNG, WEBP — Max 5MB</div>
+        <input type="file" id="shop-file-inp" accept="image/*" style="display:none" onchange="shopFileChosen(this)">
+        <div id="shop-upload-preview" style="display:none;margin-top:14px;position:relative;">
+          <img id="shop-preview-img" src="" alt="preview" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;border:1px solid var(--border);">
+          <button onclick="shopRemoveImg(event)" style="position:absolute;top:8px;right:8px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:.75rem;cursor:pointer;">✕</button>
+        </div>
+      </div>
+      <label style="font-size:.7rem;font-weight:700;color:var(--dim);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Additional Note (Optional)</label>
+      <textarea class="inp" id="shop-inp-note" rows="2" placeholder="Koi bhi extra detail..."></textarea>
+      <button class="btn-main" onclick="shopSubmitProof()">🚀 SUBMIT FOR REVIEW</button>
+    </div>
+  </div>
+
+  <!-- SUB-TAB: HISTORY -->
+  <div id="shop-history" class="shop-subtab" style="display:none;">
+    <div class="sec-title">My Submissions</div>
+    <div id="shop-sub-list"></div>
+  </div>
+
+  <!-- SUB-TAB: HOW IT WORKS -->
+  <div id="shop-howitworks" class="shop-subtab" style="display:none;">
+    <div class="card">
+      <div class="sec-title" style="font-size:.9rem;margin-bottom:14px;">How Shopping Cashback Works</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:10px;background:var(--g1d);color:var(--g1);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div><div style="font-size:.8rem;color:var(--mid);padding-top:6px;line-height:1.6;"><b style="color:var(--text);">Platform Chuno</b> — Neeche diye gaye kisi bhi platform pe jaake apni marzi ka product kharido.</div></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:10px;background:var(--g1d);color:var(--g1);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div><div style="font-size:.8rem;color:var(--mid);padding-top:6px;line-height:1.6;"><b style="color:var(--text);">Screenshot Lo</b> — Order Confirm hone ke baad order details ka screenshot lo jisme product name, price, aur order ID clearly dikhe.</div></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:10px;background:var(--g1d);color:var(--g1);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div><div style="font-size:.8rem;color:var(--mid);padding-top:6px;line-height:1.6;"><b style="color:var(--text);">Submit Karo</b> — Platform select karo, product details bharo, aur screenshot upload karo.</div></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:10px;background:var(--g1d);color:var(--g1);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">4</div><div style="font-size:.8rem;color:var(--mid);padding-top:6px;line-height:1.6;"><b style="color:var(--text);">Admin Review</b> — Hamari team 24-48 ghante mein aapki submission manually verify karegi.</div></div>
+        <div style="display:flex;gap:12px;align-items:flex-start;"><div style="width:32px;height:32px;border-radius:10px;background:var(--g1d);color:var(--g1);font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">5</div><div style="font-size:.8rem;color:var(--mid);padding-top:6px;line-height:1.6;"><b style="color:var(--text);">Coins Pao</b> — Approval ke baad coins aapke wallet mein aa jaayenge!</div></div>
+      </div>
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:14px;margin-top:16px;">
+        <div style="font-size:.78rem;font-weight:700;color:var(--danger);margin-bottom:6px;">⚠️ Important Rules</div>
+        <ul style="font-size:.72rem;color:var(--mid);line-height:2;padding-left:14px;">
+          <li>Order cancel/return hone par coins wapas honge</li>
+          <li>Fake screenshots se account permanent ban</li>
+          <li>Ek order ka ek hi screenshot accept hoga</li>
+          <li>Minimum order ₹199 se shuru hoga</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
 
   <!-- ═══ GAME ARENA PAGE ═══ -->
   <div id="pg-game" class="page">
@@ -2212,6 +2323,7 @@ function gp(id,btn){
   if(id==='pg-tasks') loadTasks('simple',document.querySelector('.ttab'));
   if(id==='pg-lb') loadLb();
   if(id==='pg-game') loadGamePageData();
+  if(id==='pg-shop') shopRenderPlatforms();
   closeSidebar();
 }
 function openSidebar(){ document.getElementById('sidebar').classList.add('mopen'); document.getElementById('sob').style.display='block'; }
@@ -3047,6 +3159,168 @@ function initBannerSlider(banners) {
       });
     }, 4000); // 4 Second me slide badlega
   }
+}
+// ═══ SHOPPING CASHBACK ENGINE ═══
+const SHOP_PLATFORMS = [
+  { id:'flipkart', name:'Flipkart', emoji:'🛒', color:'#2874f0', commMin:2, commMax:8, affiliate:'https://www.flipkart.com', hot:true },
+  { id:'amazon', name:'Amazon', emoji:'📦', color:'#ff9900', commMin:1, commMax:9, affiliate:'https://www.amazon.in', hot:false },
+  { id:'meesho', name:'Meesho', emoji:'🛍️', color:'#9d3cd0', commMin:5, commMax:15, affiliate:'https://www.meesho.com', hot:true },
+  { id:'myntra', name:'Myntra', emoji:'👗', color:'#e6007e', commMin:3, commMax:12, affiliate:'https://www.myntra.com', hot:false },
+  { id:'nykaa', name:'Nykaa', emoji:'💄', color:'#fc2779', commMin:4, commMax:10, affiliate:'https://www.nykaa.com', hot:false },
+  { id:'ajio', name:'Ajio', emoji:'👔', color:'#e8361e', commMin:3, commMax:10, affiliate:'https://www.ajio.com', hot:false },
+  { id:'snapdeal', name:'Snapdeal', emoji:'💥', color:'#e40046', commMin:2, commMax:7, affiliate:'https://www.snapdeal.com', hot:false },
+  { id:'blinkit', name:'Blinkit', emoji:'⚡', color:'#f8d000', commMin:1, commMax:5, affiliate:'https://www.blinkit.com', hot:false },
+  { id:'jiomart', name:'JioMart', emoji:'🏪', color:'#0070c0', commMin:2, commMax:8, affiliate:'https://www.jiomart.com', hot:false },
+];
+let shopSelFile = null;
+
+function shopTab(tab, el) {
+  document.querySelectorAll('.shop-subtab').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('#shop-tabs .ttab').forEach(t => t.classList.remove('active'));
+  document.getElementById('shop-' + tab).style.display = 'block';
+  el.classList.add('active');
+  if(tab === 'history') shopRenderHistory();
+}
+
+function shopRenderPlatforms() {
+  const grid = document.getElementById('plat-grid-main');
+  const commTable = document.getElementById('comm-table-main');
+  const selPlat = document.getElementById('shop-sel-plat');
+  if(!grid) return;
+  grid.innerHTML = ''; commTable.innerHTML = '';
+  selPlat.innerHTML = '<option value="">-- Platform Chuniye --</option>';
+
+  // Check Firebase for admin-configured platforms first
+  db.ref('shop_platforms').once('value', snap => {
+    let platforms = SHOP_PLATFORMS;
+    if(snap.exists()) {
+      snap.forEach(c => {
+        const v = c.val();
+        const idx = platforms.findIndex(p => p.id === c.key);
+        if(idx !== -1) { platforms[idx] = {...platforms[idx], ...v}; }
+        else { platforms.push({id: c.key, ...v}); }
+      });
+    }
+    platforms.forEach(p => {
+      grid.innerHTML += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;" onmouseenter="this.style.borderColor='rgba(0,245,196,.3)';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'" onclick="window.open('${p.affiliate||'#'}','_blank')">
+        ${p.hot ? '<div style="position:absolute;top:8px;right:8px;font-size:.55rem;font-weight:800;padding:2px 6px;border-radius:99px;background:var(--g1);color:#000;">HOT</div>' : ''}
+        <div style="width:52px;height:52px;border-radius:14px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:rgba(0,0,0,.2);">${p.emoji}</div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:4px;">${p.name}</div>
+        <div style="font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--g1d);color:var(--g1);display:inline-block;">${p.commMin}-${p.commMax}%</div>
+      </div>`;
+      commTable.innerHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">${p.emoji}</span><span style="font-size:.8rem;font-weight:700;">${p.name}</span></div><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:.7rem;color:var(--dim);">Commission:</span><span style="font-size:.8rem;font-weight:800;color:var(--g1);">${p.commMin}%-${p.commMax}%</span></div></div>`;
+      selPlat.innerHTML += `<option value="${p.id}" data-min="${p.commMin}" data-max="${p.commMax}">${p.emoji} ${p.name} (${p.commMin}-${p.commMax}%)</option>`;
+    });
+    const lastDiv = commTable.querySelector('div:last-child');
+    if(lastDiv) lastDiv.style.borderBottom = 'none';
+  });
+}
+
+function shopCalcComm() {
+  const sel = document.getElementById('shop-sel-plat');
+  const opt = sel.options[sel.selectedIndex];
+  const amt = parseFloat(document.getElementById('shop-inp-amt').value) || 0;
+  const prev = document.getElementById('shop-comm-preview');
+  if(!opt || !opt.value || !amt) { prev.style.display = 'none'; return; }
+  const min = parseFloat(opt.dataset.min) || 0;
+  const max = parseFloat(opt.dataset.max) || 0;
+  const rate = (min + max) / 2;
+  const coins = Math.round(amt * rate / 100 * 20);
+  document.getElementById('shop-comm-coins').textContent = coins;
+  document.getElementById('shop-comm-rate').textContent = 'avg ' + rate.toFixed(1) + '%';
+  prev.style.display = 'block';
+}
+
+function shopDragOv(e) { e.preventDefault(); document.getElementById('shop-upload-zone').style.borderColor = 'var(--g1)'; }
+function shopDragLv() { document.getElementById('shop-upload-zone').style.borderColor = 'rgba(0,245,196,.25)'; }
+function shopDropFn(e) { e.preventDefault(); shopDragLv(); if(e.dataTransfer.files[0]) shopProcessFile(e.dataTransfer.files[0]); }
+function shopFileChosen(inp) { if(inp.files[0]) shopProcessFile(inp.files[0]); }
+function shopProcessFile(f) {
+  if(!f.type.startsWith('image/')) { toast('Sirf image files allowed!', 'err'); return; }
+  if(f.size > 5*1024*1024) { toast('File 5MB se chota hona chahiye!', 'err'); return; }
+  shopSelFile = f;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('shop-preview-img').src = e.target.result; document.getElementById('shop-upload-preview').style.display = 'block'; };
+  reader.readAsDataURL(f);
+}
+function shopRemoveImg(e) {
+  e.stopPropagation();
+  shopSelFile = null;
+  document.getElementById('shop-upload-preview').style.display = 'none';
+  document.getElementById('shop-preview-img').src = '';
+  document.getElementById('shop-file-inp').value = '';
+}
+
+async function shopSubmitProof() {
+  const sel = document.getElementById('shop-sel-plat');
+  const opt = sel.options[sel.selectedIndex];
+  const prod = document.getElementById('shop-inp-prod').value.trim();
+  const amt = parseFloat(document.getElementById('shop-inp-amt').value) || 0;
+  const note = document.getElementById('shop-inp-note').value.trim();
+  if(!opt || !opt.value) { toast('Platform select karo!', 'err'); return; }
+  if(!prod) { toast('Product name bharo!', 'err'); return; }
+  if(amt < 199) { toast('Minimum order ₹199 hona chahiye!', 'err'); return; }
+  if(!shopSelFile) { toast('Screenshot upload karo!', 'err'); return; }
+  const min = parseFloat(opt.dataset.min) || 0;
+  const max = parseFloat(opt.dataset.max) || 0;
+  const rate = (min + max) / 2;
+  const coins = Math.round(amt * rate / 100 * 20);
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try {
+      await db.ref('shop_submissions').push({
+        uid: curUser.uid,
+        name: U.name || 'User',
+        platform: opt.value,
+        platformName: opt.text.split(' ').slice(1).join(' ').split('(')[0].trim(),
+        product: prod,
+        amount: amt,
+        expectedCoins: coins,
+        commRate: rate,
+        note: note || '',
+        screenshot: ev.target.result,
+        status: 'pending',
+        date: new Date().toLocaleDateString('en-IN'),
+        timestamp: Date.now()
+      });
+      toast('✅ Submission ho gayi! Admin 24-48hrs mein review karega.', 'ok');
+      document.getElementById('shop-inp-prod').value = '';
+      document.getElementById('shop-inp-amt').value = '';
+      document.getElementById('shop-inp-note').value = '';
+      sel.value = '';
+      document.getElementById('shop-comm-preview').style.display = 'none';
+      shopRemoveImg({ stopPropagation: () => {} });
+    } catch(e) { toast('Error: ' + e.message, 'err'); }
+  };
+  reader.readAsDataURL(shopSelFile);
+}
+
+function shopRenderHistory() {
+  const box = document.getElementById('shop-sub-list');
+  if(!curUser) return;
+  box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--dim);"><i class="fa-solid fa-circle-notch fa-spin"></i></div>';
+  db.ref('shop_submissions').orderByChild('uid').equalTo(curUser.uid).on('value', snap => {
+    box.innerHTML = '';
+    if(!snap.exists()) { box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>'; return; }
+    const items = [];
+    snap.forEach(c => items.unshift({key:c.key,...c.val()}));
+    items.forEach(s => {
+      const stColor = s.status==='approved'?'var(--g1)':s.status==='rejected'?'var(--danger)':'var(--g3)';
+      const stIcon = s.status==='approved'?'✅ Approved':s.status==='rejected'?'❌ Rejected':'⏳ Pending';
+      const stBg = s.status==='approved'?'rgba(0,245,196,.1)':s.status==='rejected'?'rgba(239,68,68,.1)':'rgba(245,166,35,.12)';
+      box.innerHTML += `<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">
+        <img style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--s3);flex-shrink:0;" src="${s.screenshot||''}" alt="ss">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--g1d);color:var(--g1);margin-bottom:5px;display:inline-block;">${s.platformName||s.platform}</div>
+          <div style="font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.product}</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">₹${(s.amount||0).toLocaleString('en-IN')} • ${s.date}</div>
+          <div style="font-size:.75rem;font-weight:800;color:var(--g1);margin-top:4px;">Expected: 🪙${s.expectedCoins} coins (${(s.commRate||0).toFixed(1)}%)</div>
+          ${s.status==='approved'&&s.coinsAwarded ? `<div style="font-size:.72rem;color:var(--g1);font-weight:700;">✅ Credited: 🪙${s.coinsAwarded}</div>` : ''}
+          <div style="font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:99px;background:${stBg};color:${stColor};display:inline-block;margin-top:4px;">${stIcon}</div>
+        </div>
+      </div>`;
+    });
+  });
 }
 </script>
 </body>
