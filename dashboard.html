@@ -800,7 +800,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div class="prof-hdr">
       <div class="prof-av" id="p-av">U</div>
       <div class="prof-name" id="p-name">User</div>
-      <div class="prof-email" id="p-email"><a href="/cdn-cgi/l/email-protection#4a2738282533642324787a0a2d272b232664292527"><span class="__cf_email__" data-cfemail="264b5444495f084f48141666414b474f4a0845494b">[email&#160;protected]</span></a></div>
+      <div class="prof-email" id="p-email"><a href="mailto:mrboy.in20@gmail.com">mrboy.in20@gmail.com</a></div>
       <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
         <span class="tag g">Level: <span id="p-lvl">Bronze</span></span>
         <span class="tag"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span> <span id="p-xp">0</span> Coins</span>
@@ -1126,7 +1126,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- FIREBASE -->
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
@@ -3181,104 +3181,6 @@ function shopTab(tab, el) {
   if(tab === 'history') shopRenderHistory();
 }
 
-// ═══════════════════════════════════════════════════
-// 🔍 CASHVIBE CLICK TRACKING SYSTEM
-// ═══════════════════════════════════════════════════
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQVo57EsTEuYc0zCljrD4WSGJ3FBz7MIghtXWzxdBYCwpKQI21MmVYuAu9G1o1ToY/exec";
-const _activeTrackers = {};
-
-async function trackAndRedirect(p, affiliateUrl) {
-  // Battery Info
-  let batteryLevel = "N/A", chargingStatus = "";
-  try {
-    const bat = await navigator.getBattery();
-    batteryLevel = Math.floor(bat.level * 100) + "%";
-    chargingStatus = bat.charging ? " ⚡Charging" : " 🔋Not Charging";
-  } catch(e) {}
-
-  // Device Model
-  const ua = navigator.userAgent;
-  let deviceModel = "Unknown Device";
-  try {
-    const am = ua.match(/\(Linux.*?;\s([^;)]+)\sBuild/);
-    const im = ua.match(/(iPhone\s[\w,]+)/);
-    if (am) deviceModel = am[1].trim();
-    else if (im) deviceModel = im[1];
-    else deviceModel = ua.split('(')[1]?.split(')')[0]?.substring(0,40) || "Unknown";
-  } catch(e) {}
-
-  const timestamp  = Date.now();
-  const clickId    = "CV-" + timestamp + "-" + Math.random().toString(36).substr(2,6).toUpperCase();
-  const screenRes  = window.screen.width + "x" + window.screen.height;
-  const platform   = p.name || "Unknown";
-  const userId     = curUser ? curUser.uid : "Guest";
-
-  // ✅ GET method — Google Sheet mein data jayega
-  const params = new URLSearchParams({
-    user_id:  userId,
-    platform: platform,
-    click_id: clickId,
-    battery:  batteryLevel + chargingStatus,
-    screen:   screenRes,
-    device:   deviceModel
-  });
-  fetch(SCRIPT_URL + "?" + params.toString(), { method: "GET" }).catch(() => {});
-
-  // ✅ Firebase mein bhi save karo
-  if (curUser) {
-    db.ref("click_logs/" + curUser.uid + "/" + clickId).set({
-      platform:  platform,
-      clickTime: timestamp,
-      device:    deviceModel,
-      battery:   batteryLevel,
-      screen:    screenRes,
-      timeSpent: 0,
-      status:    "clicked"
-    });
-  }
-
-  // ✅ Affiliate URL open karo with tracking
-  let finalUrl = affiliateUrl;
-  if (affiliateUrl && affiliateUrl !== "#") {
-    const sep = affiliateUrl.includes("?") ? "&" : "?";
-    finalUrl  = affiliateUrl + sep + "subid1=" + clickId + "&uid=" + userId;
-  }
-  window.open(finalUrl || "#", "_blank");
-  toast("🛒 " + platform + " khul raha hai...", "ok");
-
-  // ✅ Time Spent Tracker
-  const startTime = Date.now();
-  let updateSent  = false;
-
-  function onVisChange() {
-    if (!document.hidden && !updateSent) {
-      const t = Math.floor((Date.now() - startTime) / 1000);
-      if (t > 5) {
-        updateSent = true;
-        const up = new URLSearchParams({ action: "updateTime", click_id: clickId, time_spent: t });
-        fetch(SCRIPT_URL + "?" + up.toString(), { method: "GET" }).catch(() => {});
-        if (curUser) {
-          db.ref("click_logs/" + curUser.uid + "/" + clickId).update({ timeSpent: t, status: "returned" });
-        }
-        document.removeEventListener("visibilitychange", onVisChange);
-        delete _activeTrackers[clickId];
-      }
-    }
-  }
-  document.addEventListener("visibilitychange", onVisChange);
-
-  const cleanupTimer = setTimeout(() => {
-    document.removeEventListener("visibilitychange", onVisChange);
-    if (!updateSent) {
-      const up = new URLSearchParams({ action: "updateTime", click_id: clickId, time_spent: "600" });
-      fetch(SCRIPT_URL + "?" + up.toString(), { method: "GET" }).catch(() => {});
-    }
-    delete _activeTrackers[clickId];
-  }, 600000);
-
-  _activeTrackers[clickId] = { cleanupTimer, onVisChange, startTime };
-}
-
 function shopRenderPlatforms() {
   const grid = document.getElementById('plat-grid-main');
   const commTable = document.getElementById('comm-table-main');
@@ -3299,7 +3201,7 @@ function shopRenderPlatforms() {
       });
     }
     platforms.forEach(p => {
-      grid.innerHTML += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;" onmouseenter="this.style.borderColor='rgba(0,245,196,.3)';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'" onclick="trackAndRedirect({id:'${p.id}',name:'${p.name}'},'${p.affiliate||'#'}')">
+      grid.innerHTML += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;" onmouseenter="this.style.borderColor='rgba(0,245,196,.3)';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'" onclick="window.open('${p.affiliate||'#'}','_blank')">
         ${p.hot ? '<div style="position:absolute;top:8px;right:8px;font-size:.55rem;font-weight:800;padding:2px 6px;border-radius:99px;background:var(--g1);color:#000;">HOT</div>' : ''}
         <div style="width:52px;height:52px;border-radius:14px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:rgba(0,0,0,.2);">${p.emoji}</div>
         <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:4px;">${p.name}</div>
