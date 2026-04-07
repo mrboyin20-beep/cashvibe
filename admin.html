@@ -2569,6 +2569,9 @@ async function shopAction(action) {
         text: '🛍️ Shopping cashback approved for ' + (s.name || 'user') + ' — 🪙' + coinsToGive + ' credited!',
         timestamp: Date.now(), forUser: s.uid, type: 'reward'
       });
+      const aidx = allShopSubs.findIndex(x => x.sid === reviewingSubId);
+      if(aidx !== -1) allShopSubs[aidx] = { ...allShopSubs[aidx], status: 'approved', coinsAwarded: coinsToGive };
+      renderShopTable();
       closeModal('modal-ss');
       toast('✅ Approved! 🪙' + coinsToGive + ' coins credited to ' + (s.name || 'user') + '!', 'ok');
     } catch(e) { toast('Error: ' + e.message, 'err'); }
@@ -2583,6 +2586,9 @@ async function shopAction(action) {
         message: 'Aapki ' + (s.platformName || s.platform) + ' shopping submission reject ho gayi. Reason: ' + (reason || 'Screenshot valid nahi tha.'),
         type: 'alert', timestamp: Date.now(), read: false
       });
+      const ridx = allShopSubs.findIndex(x => x.sid === reviewingSubId);
+      if(ridx !== -1) allShopSubs[ridx] = { ...allShopSubs[ridx], status: 'rejected', rejectReason: reason || 'Admin ne reject kiya' };
+      renderShopTable();
       closeModal('modal-ss');
       toast('❌ Submission rejected!', 'warn');
     } catch(e) { toast('Error: ' + e.message, 'err'); }
