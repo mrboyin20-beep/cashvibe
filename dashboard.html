@@ -3298,7 +3298,7 @@ function shopRenderHistory() {
   const box = document.getElementById('shop-sub-list');
   if(!curUser || !box) return;
   box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--dim);"><i class="fa-solid fa-circle-notch fa-spin"></i></div>';
-  db.ref('shop_submissions').once('value', snap => {
+  db.ref('shop_submissions').orderByChild('uid').equalTo(curUser.uid).on('value', snap => {
     box.innerHTML = '';
     if(!snap.exists()) {
       box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>';
@@ -3307,7 +3307,7 @@ function shopRenderHistory() {
     const items = [];
     snap.forEach(c => {
       const v = c.val();
-      if(v && v.uid === curUser.uid) items.unshift({key: c.key, ...v});
+      if(v) items.unshift({key: c.key, ...v});
     });
     if(!items.length) {
       box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>';
