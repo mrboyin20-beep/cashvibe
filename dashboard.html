@@ -3182,58 +3182,160 @@ function shopTab(tab, el) {
 }
 
 
-// ═══ GOOGLE SHEET SETTINGS ═══
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_mpXLjhuYFJygOxA9erinPAYF8r_zCtk0JvHwenBsinednDaYuQmrRujY-MosTPCi/exec"; // Jo pehle banaya tha
+// ═══════════════════════════════════════════════════
+// 🔍 CASHVIBE ADVANCED CLICK TRACKING SYSTEM v2.0
+// ═══════════════════════════════════════════════════
+
+// ⚠️ APNA GOOGLE APPS SCRIPT URL YAHAN DAALO
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfatMm1uFvpZ04Nn51wWNfSbLABLMSyX9qphgCkVOiUE1lNNFiJFIJzK2VhTHxkxI/exec";
+
+// Active trackers store karna (multiple clicks handle karne ke liye)
+const _activeTrackers = {};
 
 async function trackAndRedirect(p, affiliateUrl) {
-    // 1. Device & Battery Info nikalna
-    let batteryLevel = "N/A";
-    try {
-        const bat = await navigator.getBattery();
-        batteryLevel = Math.floor(bat.level * 100) + "% " + (bat.charging ? "(⚡)" : "");
-    } catch (e) {}
 
-    const clickId = "CV-" + Math.random().toString(36).substr(2, 9);
-    const screenRes = window.screen.width + "x" + window.screen.height;
-    const device = navigator.userAgent.split('(')[1]?.split(')')[0] || "Unknown Device";
-    const startTime = Date.now();
+  // ── STEP 1: Saara Device Data Collect Karo ──
+  let batteryLevel = "N/A";
+  let chargingStatus = "";
+  try {
+    const bat = await navigator.getBattery();
+    batteryLevel = Math.floor(bat.level * 100) + "%";
+    chargingStatus = bat.charging ? " ⚡Charging" : " 🔋Not Charging";
+  } catch (e) { /* Browser support nahi hai */ }
 
-    // 2. Google Sheet ko Data bhejna
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({
-            user_id: curUser ? curUser.uid : 'Guest',
-            platform: p.name,
-            click_id: clickId,
-            battery: batteryLevel,
-            screen: screenRes,
-            device: device
-        })
+  // Device Model (User Agent se extract)
+  const ua = navigator.userAgent;
+  let deviceModel = "Unknown Device";
+  try {
+    // Android device extract karna
+    const androidMatch = ua.match(/\(Linux.*?;\s([^;)]+)\sBuild/);
+    // iPhone extract karna  
+    const iphoneMatch = ua.match(/(iPhone\s[\w,]+)/);
+    if (androidMatch) deviceModel = androidMatch[1].trim();
+    else if (iphoneMatch) deviceModel = iphoneMatch[1];
+    else deviceModel = ua.split('(')[1]?.split(')')[0]?.substring(0, 40) || "Unknown";
+  } catch(e) {}
+
+  // Unique Click ID (Fraud detect karne ke liye timestamp bhi include)
+  const timestamp = Date.now();
+  const randomPart = Math.random().toString(36).substr(2, 6).toUpperCase();
+  const clickId = `CV-${timestamp}-${randomPart}`;
+
+  const screenRes = `${window.screen.width}x${window.screen.height}`;
+  const pixelRatio = window.devicePixelRatio || 1;
+  const platform = p.name || "Unknown";
+  const userId = curUser ? curUser.uid : "Guest";
+  const clickTime = new Date().toLocaleString("en-IN", {timeZone: "Asia/Kolkata"});
+
+  // ── STEP 2: Google Sheet mein Click Log Karo ──
+  const trackingPayload = {
+    user_id:  userId,
+    platform: platform,
+    click_id: clickId,
+    battery:  batteryLevel + chargingStatus,
+    screen:   screenRes + " (@" + pixelRatio + "x)",
+    device:   deviceModel,
+    click_time: clickTime
+  };
+
+  // Non-blocking fetch — UI slow nahi hogi
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(trackingPayload)
+  }).catch(() => { /* Network error — silently fail */ });
+
+  // Firebase mein bhi click log karo (backup + fraud detection)
+  if (curUser) {
+    db.ref(`click_logs/${curUser.uid}/${clickId}`).set({
+      platform: platform,
+      clickTime: timestamp,
+      device: deviceModel,
+      battery: batteryLevel,
+      screen: screenRes,
+      timeSpent: 0,
+      status: "clicked"
     });
+  }
 
-    // 3. User ko Redirect karna (Affiliate Link + ClickID)
-    const finalUrl = affiliateUrl.includes('#') ? affiliateUrl : (affiliateUrl + (affiliateUrl.includes('?') ? '&' : '?') + "subid1=" + clickId);
-    window.open(finalUrl, '_blank');
+  // ── STEP 3: User ko Affiliate URL par Bhejo ──
+  let finalUrl = affiliateUrl;
+  if (affiliateUrl && affiliateUrl !== "#") {
+    const separator = affiliateUrl.includes("?") ? "&" : "?";
+    finalUrl = affiliateUrl + separator + "subid1=" + clickId + "&uid=" + userId;
+  }
+  window.open(finalUrl || "#", "_blank");
 
-    // 4. Time Spent Track karna (Jab user wapas aaye)
-    const checkBack = setInterval(() => {
-        if (!document.hidden) {
-            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-            if (timeSpent > 5) {
-                fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({
-                        action: "updateTime",
-                        click_id: clickId,
-                        time_spent: timeSpent
-                    })
-                });
-                clearInterval(checkBack);
-            }
-        }
-    }, 1000);
+  // ── STEP 4: Time Spent Tracker (Visibility API) ──
+  const startTime = Date.now();
+  let updateSent = false;
+
+  // Pehla update: 15 second baad (user engaged hai ya nahi)
+  const quickCheck = setTimeout(() => {
+    if (!updateSent && !document.hidden) {
+      _sendTimeUpdate(clickId, userId, Math.floor((Date.now() - startTime) / 1000), "quick_check");
+    }
+  }, 15000);
+
+  // Main tracker: Jab user wapas aaye tab chalega
+  function onVisibilityChange() {
+    if (!document.hidden && !updateSent) {
+      const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+      // Sirf meaningful time track karo (5 sec se zyada)
+      if (timeSpent > 5) {
+        updateSent = true;
+        clearTimeout(quickCheck);
+        _sendTimeUpdate(clickId, userId, timeSpent, "returned");
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        delete _activeTrackers[clickId];
+      }
+    }
+  }
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+
+  // Memory leak prevent karo — 10 min baad automatically cleanup
+  const cleanupTimer = setTimeout(() => {
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    clearTimeout(quickCheck);
+    if (!updateSent) {
+      _sendTimeUpdate(clickId, userId, 600, "timeout_cleanup");
+    }
+    delete _activeTrackers[clickId];
+  }, 600000); // 10 minutes
+
+  // Active tracker store karo
+  _activeTrackers[clickId] = { cleanupTimer, onVisibilityChange, startTime };
+
+  // Local confirmation toast
+  toast(`🛒 ${platform} khul raha hai...`, "ok");
+}
+
+// ── Helper: Google Sheet + Firebase mein Time Update ──
+function _sendTimeUpdate(clickId, userId, timeSpent, reason) {
+  // Google Sheet update
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "updateTime",
+      click_id: clickId,
+      time_spent: timeSpent,
+      reason: reason
+    })
+  }).catch(() => {});
+
+  // Firebase update
+  if (userId && userId !== "Guest") {
+    db.ref(`click_logs/${userId}/${clickId}`).update({
+      timeSpent: timeSpent,
+      status: reason,
+      updatedAt: Date.now()
+    });
+  }
 }
 
 function shopRenderPlatforms() {
