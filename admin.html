@@ -2603,6 +2603,9 @@ async function quickApprove(sid, autoCoins) {
       message: '🎉 ' + (s.platformName || s.platform) + ' shopping verify ho gayi! 🪙' + autoCoins + ' coins wallet mein credit ho gaye.',
       type: 'reward', timestamp: Date.now(), read: false
     });
+    const idx = allShopSubs.findIndex(x => x.sid === sid);
+    if(idx !== -1) allShopSubs[idx] = { ...allShopSubs[idx], status: 'approved', coinsAwarded: autoCoins };
+    renderShopTable();
     toast('✅ Quick approved! 🪙' + autoCoins + ' coins credited!', 'ok');
   } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
@@ -2620,6 +2623,9 @@ async function quickReject(sid) {
       message: 'Aapki ' + (s.platformName || s.platform) + ' submission reject ho gayi. Better screenshot ke saath dobara try karo.',
       type: 'alert', timestamp: Date.now(), read: false
     });
+    const idx2 = allShopSubs.findIndex(x => x.sid === sid);
+    if(idx2 !== -1) allShopSubs[idx2] = { ...allShopSubs[idx2], status: 'rejected', rejectReason: 'Admin ne reject kiya' };
+    renderShopTable();
     toast('❌ Rejected!', 'warn');
   } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
@@ -2643,6 +2649,8 @@ async function deleteShopSub(sid) {
   if(!confirm('Permanently delete this submission?')) return;
   try {
     await db.ref('shop_submissions/' + sid).remove();
+    allShopSubs = allShopSubs.filter(s => s.sid !== sid);
+    renderShopTable();
     toast('🗑️ Submission deleted!', 'warn');
   } catch(e) { toast('Error: ' + e.message, 'err'); }
 }
