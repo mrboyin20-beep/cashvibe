@@ -3181,6 +3181,61 @@ function shopTab(tab, el) {
   if(tab === 'history') shopRenderHistory();
 }
 
+
+// ═══ GOOGLE SHEET SETTINGS ═══
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_mpXLjhuYFJygOxA9erinPAYF8r_zCtk0JvHwenBsinednDaYuQmrRujY-MosTPCi/exec"; // Jo pehle banaya tha
+
+async function trackAndRedirect(p, affiliateUrl) {
+    // 1. Device & Battery Info nikalna
+    let batteryLevel = "N/A";
+    try {
+        const bat = await navigator.getBattery();
+        batteryLevel = Math.floor(bat.level * 100) + "% " + (bat.charging ? "(⚡)" : "");
+    } catch (e) {}
+
+    const clickId = "CV-" + Math.random().toString(36).substr(2, 9);
+    const screenRes = window.screen.width + "x" + window.screen.height;
+    const device = navigator.userAgent.split('(')[1]?.split(')')[0] || "Unknown Device";
+    const startTime = Date.now();
+
+    // 2. Google Sheet ko Data bhejna
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({
+            user_id: curUser ? curUser.uid : 'Guest',
+            platform: p.name,
+            click_id: clickId,
+            battery: batteryLevel,
+            screen: screenRes,
+            device: device
+        })
+    });
+
+    // 3. User ko Redirect karna (Affiliate Link + ClickID)
+    const finalUrl = affiliateUrl.includes('#') ? affiliateUrl : (affiliateUrl + (affiliateUrl.includes('?') ? '&' : '?') + "subid1=" + clickId);
+    window.open(finalUrl, '_blank');
+
+    // 4. Time Spent Track karna (Jab user wapas aaye)
+    const checkBack = setInterval(() => {
+        if (!document.hidden) {
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            if (timeSpent > 5) {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({
+                        action: "updateTime",
+                        click_id: clickId,
+                        time_spent: timeSpent
+                    })
+                });
+                clearInterval(checkBack);
+            }
+        }
+    }, 1000);
+}
+
 function shopRenderPlatforms() {
   const grid = document.getElementById('plat-grid-main');
   const commTable = document.getElementById('comm-table-main');
@@ -3201,17 +3256,24 @@ function shopRenderPlatforms() {
       });
     }
     platforms.forEach(p => {
-      grid.innerHTML += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;" onmouseenter="this.style.borderColor='rgba(0,245,196,.3)';this.style.transform='translateY(-3px)'" onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'" onclick="window.open('${p.affiliate||'#'}','_blank')">
+      grid.innerHTML += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:16px 12px;text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;" 
+    onmouseenter="this.style.borderColor='rgba(0,245,196,.3)';this.style.transform='translateY(-3px)'" 
+    onmouseleave="this.style.borderColor='var(--border)';this.style.transform='none'" 
+    onclick="trackAndRedirect({id:'${p.id}', name:'${p.name}'}, '${p.affiliate||'#'}')">
         ${p.hot ? '<div style="position:absolute;top:8px;right:8px;font-size:.55rem;font-weight:800;padding:2px 6px;border-radius:99px;background:var(--g1);color:#000;">HOT</div>' : ''}
         <div style="width:52px;height:52px;border-radius:14px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:rgba(0,0,0,.2);">${p.emoji}</div>
         <div style="font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:4px;">${p.name}</div>
         <div style="font-size:.65rem;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--g1d);color:var(--g1);display:inline-block;">${p.commMin}-${p.commMax}%</div>
-      </div>`;
+    </div>`;
       commTable.innerHTML += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.1rem;">${p.emoji}</span><span style="font-size:.8rem;font-weight:700;">${p.name}</span></div><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:.7rem;color:var(--dim);">Commission:</span><span style="font-size:.8rem;font-weight:800;color:var(--g1);">${p.commMin}%-${p.commMax}%</span></div></div>`;
       selPlat.innerHTML += `<option value="${p.id}" data-min="${p.commMin}" data-max="${p.commMax}">${p.emoji} ${p.name} (${p.commMin}-${p.commMax}%)</option>`;
     });
     const lastDiv = commTable.querySelector('div:last-child');
     if(lastDiv) lastDiv.style.borderBottom = 'none';
+    if(!localStorage.getItem('shop_hint_shown')) {
+        showShoppingGuidePopup(); 
+        localStorage.setItem('shop_hint_shown', 'true');
+    }
   });
 }
 
