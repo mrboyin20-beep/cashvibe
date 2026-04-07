@@ -3296,25 +3296,36 @@ async function shopSubmitProof() {
 
 function shopRenderHistory() {
   const box = document.getElementById('shop-sub-list');
-  if(!curUser) return;
+  if(!curUser || !box) return;
   box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--dim);"><i class="fa-solid fa-circle-notch fa-spin"></i></div>';
-  db.ref('shop_submissions').orderByChild('uid').equalTo(curUser.uid).on('value', snap => {
+  db.ref('shop_submissions').once('value', snap => {
     box.innerHTML = '';
-    if(!snap.exists()) { box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>'; return; }
+    if(!snap.exists()) {
+      box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>';
+      return;
+    }
     const items = [];
-    snap.forEach(c => items.unshift({key:c.key,...c.val()}));
+    snap.forEach(c => {
+      const v = c.val();
+      if(v && v.uid === curUser.uid) items.unshift({key: c.key, ...v});
+    });
+    if(!items.length) {
+      box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>';
+      return;
+    }
     items.forEach(s => {
       const stColor = s.status==='approved'?'var(--g1)':s.status==='rejected'?'var(--danger)':'var(--g3)';
       const stIcon = s.status==='approved'?'✅ Approved':s.status==='rejected'?'❌ Rejected':'⏳ Pending';
       const stBg = s.status==='approved'?'rgba(0,245,196,.1)':s.status==='rejected'?'rgba(239,68,68,.1)':'rgba(245,166,35,.12)';
       box.innerHTML += `<div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;">
-        <img style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--s3);flex-shrink:0;" src="${s.screenshot||''}" alt="ss">
+        <img style="width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--s3);flex-shrink:0;" src="${s.screenshot||''}" alt="ss" onerror="this.style.display='none'">
         <div style="flex:1;min-width:0;">
           <div style="font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--g1d);color:var(--g1);margin-bottom:5px;display:inline-block;">${s.platformName||s.platform}</div>
           <div style="font-size:.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.product}</div>
           <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">₹${(s.amount||0).toLocaleString('en-IN')} • ${s.date}</div>
-          <div style="font-size:.75rem;font-weight:800;color:var(--g1);margin-top:4px;">Expected: 🪙${s.expectedCoins} coins (${(s.commRate||0).toFixed(1)}%)</div>
-          ${s.status==='approved'&&s.coinsAwarded ? `<div style="font-size:.72rem;color:var(--g1);font-weight:700;">✅ Credited: 🪙${s.coinsAwarded}</div>` : ''}
+          <div style="font-size:.75rem;font-weight:800;color:var(--g1);margin-top:4px;">Expected: 🪙${s.expectedCoins} coins</div>
+          ${s.status==='approved'&&s.coinsAwarded?`<div style="font-size:.72rem;color:var(--g1);font-weight:700;">✅ Credited: 🪙${s.coinsAwarded}</div>`:''}
+          ${s.status==='rejected'&&s.rejectReason?`<div style="font-size:.7rem;color:var(--danger);margin-top:2px;">❌ ${s.rejectReason}</div>`:''}
           <div style="font-size:.6rem;font-weight:800;padding:2px 8px;border-radius:99px;background:${stBg};color:${stColor};display:inline-block;margin-top:4px;">${stIcon}</div>
         </div>
       </div>`;
