@@ -1038,6 +1038,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       </div>
     </div>
 
+        <!-- Pattern Memory Card -->
+    <div class="g-card" id="g-pattern-card" onclick="joinGame('pattern')">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:52px;height:52px;background:rgba(139,92,246,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">🧠</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:.92rem;color:#8b5cf6;">Pattern Memory</div>
+          <div style="font-size:.72rem;color:var(--dim);margin-top:2px;">Pattern yaad karo aur repeat karo!</div>
+          <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+            <span style="background:rgba(139,92,246,.1);color:#8b5cf6;font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">VS Player</span>
+            <span style="background:rgba(139,92,246,.1);color:#8b5cf6;font-size:.62rem;font-weight:800;padding:2px 9px;border-radius:99px;">~1 min</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="background:rgba(139,92,246,.15);color:#8b5cf6;padding:5px 12px;border-radius:99px;font-size:.7rem;font-weight:800;white-space:nowrap;" id="g-pattern-fee-lbl">20 coins</div>
+          <div style="font-size:.62rem;color:var(--dim);margin-top:4px;">🏆 <span id="g-pattern-prize-lbl">36 coins</span></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Game History -->
     <div class="sec-title" style="margin-top:6px;">Recent Games</div>
     <div id="g-hist-list">
@@ -1116,6 +1135,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       </button>
     </div>
   </div>
+
+      <!-- Pattern Memory Board -->
+    <div id="g-pattern-wrap" style="display:none;width:100%;max-width:480px;">
+      <div style="text-align:center;margin-bottom:14px;">
+        <div style="font-size:.85rem;color:var(--mid);font-weight:700;">Pattern Yaad Karo!</div>
+        <div style="font-size:.65rem;color:var(--dim);margin-top:4px;">Blinking pattern ko same sequence mein tap karo</div>
+      </div>
+      <div id="g-pattern-board" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--s2);border-radius:12px;">
+        <span style="font-size:.72rem;">Your Score: <b id="g-pattern-score">0</b></span>
+        <span style="font-size:.72rem;">Opponent: <b id="g-pattern-opp-score">0</b></span>
+        <span style="font-size:.72rem;">Level: <b id="g-pattern-level">1</b></span>
+      </div>
+    </div>
 
   <!-- GAME RESULT POPUP -->
   <div id="g-result-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(20px);">
@@ -2502,6 +2535,7 @@ let GCFG = {
   ttt:  { name:'Tic Tac Toe', fee:10, prize:18, platform:2, status:'active', timeout:30 },
   quiz: { name:'Quiz Battle', fee:20, prize:36, platform:4, status:'active', questions:5 },
   tap:  { name:'Fast Tap', fee:15, prize:26, platform:4, status:'active', timeout:5 },
+  pattern: { name:'Pattern Memory', fee:20, prize:36, platform:4, status:'active', timeout:60, level:3 }
 };
 let gTapStart = 0; // Tap timer start time
 let gTapClicked = false;
@@ -2530,6 +2564,8 @@ function updateGameUI() {
     'g-ttt-prize-lbl': GCFG.ttt.prize + ' coins',
     'g-quiz-fee-lbl':  GCFG.quiz.fee  + ' coins',
     'g-quiz-prize-lbl':GCFG.quiz.prize + ' coins',
+        'g-pattern-fee-lbl':   GCFG.pattern.fee + ' coins',
+    'g-pattern-prize-lbl': GCFG.pattern.prize + ' coins',
   };
   Object.entries(ids).forEach(([id, val]) => {
     const el = document.getElementById(id); if (el) el.textContent = val;
@@ -2537,6 +2573,11 @@ function updateGameUI() {
   const msgEl = document.getElementById('g-arena-msg');
   const tttC  = document.getElementById('g-ttt-card');
   const quizC = document.getElementById('g-quiz-card');
+    const patternC = document.getElementById('g-pattern-card');
+  if(patternC) {
+    if(gArenaStatus !== 'active') patternC.style.opacity = '0.45';
+    else patternC.style.opacity = '1';
+  }
   if (msgEl) {
     if (gArenaStatus !== 'active') {
       msgEl.style.display = 'block';
@@ -2679,8 +2720,12 @@ async function startGameBoard(room) {
 
   if (gType === 'ttt') initTTT(isA);
   else if (gType === 'quiz') initQuiz();
+   else if (gType === 'pattern') {
+    initPattern();
+  }
   else initTap();
 }
+
 // ── FAST TAP BATTLE ──
 function initTap() {
   document.getElementById('g-ttt-wrap').style.display  = 'none';
@@ -2723,6 +2768,7 @@ function initTap() {
     }
   });
 }
+
 
 async function doFastTap() {
   if (gTapClicked || gGameEnded) return;
@@ -2776,6 +2822,159 @@ async function checkTapWinner() {
   }
 }
 
+// ── PATTERN MEMORY GAME ──
+let gPatternSequence = [], gPatternUserSeq = [], gPatternLevel = 0, gPatternMyScore = 0, gPatternOppScore = 0;
+let gPatternMyTurn = true, gPatternWaiting = false, gPatternBoard = [];
+
+function initPattern() {
+  document.getElementById('g-ttt-wrap').style.display = 'none';
+  document.getElementById('g-quiz-wrap').style.display = 'none';
+  document.getElementById('g-tap-wrap').style.display = 'none';
+  document.getElementById('g-pattern-wrap').style.display = 'block';
+  
+  const board = document.getElementById('g-pattern-board');
+  if(board) {
+    board.innerHTML = '';
+    gPatternBoard = [];
+    const colors = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '🔷', '🔶', '⭐'];
+    for(let i = 0; i < 9; i++) {
+      const btn = document.createElement('div');
+      btn.className = 'g-tc';
+      btn.textContent = colors[i % colors.length];
+      btn.style.fontSize = '1.5rem';
+      btn.dataset.index = i;
+      btn.onclick = () => patternUserClick(i);
+      board.appendChild(btn);
+      gPatternBoard.push(btn);
+    }
+  }
+  
+  gPatternSequence = [];
+  gPatternUserSeq = [];
+  gPatternLevel = 1;
+  gPatternMyScore = 0;
+  gPatternOppScore = 0;
+  gPatternMyTurn = (gRole === 'playerA');
+  gPatternWaiting = false;
+  
+  document.getElementById('g-board-status').textContent = gPatternMyTurn ? 'Aapki Baari! Pattern yaad karo' : 'Opponent ki baari...';
+  document.getElementById('g-ttt-hint').textContent = 'Pattern yaad karo aur same sequence tap karo!';
+  document.getElementById('g-pattern-score').textContent = '0';
+  document.getElementById('g-pattern-opp-score').textContent = '0';
+  document.getElementById('g-pattern-level').textContent = '1';
+  
+  if(gPatternMyTurn) {
+    setTimeout(() => showNextPattern(), 1000);
+  }
+  
+  listenPatternTurn();
+}
+
+function showNextPattern() {
+  if(gPatternWaiting || !gPatternMyTurn) return;
+  gPatternWaiting = true;
+  
+  gPatternSequence.push(Math.floor(Math.random() * 9));
+  gPatternUserSeq = [];
+  
+  document.getElementById('g-board-status').textContent = '👀 Pattern dekho...';
+  document.getElementById('g-ttt-hint').textContent = 'Yaad karo sequence!';
+  
+  let i = 0;
+  const interval = setInterval(() => {
+    if(i >= gPatternSequence.length) {
+      clearInterval(interval);
+      gPatternWaiting = false;
+      document.getElementById('g-board-status').textContent = '🎯 Ab tumhari baari! Same sequence tap karo';
+      document.getElementById('g-ttt-hint').textContent = 'Jo order dekha wahi tap karo';
+      return;
+    }
+    
+    const idx = gPatternSequence[i];
+    const btn = gPatternBoard[idx];
+    if(btn) {
+      btn.style.background = 'var(--g1d)';
+      btn.style.transform = 'scale(1.1)';
+      btn.style.transition = '0.2s';
+      setTimeout(() => {
+        if(btn) {
+          btn.style.background = '';
+          btn.style.transform = '';
+        }
+      }, 300);
+    }
+    i++;
+  }, 600);
+}
+
+function patternUserClick(idx) {
+  if(gPatternWaiting || !gPatternMyTurn || gGameEnded) return;
+  
+  const btn = gPatternBoard[idx];
+  if(btn) {
+    btn.style.background = 'var(--g1d)';
+    setTimeout(() => { if(btn) btn.style.background = ''; }, 200);
+  }
+  
+  gPatternUserSeq.push(idx);
+  const expectedIndex = gPatternUserSeq.length - 1;
+  
+  if(idx !== gPatternSequence[expectedIndex]) {
+    document.getElementById('g-board-status').textContent = '❌ Wrong sequence! Opponent ki baari...';
+    gPatternMyTurn = false;
+    document.getElementById('g-ttt-hint').textContent = 'Opponent khel raha hai...';
+    
+    db.ref('game_rooms/' + gRoom + '/patternTurn').set(gRole === 'playerA' ? 'B' : 'A');
+    return;
+  }
+  
+  if(gPatternUserSeq.length === gPatternSequence.length) {
+    gPatternMyScore++;
+    document.getElementById('g-pattern-score').textContent = gPatternMyScore;
+    document.getElementById('g-pattern-level').textContent = gPatternMyScore + 1;
+    
+    const myKey = gRole === 'playerA' ? 'A' : 'B';
+    db.ref('game_rooms/' + gRoom + '/patternScores/' + myKey).set(gPatternMyScore);
+    
+    if(gPatternMyScore >= 5) {
+      endPatternGame();
+      return;
+    }
+    
+    setTimeout(() => showNextPattern(), 1000);
+  }
+}
+
+async function endPatternGame() {
+  const oppKey = gRole === 'playerA' ? 'B' : 'A';
+  const oppScoreSnap = await db.ref('game_rooms/' + gRoom + '/patternScores/' + oppKey).once('value');
+  gPatternOppScore = oppScoreSnap.val() || 0;
+  document.getElementById('g-pattern-opp-score').textContent = gPatternOppScore;
+  
+  let winner = 'draw';
+  if(gPatternMyScore > gPatternOppScore) winner = (gRole === 'playerA' ? 'A' : 'B');
+  else if(gPatternOppScore > gPatternMyScore) winner = (gRole === 'playerA' ? 'B' : 'A');
+  
+  await db.ref('game_rooms/' + gRoom).update({ 
+    status: 'finished', 
+    winner, 
+    finishedAt: Date.now()
+  });
+}
+
+function listenPatternTurn() {
+  if(!gRoom) return;
+  const oppKey = gRole === 'playerA' ? 'B' : 'A';
+  db.ref('game_rooms/' + gRoom + '/patternTurn').on('value', s => {
+    if(s.val() === oppKey && !gPatternMyTurn && !gGameEnded) {
+      gPatternMyTurn = true;
+      gPatternSequence = [];
+      gPatternUserSeq = [];
+      document.getElementById('g-board-status').textContent = 'Aapki Baari! Pattern dekho...';
+      setTimeout(() => showNextPattern(), 1000);
+    }
+  });
+}
 // ── TTT ──
 function initTTT(isA) {
   document.getElementById('g-ttt-wrap').style.display  = 'block';
