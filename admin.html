@@ -2387,11 +2387,19 @@ function loadRedeemConfig(){ loadRedeem(); }
 // ══════════════════════════════════════════
 let allShopSubs = [], shopFilter = 'pending', reviewingSubId = null, reviewingSubData = null;
 
+let _shopListener = null;
 function loadShopSubmissions() {
   const tbody = document.getElementById('shop-tbody');
   if(tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:30px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</td></tr>';
 
-  db.ref('shop_submissions').orderByChild('timestamp').once('value', snap => {
+  // Pehle se chal raha listener band karo
+  if(_shopListener) {
+    db.ref('shop_submissions').off('value', _shopListener);
+    _shopListener = null;
+  }
+
+  // Realtime listener lagao — hamesha live data aayega
+  _shopListener = db.ref('shop_submissions').orderByChild('timestamp').on('value', snap => {
     allShopSubs = [];
     snap.forEach(c => allShopSubs.push({ sid: c.key, ...c.val() }));
     allShopSubs.reverse();
