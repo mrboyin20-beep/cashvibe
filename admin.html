@@ -792,6 +792,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       </div>
     </div>
 
+          <!-- Pattern Memory Settings -->
+      <div class="set-card" style="border-top:3px solid #8b5cf6;">
+        <div class="set-card-title">🧠 Pattern Memory Settings</div>
+        <label class="flabel">Entry Fee (Coins)</label>
+        <input class="finp" type="number" id="g-pattern-fee" placeholder="e.g. 20" min="1" oninput="calcPF('pattern')">
+        <label class="flabel">Prize Pool (Coins)</label>
+        <input class="finp" type="number" id="g-pattern-prize" placeholder="e.g. 36" min="1" oninput="calcPF('pattern')">
+        <label class="flabel">Platform Fee (Auto-calculate)</label>
+        <input class="finp" type="number" id="g-pattern-platform" placeholder="Auto" readonly style="opacity:.5;cursor:not-allowed;">
+        <label class="flabel">Max Level (5 = best of 5)</label>
+        <input class="finp" type="number" id="g-pattern-maxlevel" placeholder="5" min="3" max="10">
+        <label class="flabel">Status</label>
+        <select class="fselect" id="g-pattern-status">
+          <option value="active">✅ Active</option>
+          <option value="inactive">❌ Disabled</option>
+        </select>
+        <button class="fbtn fbtn-p" style="width:100%;margin-top:6px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;" onclick="saveGameSettings('pattern')">💾 SAVE PATTERN SETTINGS</button>
+        <div style="font-size:.65rem;color:var(--dim);margin-top:8px;line-height:1.6;">💡 Pattern yaad karke sequence repeat karna hai. Best of 5 matches.</div>
+      </div>
+
     <!-- Recent Game History -->
     <div class="card" style="margin-top:16px;">
       <div class="card-title">📊 Recent Games
@@ -2365,6 +2385,18 @@ function loadGameSettings() {
     if (ts2) ts2.value = tap.status  || 'active';
     calcPF('tap');
 
+        // Pattern Memory
+    const pattern = cfg.pattern || {};
+    const pf = document.getElementById('g-pattern-fee');
+    const pp = document.getElementById('g-pattern-prize');
+    const pl = document.getElementById('g-pattern-maxlevel');
+    const ps = document.getElementById('g-pattern-status');
+    if (pf) pf.value = pattern.fee || 20;
+    if (pp) pp.value = pattern.prize || 36;
+    if (pl) pl.value = pattern.maxlevel || 5;
+    if (ps) ps.value = pattern.status || 'active';
+    calcPF('pattern');
+
     // Global
     const gm  = document.getElementById('g-mm-timeout');
     const ga  = document.getElementById('g-arena-status');
@@ -2413,6 +2445,15 @@ async function saveGameSettings(type) {
       if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
       await db.ref('game_config/tap').set({ fee, prize, platform: (fee*2)-prize, timeout, status });
       toast('✅ Fast Tap settings saved!', 'ok');
+    }
+        else if (type === 'pattern') {
+      const fee = parseInt(document.getElementById('g-pattern-fee').value) || 20;
+      const prize = parseInt(document.getElementById('g-pattern-prize').value) || 36;
+      const maxlevel = parseInt(document.getElementById('g-pattern-maxlevel').value) || 5;
+      const status = document.getElementById('g-pattern-status').value;
+      if (prize >= fee * 2) { toast('❌ Prize must be less than Entry × 2 (' + (fee*2) + ')!', 'err'); return; }
+      await db.ref('game_config/pattern').set({ fee, prize, platform: (fee*2)-prize, maxlevel, status, updated_at: Date.now() });
+      toast('✅ Pattern Memory settings saved!', 'ok');
     }
     else if (type === 'global') {
       const mm_timeout   = parseInt(document.getElementById('g-mm-timeout').value) || 60;
