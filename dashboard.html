@@ -350,6 +350,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .cv-coin svg{width:100%;height:100%;}
 
 /* ═══ GAME ARENA ═══ */
+/* Pattern Memory Cell Styles */
+.pattern-cell {
+  aspect-ratio: 1;
+  background: var(--s2);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pattern-cell:hover {
+  border-color: var(--g1);
+  background: var(--g1d);
+  transform: scale(1.02);
+}
 .g-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px;cursor:pointer;transition:.2s;}
 .g-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);}
 .g-card:active{transform:scale(.97);}
@@ -1136,7 +1154,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
-      <!-- Pattern Memory Board -->
+         <!-- Pattern Memory Board -->
     <div id="g-pattern-wrap" style="display:none;width:100%;max-width:480px;">
       <div style="text-align:center;margin-bottom:14px;">
         <div style="font-size:.85rem;color:var(--mid);font-weight:700;">Pattern Yaad Karo!</div>
@@ -2861,30 +2879,33 @@ async function checkTapWinner() {
   }
 }
 
-// ── PATTERN MEMORY GAME ──
+// ── PATTERN MEMORY GAME (Cheating-Proof) ──
 let gPatternSequence = [], gPatternUserSeq = [], gPatternLevel = 0, gPatternMyScore = 0, gPatternOppScore = 0;
-let gPatternMyTurn = true, gPatternWaiting = false, gPatternBoard = [];
+let gPatternMyTurn = true, gPatternWaiting = false, gPatternBoardEl = [];
 
 function initPattern() {
+  // Hide all other game boards
   document.getElementById('g-ttt-wrap').style.display = 'none';
   document.getElementById('g-quiz-wrap').style.display = 'none';
   document.getElementById('g-tap-wrap').style.display = 'none';
   document.getElementById('g-pattern-wrap').style.display = 'block';
   
+  // Create pattern board (3x3 grid) with custom styling - NOT using g-tc class
   const board = document.getElementById('g-pattern-board');
   if(board) {
     board.innerHTML = '';
-    gPatternBoard = [];
+    gPatternBoardEl = [];
     const colors = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '🔷', '🔶', '⭐'];
     for(let i = 0; i < 9; i++) {
       const btn = document.createElement('div');
-      btn.className = 'g-tc';
+      // Use custom class, NOT g-tc
+      btn.className = 'pattern-cell';
       btn.textContent = colors[i % colors.length];
-      btn.style.fontSize = '1.5rem';
-      btn.dataset.index = i;
-      btn.onclick = () => patternUserClick(i);
+      btn.style.cssText = 'aspect-ratio:1;background:var(--s2);border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:all 0.2s ease;';
+      btn.setAttribute('data-index', i);
+      btn.onclick = (function(idx) { return function() { patternUserClick(idx); }; })(i);
       board.appendChild(btn);
-      gPatternBoard.push(btn);
+      gPatternBoardEl.push(btn);
     }
   }
   
@@ -2896,7 +2917,7 @@ function initPattern() {
   gPatternMyTurn = (gRole === 'playerA');
   gPatternWaiting = false;
   
-  document.getElementById('g-board-status').textContent = gPatternMyTurn ? 'Aapki Baari! Pattern yaad karo' : 'Opponent ki baari...';
+  document.getElementById('g-board-status').textContent = gPatternMyTurn ? '🎯 Aapki Baari! Pattern yaad karo' : '⏳ Opponent ki baari...';
   document.getElementById('g-ttt-hint').textContent = 'Pattern yaad karo aur same sequence tap karo!';
   document.getElementById('g-pattern-score').textContent = '0';
   document.getElementById('g-pattern-opp-score').textContent = '0';
@@ -2906,13 +2927,15 @@ function initPattern() {
     setTimeout(() => showNextPattern(), 1000);
   }
   
+  // Listen for opponent's turn
   listenPatternTurn();
 }
 
 function showNextPattern() {
-  if(gPatternWaiting || !gPatternMyTurn) return;
+  if(gPatternWaiting || !gPatternMyTurn || gGameEnded) return;
   gPatternWaiting = true;
   
+  // Add random index (0-8) to sequence
   gPatternSequence.push(Math.floor(Math.random() * 9));
   gPatternUserSeq = [];
   
@@ -2930,61 +2953,76 @@ function showNextPattern() {
     }
     
     const idx = gPatternSequence[i];
-    const btn = gPatternBoard[idx];
+    const btn = gPatternBoardEl[idx];
     if(btn) {
       btn.style.background = 'var(--g1d)';
-      btn.style.transform = 'scale(1.1)';
-      btn.style.transition = '0.2s';
+      btn.style.transform = 'scale(1.05)';
+      btn.style.borderColor = 'var(--g1)';
       setTimeout(() => {
         if(btn) {
           btn.style.background = '';
           btn.style.transform = '';
+          btn.style.borderColor = 'var(--border)';
         }
-      }, 300);
+      }, 400);
     }
     i++;
-  }, 600);
+  }, 700);
 }
 
 function patternUserClick(idx) {
   if(gPatternWaiting || !gPatternMyTurn || gGameEnded) return;
   
-  const btn = gPatternBoard[idx];
+  const btn = gPatternBoardEl[idx];
   if(btn) {
     btn.style.background = 'var(--g1d)';
-    setTimeout(() => { if(btn) btn.style.background = ''; }, 200);
+    btn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      if(btn) {
+        btn.style.background = '';
+        btn.style.transform = '';
+      }
+    }, 200);
   }
   
   gPatternUserSeq.push(idx);
   const expectedIndex = gPatternUserSeq.length - 1;
   
   if(idx !== gPatternSequence[expectedIndex]) {
+    // Wrong sequence - user loses this turn
     document.getElementById('g-board-status').textContent = '❌ Wrong sequence! Opponent ki baari...';
-    gPatternMyTurn = false;
     document.getElementById('g-ttt-hint').textContent = 'Opponent khel raha hai...';
+    gPatternMyTurn = false;
     
+    // Send turn to opponent via Firebase
     db.ref('game_rooms/' + gRoom + '/patternTurn').set(gRole === 'playerA' ? 'B' : 'A');
     return;
   }
   
+  // Check if user completed the sequence
   if(gPatternUserSeq.length === gPatternSequence.length) {
+    // Correct sequence - increase score
     gPatternMyScore++;
     document.getElementById('g-pattern-score').textContent = gPatternMyScore;
     document.getElementById('g-pattern-level').textContent = gPatternMyScore + 1;
     
+    // Send score to Firebase
     const myKey = gRole === 'playerA' ? 'A' : 'B';
     db.ref('game_rooms/' + gRoom + '/patternScores/' + myKey).set(gPatternMyScore);
     
+    // Check if game should end (best of 5)
     if(gPatternMyScore >= 5) {
       endPatternGame();
       return;
     }
     
+    // Show next level pattern
     setTimeout(() => showNextPattern(), 1000);
   }
 }
 
 async function endPatternGame() {
+  // Get opponent's score from Firebase
   const oppKey = gRole === 'playerA' ? 'B' : 'A';
   const oppScoreSnap = await db.ref('game_rooms/' + gRoom + '/patternScores/' + oppKey).once('value');
   gPatternOppScore = oppScoreSnap.val() || 0;
@@ -2997,19 +3035,21 @@ async function endPatternGame() {
   await db.ref('game_rooms/' + gRoom).update({ 
     status: 'finished', 
     winner, 
-    finishedAt: Date.now()
+    finishedAt: Date.now(),
+    patternWinner: winner
   });
 }
 
 function listenPatternTurn() {
   if(!gRoom) return;
   const oppKey = gRole === 'playerA' ? 'B' : 'A';
-  db.ref('game_rooms/' + gRoom + '/patternTurn').on('value', s => {
+  db.ref('game_rooms/' + gRoom + '/patternTurn').on('value', (s) => {
     if(s.val() === oppKey && !gPatternMyTurn && !gGameEnded) {
       gPatternMyTurn = true;
       gPatternSequence = [];
       gPatternUserSeq = [];
       document.getElementById('g-board-status').textContent = 'Aapki Baari! Pattern dekho...';
+      document.getElementById('g-ttt-hint').textContent = 'Pattern yaad karo...';
       setTimeout(() => showNextPattern(), 1000);
     }
   });
