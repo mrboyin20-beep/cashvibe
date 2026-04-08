@@ -1878,36 +1878,52 @@ function loadHistory(){
   if (!curUser) return;
   db.ref('withdrawals').orderByChild('uid').equalTo(curUser.uid).on('value', s => {
     const box = document.getElementById('hist-box');
+    if (!box) return;
     box.innerHTML = '';
+    
     if (!s.exists()) {
       box.innerHTML = '<p style="color:var(--dim);font-size:.8rem;text-align:center;padding:20px 0;">No withdrawal history yet.</p>';
       return;
     }
+    
     const items = [];
     s.forEach(c => items.push({ wid: c.key, ...c.val() }));
     items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
+    let htmlData = ''; // Loop ke andar direct HTML change karne se roknge
+    
     items.forEach(w => {
-      const coins = w.coins || Math.round((w.amount || 0) * 20);
-      const amt = w.amount || (coins / 20).toFixed(2);
-      const st = w.status || 'Processing';
-      const stColor = st === 'Done' ? '#10b981' : st === 'Rejected' ? '#ef4444' : '#f5a623';
-      const stIcon = st === 'Done' ? '✅' : st === 'Rejected' ? '❌' : '⏳';
-      const dateStr = w.date || (w.timestamp ? new Date(w.timestamp).toLocaleDateString('en-IN') : '—');
+      try {
+        // Safe Parsing taaki string hone par bhi app crash na ho
+        const amt = parseFloat(w.amount) || 0;
+        const coins = parseInt(w.coins) || Math.round(amt * 20);
+        
+        const st = w.status || 'Processing';
+        const stColor = st === 'Done' ? '#10b981' : st === 'Rejected' ? '#ef4444' : '#f5a623';
+        const stIcon = st === 'Done' ? '✅' : st === 'Rejected' ? '❌' : '⏳';
+        
+        const dateStr = w.date || (w.timestamp ? new Date(w.timestamp).toLocaleDateString('en-IN') : '—');
+        const safeUpi = (w.upi || '—').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
-      box.innerHTML += '<div class="hi" style="border-left:3px solid ' + stColor + ';padding-left:12px;">' +
-        '<div>' +
-          '<div class="hi-type" style="font-weight:700;">💸 Withdrawal Request</div>' +
-          '<div style="font-size:.72rem;color:var(--dim);margin-top:2px;">UPI: ' + (w.upi || '—') + '</div>' +
-          '<div class="hi-date">' + dateStr + '</div>' +
-        '</div>' +
-        '<div style="text-align:right;">' +
-          '<div class="hi-amt h-red" style="font-size:.95rem;">-🪙' + coins + '</div>' +
-          '<div style="font-size:.75rem;color:var(--dim);">= ₹' + amt + '</div>' +
-          '<div style="font-size:.72rem;color:' + stColor + ';font-weight:700;margin-top:4px;">' + stIcon + ' ' + st + '</div>' +
-        '</div>' +
-      '</div>';
+        htmlData += '<div class="hi" style="border-left:3px solid ' + stColor + ';padding-left:12px;margin-bottom:8px;">' +
+          '<div>' +
+            '<div class="hi-type" style="font-weight:700;">💸 Withdrawal Request</div>' +
+            '<div style="font-size:.72rem;color:var(--dim);margin-top:2px;">UPI: ' + safeUpi + '</div>' +
+            '<div class="hi-date" style="color:var(--dim);font-size:.65rem;margin-top:2px;">' + dateStr + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div class="hi-amt h-red" style="font-size:.95rem;">-🪙' + coins + '</div>' +
+            '<div style="font-size:.75rem;color:var(--dim);">= ₹' + amt.toFixed(2) + '</div>' +
+            '<div style="font-size:.72rem;color:' + stColor + ';font-weight:700;margin-top:4px;">' + stIcon + ' ' + st + '</div>' +
+          '</div>' +
+        '</div>';
+      } catch (err) {
+        console.log("History item skip hua due to data error", err);
+      }
     });
+    
+    // Ek sath poora HTML dalenge taaki display block na ho
+    box.innerHTML = htmlData;
   });
 }
 
@@ -3307,7 +3323,7 @@ function shopRenderHistory() {
     const items = [];
     snap.forEach(c => {
       const v = c.val();
-      if(v) items.unshift({key: c.key, ...v});
+      if(v) items.unshift({key: c.key,  ...v});
     });
     if(!items.length) {
       box.innerHTML = '<div class="card" style="text-align:center;padding:28px;"><div style="font-size:2rem;margin-bottom:8px;">🛍️</div><div style="color:var(--dim);font-size:.82rem;">Abhi tak koi submission nahi ki</div></div>';
