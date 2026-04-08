@@ -2789,9 +2789,12 @@ async function startGameBoard(room) {
 
 // ── FAST TAP BATTLE ──
 function initTap() {
-  document.getElementById('g-ttt-wrap').style.display  = 'none';
+  // Hide ALL other game boards FIRST
+  document.getElementById('g-ttt-wrap').style.display = 'none';
   document.getElementById('g-quiz-wrap').style.display = 'none';
-  document.getElementById('g-tap-wrap').style.display  = 'block';
+  document.getElementById('g-pattern-wrap').style.display = 'none';
+  // Then show Tap board
+  document.getElementById('g-tap-wrap').style.display = 'block';
 
   gTapClicked = false;
   gTapStart = 0;
@@ -2807,7 +2810,6 @@ function initTap() {
 
   document.getElementById('g-board-status').textContent = 'Get Ready...';
 
-  // Random Delay before Green (3 to 6 seconds) + Firebase sync buffer
   const delay = Math.floor(Math.random() * 3000) + 3000;
   
   setTimeout(() => {
@@ -2820,7 +2822,6 @@ function initTap() {
     document.getElementById('g-board-status').textContent = 'TAP FAST! ⚡';
   }, delay);
 
-  // Opponent ka tap dekhne ke liye listener
   const oppK = gRole === 'playerA' ? 'B' : 'A';
   db.ref('game_rooms/' + gRoom + '/taps/' + oppK).on('value', s => {
     if (s.exists() && !gGameEnded) {
@@ -2829,7 +2830,6 @@ function initTap() {
     }
   });
 }
-
 
 async function doFastTap() {
   if (gTapClicked || gGameEnded) return;
@@ -2888,28 +2888,28 @@ let gPatternSequence = [], gPatternUserSeq = [], gPatternLevel = 0, gPatternMySc
 let gPatternMyTurn = true, gPatternWaiting = false, gPatternBoardEl = [];
 
 function initPattern() {
-  // Hide all other game boards
+  // Hide ALL other game boards FIRST
   document.getElementById('g-ttt-wrap').style.display = 'none';
   document.getElementById('g-quiz-wrap').style.display = 'none';
   document.getElementById('g-tap-wrap').style.display = 'none';
+  // Then show Pattern board
   document.getElementById('g-pattern-wrap').style.display = 'block';
   
-  // Create pattern board (3x3 grid) with custom styling - NOT using g-tc class
   const board = document.getElementById('g-pattern-board');
   if(board) {
     board.innerHTML = '';
     gPatternBoardEl = [];
-    const colors = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '🔷', '🔶', '⭐'];
+    const patterns = ['🔴', '🔵', '🟢', '🟡', '🟣', '🟠', '💎', '⭐', '❤️'];
     for(let i = 0; i < 9; i++) {
-      const btn = document.createElement('div');
-      // Use custom class, NOT g-tc
-      btn.className = 'pattern-cell';
-      btn.textContent = colors[i % colors.length];
-      btn.style.cssText = 'aspect-ratio:1;background:var(--s2);border:2px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;cursor:pointer;transition:all 0.2s ease;';
-      btn.setAttribute('data-index', i);
-      btn.onclick = (function(idx) { return function() { patternUserClick(idx); }; })(i);
-      board.appendChild(btn);
-      gPatternBoardEl.push(btn);
+      const cell = document.createElement('div');
+      cell.className = 'pattern-cell';
+      cell.textContent = patterns[i % patterns.length];
+      cell.setAttribute('data-index', i);
+      cell.onclick = (function(idx) { 
+        return function() { patternUserClick(idx); }; 
+      })(i);
+      board.appendChild(cell);
+      gPatternBoardEl.push(cell);
     }
   }
   
@@ -2922,7 +2922,7 @@ function initPattern() {
   gPatternWaiting = false;
   
   document.getElementById('g-board-status').textContent = gPatternMyTurn ? '🎯 Aapki Baari! Pattern yaad karo' : '⏳ Opponent ki baari...';
-  document.getElementById('g-ttt-hint').textContent = 'Pattern yaad karo aur same sequence tap karo!';
+  document.getElementById('g-ttt-hint').textContent = '👆 Pattern yaad karo aur same sequence mein tap karo!';
   document.getElementById('g-pattern-score').textContent = '0';
   document.getElementById('g-pattern-opp-score').textContent = '0';
   document.getElementById('g-pattern-level').textContent = '1';
@@ -2931,7 +2931,6 @@ function initPattern() {
     setTimeout(() => showNextPattern(), 1000);
   }
   
-  // Listen for opponent's turn
   listenPatternTurn();
 }
 
@@ -3058,30 +3057,32 @@ function listenPatternTurn() {
     }
   });
 }
-// ── TTT ──
 function initTTT(isA) {
-  document.getElementById('g-ttt-wrap').style.display  = 'block';
+  // Hide ALL other game boards FIRST
   document.getElementById('g-quiz-wrap').style.display = 'none';
+  document.getElementById('g-tap-wrap').style.display = 'none';
+  document.getElementById('g-pattern-wrap').style.display = 'none';
+  // Then show TTT board
+  document.getElementById('g-ttt-wrap').style.display = 'block';
+  
   gMark = isA ? 'X' : 'O';
   document.getElementById('g-me-mark').textContent  = gMark === 'X' ? '✕' : '○';
   document.getElementById('g-opp-mark').textContent = gMark === 'X' ? '○' : '✕';
 
-  // Turn listener — update gMyTurn AND re-render board so onclick handlers update
+  // Turn listener
   db.ref('game_rooms/' + gRoom + '/currentTurn').on('value', s => {
     if (!s.val()) return;
     gMyTurn = (s.val() === (gRole === 'playerA' ? 'A' : 'B'));
     document.getElementById('g-board-status').textContent = gMyTurn ? 'Aapki Baari ⚔️' : 'Opponent ki baari...';
     document.getElementById('g-ttt-hint').textContent     = gMyTurn ? '👆 Cell tap karo' : '⏳ Wait kar raho...';
-    // Re-render board with updated turn so onclick handlers are fresh
     renderTTTBoard(gBoard);
   });
 
-  // Board listener — renders latest board state
+  // Board listener
   db.ref('game_rooms/' + gRoom + '/board').on('value', s => {
     if (s.val()) renderTTTBoard(s.val());
   });
 }
-
 function renderTTTBoard(board) {
   if (!board || !board.length) return;
   gBoard = [...board];
@@ -3144,8 +3145,13 @@ const G_QB = [
 ];
 
 function initQuiz() {
-  document.getElementById('g-ttt-wrap').style.display  = 'none';
+  // Hide ALL other game boards FIRST
+  document.getElementById('g-ttt-wrap').style.display = 'none';
+  document.getElementById('g-tap-wrap').style.display = 'none';
+  document.getElementById('g-pattern-wrap').style.display = 'none';
+  // Then show Quiz board
   document.getElementById('g-quiz-wrap').style.display = 'block';
+  
   const total = GCFG.quiz.questions || 5;
   gQList = [...G_QB].sort(() => Math.random() - .5).slice(0, total);
   gQIdx = 0; gMyScore = 0;
