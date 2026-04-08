@@ -530,7 +530,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
         </div>
       </div>
     </div>
-    <div class="card"><div class="card-title">All Notices</div><div id="notices-list"></div></div>
+        <div class="card">
+      <div class="card-title">📢 All Notices <span id="notice-count" style="font-size:.6rem;background:var(--g1d);color:var(--g1);padding:2px 8px;border-radius:99px;">0</span></div>
+      <div id="notices-list"></div>
+    </div>
+
+    <!-- USER NOTIFICATIONS SECTION (Kis user ko kya msg mila) -->
+    <div class="card" style="margin-top:14px;border-color:rgba(123,94,167,.2);background:rgba(123,94,167,.02);">
+      <div class="card-title" style="color:#b88fff;">
+        🔔 User Notifications History
+        <span style="font-size:.6rem;color:var(--dim);font-weight:400;">(Kis user ko kya message bheja)</span>
+      </div>
+      
+      <!-- User Search -->
+      <div class="search-bar" style="margin-bottom:12px;">
+        <input class="sinp" id="user-notif-search" placeholder="🔍 Search by User UID or Name..." oninput="loadUserNotifications()" style="flex:1;">
+        <button class="filt-btn" onclick="loadUserNotifications()" style="padding:6px 12px;">Search</button>
+      </div>
+      
+      <!-- User Notifications List -->
+      <div id="user-notif-list" style="max-height:400px;overflow-y:auto;">
+        <p style="color:var(--dim);font-size:.8rem;text-align:center;padding:20px;">Select a user to view notifications</p>
+      </div>
+    </div>
   </div>
 
   <!-- SETTINGS -->
@@ -1900,15 +1922,55 @@ async function rejectWdl(btn) {
   } catch(e) { toast('Error: ' + e.message, 'err'); btn.disabled = false; btn.textContent = '❌ Reject'; }
 }
 
-// NOTICES
 function loadNotices() {
-  db.ref('notices_list').orderByChild('timestamp').limitToLast(20).on('value',s=>{
-    const list=document.getElementById('notices-list'); list.innerHTML='';
-    if(!s.exists()){ list.innerHTML='<p style="color:var(--dim);font-size:.8rem;">No notices yet.</p>'; return; }
-    const items=[]; s.forEach(c=>items.push({nid:c.key,...c.val()})); items.reverse();
-    items.forEach(n=>{
-      list.innerHTML+=`<div class="notice-item"><div><div style="font-size:.8rem;line-height:1.6;">${n.text}</div><div style="font-size:.62rem;color:var(--dim);margin-top:3px;">${new Date(n.timestamp).toLocaleString()}</div></div><button class="act-btn ab-r" onclick="deleteNotice('${n.nid}')">Del</button></div>`;
+  // Ab limitToLast hata diya - SAARE NOTICES LOAD HONGE
+  db.ref('notices_list').orderByChild('timestamp').on('value', s => {
+    const list = document.getElementById('notices-list');
+    list.innerHTML = '';
+    
+    if (!s.exists()) {
+      list.innerHTML = '<p style="color:var(--dim);font-size:.8rem;">No notices yet.</p>';
+      return;
+    }
+    
+    const items = [];
+    s.forEach(c => items.push({ nid: c.key, ...c.val() }));
+    // Latest pehle (timestamp se sort)
+    items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    if (items.length === 0) {
+      list.innerHTML = '<p style="color:var(--dim);font-size:.8rem;">No notices yet.</p>';
+      return;
+    }
+    
+    items.forEach(n => {
+      // ForUser hai toh personal notification hai, warna public
+      const isPersonal = n.forUser && n.forUser !== 'ALL';
+      const targetText = isPersonal ? `🔔 To: ${n.forUser ? n.forUser.substring(0, 10) + '...' : 'User'}` : '🌍 Public Notice';
+      const targetColor = isPersonal ? 'var(--g1)' : 'var(--g3)';
+      
+      list.innerHTML += `
+        <div class="notice-item" style="border-left: 3px solid ${targetColor};">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:.65rem;font-weight:700;color:${targetColor};">${targetText}</span>
+              <span style="font-size:.55rem;color:var(--dim);background:var(--s2);padding:2px 6px;border-radius:99px;">${n.type || 'info'}</span>
+            </div>
+            <div style="font-size:.78rem;line-height:1.5;">${n.text}</div>
+            <div style="font-size:.58rem;color:var(--dim);margin-top:5px;">
+              📅 ${new Date(n.timestamp).toLocaleString('en-IN')}
+              ${n.link ? ` 🔗 <a href="${n.link}" target="_blank" style="color:var(--g1);">Link</a>` : ''}
+            </div>
+          </div>
+          <button class="act-btn ab-r" onclick="deleteNotice('${n.nid}')" style="padding:4px 10px;font-size:.6rem;">🗑️</button>
+        </div>`;
     });
+    
+    // Show total count
+    const noticeTitle = document.querySelector('#pg-notices .card-title');
+    if (noticeTitle && noticeTitle.textContent.includes('All Notices')) {
+      noticeTitle.innerHTML = `All Notices <span style="font-size:.6rem;background:var(--g1d);color:var(--g1);padding:2px 8px;border-radius:99px;">${items.length}</span>`;
+    }
   });
 }
 async function postNotice() {
@@ -1920,6 +1982,92 @@ async function postNotice() {
 }
 async function deleteNotice(nid) { await db.ref('notices_list/'+nid).remove(); toast('Deleted!','warn'); }
 
+// Load notifications for specific user
+async function loadUserNotifications() {
+  const searchVal = document.getElementById('user-notif-search').value.trim().toLowerCase();
+  const container = document.getElementById('user-notif-list');
+  
+  if (!searchVal) {
+    container.innerHTML = '<p style="color:var(--dim);font-size:.8rem;text-align:center;padding:20px;">Enter User UID or Name to search</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--dim);"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading...</div>';
+  
+  // Pehle user search karo
+  let targetUid = null;
+  let targetName = null;
+  
+  for (const u of allUsers) {
+    if ((u.uid && u.uid.toLowerCase().includes(searchVal)) || 
+        (u.name && u.name.toLowerCase().includes(searchVal))) {
+      targetUid = u.uid;
+      targetName = u.name;
+      break;
+    }
+  }
+  
+  if (!targetUid) {
+    container.innerHTML = '<p style="color:var(--dim);font-size:.8rem;text-align:center;padding:20px;">User not found! Try UID or Name.</p>';
+    return;
+  }
+  
+  // User ki saari notifications load karo
+  db.ref('user_notifications/' + targetUid).orderByChild('timestamp').once('value', snap => {
+    if (!snap.exists()) {
+      container.innerHTML = `<p style="color:var(--dim);font-size:.8rem;text-align:center;padding:20px;">📭 No notifications sent to ${targetName || targetUid.substring(0,10)} yet.</p>`;
+      return;
+    }
+    
+    const items = [];
+    snap.forEach(c => items.push({ nid: c.key, ...c.val() }));
+    items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    
+    let html = `<div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:40px;height:40px;background:var(--g1d);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👤</div>
+        <div>
+          <div style="font-weight:700;font-size:.9rem;">${targetName || 'User'}</div>
+          <div style="font-size:.65rem;color:var(--dim);font-family:monospace;">${targetUid}</div>
+        </div>
+      </div>
+      <div style="font-size:.7rem;color:var(--mid);">Total notifications: <strong>${items.length}</strong></div>
+    </div>`;
+    
+    items.forEach(n => {
+      const timeAgo = getTimeAgoUser(n.timestamp);
+      const isRead = n.read ? '✅ Read' : '🟡 Unread';
+      
+      html += `
+        <div style="background:var(--s2);border-radius:12px;padding:12px;margin-bottom:8px;border-left:3px solid ${n.type === 'reward' ? '#10b981' : n.type === 'alert' ? '#ef4444' : '#00f5c4'};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:5px;">
+            <div style="font-weight:700;font-size:.8rem;color:var(--text);">${n.title || 'Notification'}</div>
+            <span style="font-size:.6rem;padding:2px 6px;border-radius:99px;background:rgba(0,0,0,.3);color:${n.type === 'reward' ? '#10b981' : n.type === 'alert' ? '#ef4444' : 'var(--g1)'};">${n.type || 'info'}</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--mid);margin-top:5px;line-height:1.5;">${n.message || n.text || ''}</div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <div style="font-size:.6rem;color:var(--dim);">📅 ${new Date(n.timestamp).toLocaleString('en-IN')}</div>
+            <div style="font-size:.6rem;color:${n.read ? 'var(--g1)' : 'var(--dim)'};">${isRead}</div>
+          </div>
+          ${n.link ? `<div style="margin-top:5px;"><a href="${n.link}" target="_blank" style="font-size:.6rem;color:var(--g1);">🔗 View Link</a></div>` : ''}
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  });
+}
+
+// Helper function for time ago
+function getTimeAgoUser(ts) {
+  if (!ts) return 'Just now';
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), d = Math.floor(diff/86400000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return m + 'm ago';
+  if (h < 24) return h + 'h ago';
+  return d + 'd ago';
+}
 // SETTINGS
 function loadSettings() {
   db.ref('settings').once('value',s=>{
