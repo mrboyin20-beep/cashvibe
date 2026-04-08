@@ -1888,13 +1888,13 @@ function loadHistory(){
     
     const items = [];
     s.forEach(c => items.push({ wid: c.key, ...c.val() }));
+    // Latest pehle dikhane ke liye sort
     items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-    let htmlData = ''; // Loop ke andar direct HTML change karne se roknge
+    let htmlData = ''; 
     
     items.forEach(w => {
       try {
-        // Safe Parsing taaki string hone par bhi app crash na ho
         const amt = parseFloat(w.amount) || 0;
         const coins = parseInt(w.coins) || Math.round(amt * 20);
         
@@ -1903,7 +1903,9 @@ function loadHistory(){
         const stIcon = st === 'Done' ? '✅' : st === 'Rejected' ? '❌' : '⏳';
         
         const dateStr = w.date || (w.timestamp ? new Date(w.timestamp).toLocaleDateString('en-IN') : '—');
-        const safeUpi = (w.upi || '—').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        
+        // 🔥 MAIN FIX: w.upi ko String() mein dala taaki number hone par code crash na ho
+        const safeUpi = String(w.upi || '—').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
         htmlData += '<div class="hi" style="border-left:3px solid ' + stColor + ';padding-left:12px;margin-bottom:8px;">' +
           '<div>' +
@@ -1918,11 +1920,10 @@ function loadHistory(){
           '</div>' +
         '</div>';
       } catch (err) {
-        console.log("History item skip hua due to data error", err);
+        console.log("History item skip hua: ", err);
       }
     });
     
-    // Ek sath poora HTML dalenge taaki display block na ho
     box.innerHTML = htmlData;
   });
 }
