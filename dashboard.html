@@ -2548,13 +2548,35 @@ let gRoomListener=null, gMmTimer=null;
 
 // Realtime config from Firebase (admin panel se control)
 db.ref('game_config').on('value', snap => {
-  const cfg = snap.val(); if (!cfg) return;
-  if (cfg.ttt)  { Object.assign(GCFG.ttt,  cfg.ttt);  }
-  if (cfg.quiz) { Object.assign(GCFG.quiz, cfg.quiz); }
+  const cfg = snap.val(); 
+  if (!cfg) return;
+  
+  // Update TTT
+  if (cfg.ttt) { 
+    GCFG.ttt = { ...GCFG.ttt, ...cfg.ttt };
+  }
+  
+  // Update Quiz
+  if (cfg.quiz) { 
+    GCFG.quiz = { ...GCFG.quiz, ...cfg.quiz };
+  }
+  
+  // Update Fast Tap
+  if (cfg.tap) { 
+    GCFG.tap = { ...GCFG.tap, ...cfg.tap };
+  }
+  
+  // Update Pattern Memory
+  if (cfg.pattern) { 
+    GCFG.pattern = { ...GCFG.pattern, ...cfg.pattern };
+  }
+  
+  // Update Global settings
   if (cfg.global) {
     gArenaStatus = cfg.global.arena_status || 'active';
     gMaintMsg    = cfg.global.maint_msg    || '';
   }
+  
   updateGameUI();
 });
 
@@ -2564,6 +2586,7 @@ function updateGameUI() {
     'g-ttt-prize-lbl': GCFG.ttt.prize + ' coins',
     'g-quiz-fee-lbl':  GCFG.quiz.fee  + ' coins',
     'g-quiz-prize-lbl':GCFG.quiz.prize + ' coins',
+    
         'g-pattern-fee-lbl':   GCFG.pattern.fee + ' coins',
     'g-pattern-prize-lbl': GCFG.pattern.prize + ' coins',
   };
@@ -2573,10 +2596,22 @@ function updateGameUI() {
   const msgEl = document.getElementById('g-arena-msg');
   const tttC  = document.getElementById('g-ttt-card');
   const quizC = document.getElementById('g-quiz-card');
-    const patternC = document.getElementById('g-pattern-card');
-  if(patternC) {
-    if(gArenaStatus !== 'active') patternC.style.opacity = '0.45';
-    else patternC.style.opacity = '1';
+     // Pattern Memory UI Update
+  const patternFeeEl = document.getElementById('g-pattern-fee-lbl');
+  const patternPrizeEl = document.getElementById('g-pattern-prize-lbl');
+  const patternCard = document.getElementById('g-pattern-card');
+  
+  if (patternFeeEl) patternFeeEl.textContent = GCFG.pattern.fee + ' coins';
+  if (patternPrizeEl) patternPrizeEl.textContent = GCFG.pattern.prize + ' coins';
+  
+  if (patternCard) {
+    if (gArenaStatus !== 'active' || GCFG.pattern.status === 'inactive') {
+      patternCard.style.opacity = '0.45';
+      patternCard.style.pointerEvents = 'none';
+    } else {
+      patternCard.style.opacity = '1';
+      patternCard.style.pointerEvents = 'auto';
+    }
   }
   if (msgEl) {
     if (gArenaStatus !== 'active') {
@@ -2642,7 +2677,11 @@ async function joinGame(gameType) {
   const cfg = GCFG[gameType];
   if (!cfg) return;
   if (cfg.status === 'inactive') { toast(cfg.name + ' abhi disabled hai!', 'err'); return; }
-  
+    // Pattern Memory specific status check
+  if (gameType === 'pattern' && GCFG.pattern.status === 'inactive') {
+    toast('Pattern Memory game abhi disabled hai!', 'err');
+    return;
+  }
   const bal = Math.floor(U.balance || 0);
   const entryFee = Number(cfg.fee) || 0;
   if (bal < entryFee) { toast('Insufficient coins! ' + entryFee + ' coins chahiye.', 'err'); return; }
