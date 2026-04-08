@@ -707,7 +707,7 @@ async function doGoogle() {
     const snap = await db.ref('users/' + uid).once('value');
     
     if (snap.exists()) {
-      // Purana user hai, seedha dashboard par bhejo
+      // Purana user hai, dashboard par bhejo
       await registerDevice(uid);
       toast('Welcome back! 🎉', 'ok');
       setTimeout(() => {
@@ -715,13 +715,51 @@ async function doGoogle() {
         window.location.replace('dashboard.html');
       }, 800);
     } else {
-      // Naya user hai, form dikhao!
+      // Naya user hai - Basic Details Form Dikhao
       tempGoogleUser = user;
       
-      // Slides ko chupao aur form dikhao
+      // Google se data le lo
+      const googleName = user.displayName || '';
+      const googleEmail = user.email || '';
+      
+      // Form dikhane se pehle saari chizein hide karo
       document.querySelector('.slides .slide-track').style.display = 'none';
       document.getElementById('toggle').style.display = 'none';
-      document.getElementById('frm-g-complete').style.display = 'block';
+      
+      // Basic Details Form Show Karo
+      const formHtml = `
+        <div id="google-details-form" style="padding:10px 0;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">🚀</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--g1);">Complete Your Profile</div>
+            <p style="font-size:.75rem;color:var(--dim);line-height:1.6;">Please provide basic details to continue</p>
+          </div>
+          <div class="inp-wrap">
+            <i class="fa-solid fa-user icon"></i>
+            <input type="text" id="google-name" placeholder="Full Name" value="${googleName}">
+          </div>
+          <div class="inp-wrap">
+            <i class="fa-solid fa-envelope icon"></i>
+            <input type="email" id="google-email" placeholder="Email Address" value="${googleEmail}" readonly style="background:rgba(0,245,196,.05);border-color:var(--g1);color:var(--g1);">
+          </div>
+          <div class="inp-wrap">
+            <i class="fa-solid fa-phone icon"></i>
+            <input type="tel" id="google-phone" placeholder="Mobile Number (10 digits)" maxlength="10">
+          </div>
+          <div class="refer-tag"><i class="fa-solid fa-gift"></i> Referral code? Get extra joining bonus!</div>
+          <div class="inp-wrap">
+            <i class="fa-solid fa-ticket icon"></i>
+            <input type="text" id="google-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
+          </div>
+          <button class="auth-btn" id="google-submit-btn" onclick="completeGoogleSignup()">
+            <i class="fa-solid fa-check-circle"></i> COMPLETE SIGNUP
+          </button>
+        </div>
+      `;
+      
+      // Form inject karo
+      const slidesDiv = document.querySelector('.slides');
+      slidesDiv.innerHTML = formHtml;
       
       setLoading(false);
       toast('Please complete your profile!', 'ok');
@@ -735,25 +773,36 @@ async function doGoogle() {
     }
   }
 }
+
 // ══════════════════════════════════════════════
 // 📝 COMPLETE GOOGLE PROFILE (Save Data & Bonus)
 // ══════════════════════════════════════════════
-async function completeGoogleProfile() {
-  if (!tempGoogleUser) return;
+async function completeGoogleSignup() {
+  if (!tempGoogleUser) {
+    toast('Session expired! Please try again.', 'err');
+    return;
+  }
   
-  const phone = document.getElementById('g-phone').value.trim().replace(/\D/g, '');
-  const refer = document.getElementById('g-refer').value.trim().toUpperCase();
+  const name = document.getElementById('google-name').value.trim();
+  const phone = document.getElementById('google-phone').value.trim().replace(/\D/g, '');
+  const refer = document.getElementById('google-refer').value.trim().toUpperCase();
+  const email = document.getElementById('google-email').value.trim();
 
-  if (phone.length !== 10) return toast('Enter valid 10-digit mobile number!', 'err');
+  if (!name || name.length < 2) {
+    toast('Please enter your full name!', 'err');
+    return;
+  }
+  if (phone.length !== 10) {
+    toast('Enter valid 10-digit mobile number!', 'err');
+    return;
+  }
 
-  const btn = document.getElementById('g-complete-btn');
+  const btn = document.getElementById('google-submit-btn');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating Account...';
 
   try {
     const uid = tempGoogleUser.uid;
-    const name = tempGoogleUser.displayName || 'Google User';
-    const email = tempGoogleUser.email || '';
 
     // Mobile number duplicate check
     let phoneTaken = false;
@@ -769,27 +818,33 @@ async function completeGoogleProfile() {
     
     if (phoneTaken) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> FINISH SIGNUP';
+      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> COMPLETE SIGNUP';
       return toast('Phone number already registered!', 'err');
     }
     
     if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
 
-    // Admin Settings load karo (Bonus ke liye)
+    // Admin Settings load karo
     let cfg = { signup_bonus: 0, refer_reward: 0 };
     const cfgSnap = await db.ref('app_control').once('value');
     if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
 
-    // Sirf tabhi bonus do agar Referral Code sahi hai
     const joinBonus = referrerUid ? (cfg.signup_bonus || 400) : 0;
     const now = Date.now();
 
-    // Data ko Firebase (Admin Panel) mein save karo
+    // DEVICE CHECK
+    const devCheck = await checkDevice(uid);
+    if (!devCheck.allowed) {
+      showDeviceBlocked(devCheck.uids);
+      return;
+    }
+
+    // USER DATA SAVE - NAME, EMAIL, PHONE SAB SAVE HOGA
     await db.ref('users/' + uid).set({
-      name: name,
-      email: email,
-      mobile: phone, // Number yahan save hoga
-      balance: joinBonus, // Agar refer code sahi hai toh bonus milega, warna 0
+      name: name,              // ✅ User ka entered name
+      email: email,            // ✅ Google se auto email
+      mobile: phone,           // ✅ User ka phone number
+      balance: joinBonus,
       streak: 0, 
       xp: 0,
       referredBy: referrerUid || 'DIRECT', 
@@ -797,18 +852,12 @@ async function completeGoogleProfile() {
       emailVerified: true,
       deviceId: DEVICE_ID,
       joinDate: new Date().toLocaleDateString('en-IN'),
-      joinedAt: now,
-      pendingReferral: referrerUid ? {
-        referrerUid,
-        reward: cfg.refer_reward || 500,
-        joinedAt: now,
-        credited: false
-      } : null
+      joinedAt: now
     });
 
     await registerDevice(uid);
 
-    // Referral log (Referrer ko bonus dene ke liye)
+    // Referral log
     if (referrerUid) {
       await db.ref('refer_logs/' + uid).set({
         from: referrerUid,
@@ -816,23 +865,24 @@ async function completeGoogleProfile() {
         rewardCredited: false,
         rewardAmount: cfg.refer_reward || 500
       });
-      toast('Welcome! 🎉 Bonus credited. Refer bonus in 2 days.', 'ok');
-    } else {
-      toast('Account created! Welcome to CashVibe 🚀', 'ok');
     }
 
-    // Dashboard par bhejo!
+    toast('Account created successfully! 🎉', 'ok');
+    
+    // Dashboard par redirect
     setTimeout(() => {
       otpVerifyInProgress = false;
       window.location.replace('dashboard.html');
     }, 1000);
 
   } catch(e) {
+    console.error('Signup error:', e);
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> FINISH SIGNUP';
-    toast('Error saving profile: ' + e.message, 'err');
+    btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> COMPLETE SIGNUP';
+    toast('Error: ' + e.message, 'err');
   }
 }
+
 // ══════════════════════════════════════════════
 // 🎁 REFERRAL REWARD CHECK (Moved to Dashboard)
 // ══════════════════════════════════════════════
