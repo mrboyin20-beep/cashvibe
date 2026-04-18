@@ -192,6 +192,17 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
+<!-- ═══════════ MOBILE VERIFICATION SECTION (Email verify hone ke baad dikhega) ═══════════ -->
+<div id="mobileVerificationSection" style="display: none; margin-top: 24px;">
+    <div class="divider"><span></span><p>VERIFY MOBILE NUMBER</p><span></span></div>
+    <button onclick="startTruecallerVerification()" style="width:100%;padding:16px;background:linear-gradient(135deg,#00f5c4,#00c49a);border:none;border-radius:60px;color:#000;font-weight:800;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;">
+        <i class="fa-brands fa-truecaller" style="font-size:1.2rem;"></i> Verify with Truecaller
+    </button>
+    <p style="font-size:0.7rem;color:var(--dim);text-align:center;margin-top:14px;">
+        ⚡ One-click verification — No OTP required<br>
+        Make sure Truecaller app is installed on your phone
+    </p>
+</div>
 <!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
 <div class="modal" id="resetModal">
   <div class="modal-box">
@@ -575,13 +586,21 @@ async function checkVerification() {
 
   const user = auth.currentUser;
   if (user) {
-    await user.reload(); // Refresh the user's token state from Firebase
+    await user.reload();
     if (user.emailVerified) {
-      // Mark as verified in DB
       await db.ref('users/' + user.uid).update({ emailVerified: true });
       
-      toast('Account Verified Successfully! 🎉', 'ok');
-      window.location.replace('dashboard.html');
+      toast('Email Verified Successfully! 🎉', 'ok');
+      
+      // ✅ Email verify ho gaya — ab mobile verification section dikhao
+      document.getElementById('mobileVerificationSection').style.display = 'block';
+      
+      // Modal band karo
+      document.getElementById('otpModal').classList.remove('open');
+      
+      // Button reset karo
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> I HAVE VERIFIED';
     } else {
       toast('❌ Not verified yet! Check inbox/spam folder.', 'err');
       btn.disabled = false;
@@ -958,6 +977,95 @@ function togglePass(id, el) {
       .catch(err => console.log('PWA SW Failed: ', err));
     });
   }
+
+  // ============================================
+// 🔥 TRUECALLER VERIFICATION (Add this at the end of your script)
+// ============================================
+
+// Truecaller configuration
+const TRUECALLER_APP_KEY = "ULckr867df128add6429fbf3dc5870b633901";
+const TRUECALLER_BACKEND = "https://cashvibe-truecaller.vercel.app";
+
+function generateTruecallerRequestId() {
+    return 'cv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16);
+}
+
+async function startTruecallerVerification() {
+    const user = auth.currentUser;
+    if (!user) {
+        toast('Please login first!', 'err');
+        return;
+    }
+    
+    const userEmail = user.email;
+    if (!user.emailVerified) {
+        toast('Please verify your email first!', 'err');
+        return;
+    }
+    
+    const requestId = generateTruecallerRequestId();
+    sessionStorage.setItem('tc_request_id', requestId);
+    sessionStorage.setItem('tc_user_email', userEmail);
+    
+    // Deep link URL
+    const deepLink = `truecallersdk://truesdk/web_verify?requestNonce=${requestId}&partnerKey=${TRUECALLER_APP_KEY}&partnerName=CashVibe&lang=hi&loginPrefix=proceed&loginSuffix=verify`;
+    
+    showLoader("Opening Truecaller...");
+    
+    // Open Truecaller app
+    window.location.href = deepLink;
+    
+    // Start polling for verification
+    startTruecallerPolling(requestId);
+}
+
+async function startTruecallerPolling(requestId) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 15;
+    const INTERVAL = 3000;
+    
+    const intervalId = setInterval(async () => {
+        attempts++;
+        
+        try {
+            const response = await fetch(`${TRUECALLER_BACKEND}/api/verification-status/${requestId}`);
+            const data = await response.json();
+            
+            if (data.verified) {
+                clearInterval(intervalId);
+                hideLoader();
+                await linkPhoneToFirebaseUser(requestId);
+                toast('Mobile number verified successfully! 🎉', 'ok');
+                setTimeout(() => {
+                    window.location.href = '/dashboard.html';
+                }, 1500);
+            } else if (attempts >= MAX_ATTEMPTS) {
+                clearInterval(intervalId);
+                hideLoader();
+                toast('Verification timeout. Please try again.', 'err');
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+            if (attempts >= MAX_ATTEMPTS) {
+                clearInterval(intervalId);
+                hideLoader();
+                toast('Verification failed. Please try again.', 'err');
+            }
+        }
+    }, INTERVAL);
+}
+
+async function linkPhoneToFirebaseUser(requestId) {
+    const userEmail = sessionStorage.getItem('tc_user_email');
+    const response = await fetch(`${TRUECALLER_BACKEND}/api/link-phone-to-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, userEmail })
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error);
+    return data;
+}
 </script>
 </body>
 </html>
