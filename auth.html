@@ -203,6 +203,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
         Make sure Truecaller app is installed on your phone
     </p>
 </div>
+
 <!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
 <div class="modal" id="resetModal">
   <div class="modal-box">
@@ -328,7 +329,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 
 <script>
 // ══════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG & INIT (Var used to prevent initialization errors)
+// 🔥 FIREBASE CONFIG & INIT
 // ══════════════════════════════════════════════
 var firebaseConfig = {
   apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
@@ -370,12 +371,11 @@ const DEVICE_ID = getDeviceId();
 // ══════════════════════════════════════════════
 // 🔄 AUTO LOGIN CHECK & AUTH OBSERVER
 // ══════════════════════════════════════════════
-let otpVerifyInProgress = false; // Manual flow marker
+let otpVerifyInProgress = false;
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .then(() => {
     const unsub = auth.onAuthStateChanged(user => {
       if (user && !otpVerifyInProgress) {
-        // Observer checking email verified status
         const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
         if (user.emailVerified || isGoogle) {
           unsub(); 
@@ -465,7 +465,7 @@ function showDeviceBlocked(uids) {
 }
 
 // ══════════════════════════════════════════════
-// 📝 SIGNUP (With Native Firebase Email Verification)
+// 📝 SIGNUP
 // ══════════════════════════════════════════════
 async function doSignup() {
   const name  = document.getElementById('reg-name').value.trim();
@@ -481,7 +481,6 @@ async function doSignup() {
 
   setLoading(true);
   try {
-    // 1. DB DUPLICATE CHECK (Phone & Referral)
     let phoneTaken = false, referrerUid = null;
     try {
       const usersSnap = await db.ref('users').once('value');
@@ -501,22 +500,17 @@ async function doSignup() {
       if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
     } catch(e) {}
 
-    // Blocking redirect to ensure smooth DB writes
     otpVerifyInProgress = true;
-
-    // 2. CREATE AUTH USER
     const res = await auth.createUserWithEmailAndPassword(email, pass);
     const user = res.user;
     const uid = user.uid;
 
-    // 3. DEVICE CHECK
     const devCheck = await checkDevice(uid);
     if (!devCheck.allowed) {
       showDeviceBlocked(devCheck.uids);
       return;
     }
 
-    // 4. SETUP USER IN DB
     const now = Date.now();
     const joinBonus = referrerUid ? (cfg.signup_bonus || 0) : 0;
 
@@ -549,13 +543,10 @@ async function doSignup() {
       });
     }
 
-    // 5. UPDATE PROFILE & SEND FIREBASE EMAIL
     await user.updateProfile({ displayName: name });
     await user.sendEmailVerification();
 
     otpVerifyInProgress = false;
-
-    // 6. SHOW VERIFICATION MODAL
     openVerifyModal(email);
     toast('Verification link sent! Check email.', 'ok');
 
@@ -593,7 +584,11 @@ async function checkVerification() {
       toast('Email Verified Successfully! 🎉', 'ok');
       
       // ✅ Email verify ho gaya — ab mobile verification section dikhao
-      document.getElementById('mobileVerificationSection').style.display = 'block';
+      const mobileSection = document.getElementById('mobileVerificationSection');
+      if (mobileSection) {
+          mobileSection.style.display = 'block';
+          mobileSection.scrollIntoView({ behavior: 'smooth' });
+      }
       
       // Modal band karo
       document.getElementById('otpModal').classList.remove('open');
@@ -633,7 +628,6 @@ async function cancelVerification() {
   document.getElementById('otpModal').classList.remove('open');
   toast('Logged out.', 'ok');
 }
-
 
 // ══════════════════════════════════════════════
 // 🔐 LOGIN
@@ -682,7 +676,7 @@ async function doLogin() {
     await registerDevice(uid);
     checkReferralReward(uid);
 
-    otpVerifyInProgress = false; // Allow manual handling
+    otpVerifyInProgress = false;
 
     if (user.emailVerified) {
       toast('Welcome back! 💰', 'ok');
@@ -708,14 +702,13 @@ async function doLogin() {
 }
 
 // ══════════════════════════════════════════════
-// 🌐 GOOGLE LOGIN (With Profile Completion)
+// 🌐 GOOGLE LOGIN
 // ══════════════════════════════════════════════
 let tempGoogleUser = null;
 
 async function doGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   setLoading(true);
-  
   otpVerifyInProgress = true; 
   
   try {
@@ -726,7 +719,6 @@ async function doGoogle() {
     const snap = await db.ref('users/' + uid).once('value');
     
     if (snap.exists()) {
-      // Purana user hai, dashboard par bhejo
       await registerDevice(uid);
       toast('Welcome back! 🎉', 'ok');
       setTimeout(() => {
@@ -734,18 +726,13 @@ async function doGoogle() {
         window.location.replace('dashboard.html');
       }, 800);
     } else {
-      // Naya user hai - Basic Details Form Dikhao
       tempGoogleUser = user;
-      
-      // Google se data le lo
       const googleName = user.displayName || '';
       const googleEmail = user.email || '';
       
-      // Form dikhane se pehle saari chizein hide karo
       document.querySelector('.slides .slide-track').style.display = 'none';
       document.getElementById('toggle').style.display = 'none';
       
-      // Basic Details Form Show Karo
       const formHtml = `
         <div id="google-details-form" style="padding:10px 0;">
           <div style="text-align:center;margin-bottom:20px;">
@@ -776,10 +763,8 @@ async function doGoogle() {
         </div>
       `;
       
-      // Form inject karo
       const slidesDiv = document.querySelector('.slides');
       slidesDiv.innerHTML = formHtml;
-      
       setLoading(false);
       toast('Please complete your profile!', 'ok');
     }
@@ -793,9 +778,6 @@ async function doGoogle() {
   }
 }
 
-// ══════════════════════════════════════════════
-// 📝 COMPLETE GOOGLE PROFILE (Save Data & Bonus)
-// ══════════════════════════════════════════════
 async function completeGoogleSignup() {
   if (!tempGoogleUser) {
     toast('Session expired! Please try again.', 'err');
@@ -823,7 +805,6 @@ async function completeGoogleSignup() {
   try {
     const uid = tempGoogleUser.uid;
 
-    // Mobile number duplicate check
     let phoneTaken = false;
     let referrerUid = null;
     
@@ -843,7 +824,6 @@ async function completeGoogleSignup() {
     
     if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
 
-    // Admin Settings load karo
     let cfg = { signup_bonus: 0, refer_reward: 0 };
     const cfgSnap = await db.ref('app_control').once('value');
     if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
@@ -851,24 +831,17 @@ async function completeGoogleSignup() {
     const joinBonus = referrerUid ? (cfg.signup_bonus || 400) : 0;
     const now = Date.now();
 
-    // DEVICE CHECK
     const devCheck = await checkDevice(uid);
     if (!devCheck.allowed) {
       showDeviceBlocked(devCheck.uids);
       return;
     }
 
-    // USER DATA SAVE - NAME, EMAIL, PHONE SAB SAVE HOGA
     await db.ref('users/' + uid).set({
-      name: name,              // ✅ User ka entered name
-      email: email,            // ✅ Google se auto email
-      mobile: phone,           // ✅ User ka phone number
-      balance: joinBonus,
-      streak: 0, 
-      xp: 0,
+      name: name, email: email, mobile: phone,
+      balance: joinBonus, streak: 0, xp: 0,
       referredBy: referrerUid || 'DIRECT', 
-      status: 'active',
-      emailVerified: true,
+      status: 'active', emailVerified: true,
       deviceId: DEVICE_ID,
       joinDate: new Date().toLocaleDateString('en-IN'),
       joinedAt: now
@@ -876,7 +849,6 @@ async function completeGoogleSignup() {
 
     await registerDevice(uid);
 
-    // Referral log
     if (referrerUid) {
       await db.ref('refer_logs/' + uid).set({
         from: referrerUid,
@@ -888,7 +860,6 @@ async function completeGoogleSignup() {
 
     toast('Account created successfully! 🎉', 'ok');
     
-    // Dashboard par redirect
     setTimeout(() => {
       otpVerifyInProgress = false;
       window.location.replace('dashboard.html');
@@ -902,12 +873,10 @@ async function completeGoogleSignup() {
   }
 }
 
-// ══════════════════════════════════════════════
-// 🎁 REFERRAL REWARD CHECK (Moved to Dashboard)
-// ══════════════════════════════════════════════
 async function checkReferralReward(uid) {
-  // Purana 2-Day system hata diya gaya hai. Ab Dashboard 100% live track karega!
+  // Dashboard handle karega
 }
+
 // ══════════════════════════════════════════════
 // 🔑 RESET PASSWORD
 // ══════════════════════════════════════════════
@@ -946,7 +915,7 @@ async function sendReset() {
   }
 }
 
-// Page load animation for auth card
+// Page load animation
 document.addEventListener('DOMContentLoaded', () => {
   const card = document.querySelector('.auth-card');
   if(card) {
@@ -960,9 +929,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ══════════════════════════════════════════════
-// 👁️ PASSWORD TOGGLE
-// ══════════════════════════════════════════════
 function togglePass(id, el) {
   const inp = document.getElementById(id);
   inp.type = inp.type === 'password' ? 'text' : 'password';
@@ -970,21 +936,37 @@ function togglePass(id, el) {
     ? '<i class="fa-solid fa-eye"></i>'
     : '<i class="fa-solid fa-eye-slash"></i>';
 }
- if ('serviceWorker' in navigator) {
+
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('PWA SW Registered!'))
       .catch(err => console.log('PWA SW Failed: ', err));
     });
-  }
+}
 
-  // ============================================
-// 🔥 TRUECALLER VERIFICATION (Add this at the end of your script)
-// ============================================
+// ══════════════════════════════════════════════
+// 🔥 TRUECALLER VERIFICATION
+// ══════════════════════════════════════════════
 
-// Truecaller configuration
 const TRUECALLER_APP_KEY = "ULckr867df128add6429fbf3dc5870b633901";
 const TRUECALLER_BACKEND = "https://cashvibe-truecaller.vercel.app";
+
+function showTruecallerLoader(msg) {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'block';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ' + msg;
+    }
+}
+
+function hideTruecallerLoader() {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'none';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch"></i> Please wait...';
+    }
+}
 
 function generateTruecallerRequestId() {
     return 'cv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16);
@@ -1007,15 +989,10 @@ async function startTruecallerVerification() {
     sessionStorage.setItem('tc_request_id', requestId);
     sessionStorage.setItem('tc_user_email', userEmail);
     
-    // Deep link URL
     const deepLink = `truecallersdk://truesdk/web_verify?requestNonce=${requestId}&partnerKey=${TRUECALLER_APP_KEY}&partnerName=CashVibe&lang=hi&loginPrefix=proceed&loginSuffix=verify`;
     
-    showLoader("Opening Truecaller...");
-    
-    // Open Truecaller app
+    showTruecallerLoader("Opening Truecaller...");
     window.location.href = deepLink;
-    
-    // Start polling for verification
     startTruecallerPolling(requestId);
 }
 
@@ -1033,7 +1010,7 @@ async function startTruecallerPolling(requestId) {
             
             if (data.verified) {
                 clearInterval(intervalId);
-                hideLoader();
+                hideTruecallerLoader();
                 await linkPhoneToFirebaseUser(requestId);
                 toast('Mobile number verified successfully! 🎉', 'ok');
                 setTimeout(() => {
@@ -1041,14 +1018,14 @@ async function startTruecallerPolling(requestId) {
                 }, 1500);
             } else if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(intervalId);
-                hideLoader();
+                hideTruecallerLoader();
                 toast('Verification timeout. Please try again.', 'err');
             }
         } catch (error) {
             console.error('Polling error:', error);
             if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(intervalId);
-                hideLoader();
+                hideTruecallerLoader();
                 toast('Verification failed. Please try again.', 'err');
             }
         }
