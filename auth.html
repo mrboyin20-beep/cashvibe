@@ -192,16 +192,36 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
-<!-- ═══════════ MOBILE VERIFICATION SECTION (Email verify hone ke baad dikhega) ═══════════ -->
+<!-- ═══════════ MOBILE VERIFICATION SECTION (Stylish) ═══════════ -->
 <div id="mobileVerificationSection" style="display: none; margin-top: 24px;">
-    <div class="divider"><span></span><p>VERIFY MOBILE NUMBER</p><span></span></div>
-    <button onclick="startTruecallerVerification()" style="width:100%;padding:16px;background:linear-gradient(135deg,#00f5c4,#00c49a);border:none;border-radius:60px;color:#000;font-weight:800;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;">
-        <i class="fa-brands fa-truecaller" style="font-size:1.2rem;"></i> Verify with Truecaller
-    </button>
-    <p style="font-size:0.7rem;color:var(--dim);text-align:center;margin-top:14px;">
-        ⚡ One-click verification — No OTP required<br>
-        Make sure Truecaller app is installed on your phone
-    </p>
+    <div style="background: rgba(0,245,196,0.03); border: 1px solid rgba(0,245,196,0.15); border-radius: 24px; padding: 24px 20px;">
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 50px; height: 50px; background: rgba(0,245,196,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <i class="fa-solid fa-mobile-screen" style="color: var(--g1); font-size: 1.4rem;"></i>
+            </div>
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 1px; color: var(--g1);">VERIFY MOBILE NUMBER</div>
+            <p style="font-size: 0.7rem; color: var(--dim); margin-top: 6px;">Complete your account setup</p>
+        </div>
+        
+        <!-- 🔥 NEW STYLISH BUTTON - YAHAN PASTE KARO 🔥 -->
+        <button onclick="startTruecallerVerification()" style="width:100%; padding: 18px; background: transparent; border: 2px solid var(--g1); border-radius: 60px; color: var(--g1); font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s ease;">
+            <i class="fa-brands fa-truecaller" style="font-size: 1.3rem;"></i> 
+            Verify with Truecaller
+        </button>
+        
+        <p style="font-size: 0.65rem; color: var(--dim); text-align: center; margin-top: 16px;">
+            ⚡ One-click verification — No OTP required<br>
+            Make sure Truecaller app is installed
+        </p>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <button onclick="skipPhoneVerification()" style="background: transparent; border: none; color: var(--dim); font-size: 0.7rem; cursor: pointer;">
+                <i class="fa-solid fa-clock"></i> Skip for now — Verify later
+            </button>
+        </div>
+        
+    </div>
 </div>
 
 <!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
@@ -312,7 +332,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           <i class="fa-solid fa-ticket icon"></i>
           <input type="text" id="g-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
         </div>
-        <button class="auth-btn" id="g-complete-btn" onclick="completeGoogleProfile()">
+        <button class="auth-btn" id="g-complete-btn" onclick="completeGoogleSignup()">
           <i class="fa-solid fa-check-circle"></i> FINISH SIGNUP
         </button>
       </div>
@@ -945,6 +965,15 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ============================================
+// ⏭️ SKIP PHONE VERIFICATION (Verify later from profile)
+// ============================================
+function skipPhoneVerification() {
+    toast('You can verify your phone later from profile settings.', 'ok');
+    setTimeout(() => {
+        window.location.href = '/dashboard.html';
+    }, 1500);
+}
 // ══════════════════════════════════════════════
 // 🔥 TRUECALLER VERIFICATION
 // ══════════════════════════════════════════════
