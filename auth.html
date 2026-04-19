@@ -192,6 +192,43 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
+<!-- ═══════════ TRUECALLER VERIFICATION MODAL ═══════════ -->
+<div class="modal" id="truecallerModal">
+    <div class="modal-box" style="max-width: 400px;">
+        <div style="width: 64px; height: 64px; background: rgba(0,245,196,0.08); border: 1px solid rgba(0,245,196,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.8rem;">
+            <i class="fa-brands fa-truecaller" style="color: var(--g1); font-size: 2rem;"></i>
+        </div>
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; margin-bottom: 6px;">Verify Mobile Number</div>
+        <p style="font-size: 0.8rem; color: var(--dim); margin-bottom: 20px; line-height: 1.6;">
+            Complete your account setup by verifying your mobile number
+        </p>
+        
+        <button onclick="startTruecallerVerification()" style="width:100%; padding: 16px; background: linear-gradient(135deg, #00f5c4, #00c49a); border: none; border-radius: 60px; color: #000; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+            <i class="fa-brands fa-truecaller" style="font-size: 1.2rem;"></i> 
+            Verify with Truecaller
+        </button>
+        
+        <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
+            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
+            <p style="font-size: 0.65rem; color: var(--dim); font-weight: 600; letter-spacing: 1px;">OR</p>
+            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
+        </div>
+        
+        <div style="text-align: center;">
+            <button onclick="skipPhoneVerification()" style="background: transparent; border: none; color: var(--dim); font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-clock"></i> Skip for now — Verify later
+            </button>
+        </div>
+        
+        <p style="font-size: 0.65rem; color: var(--dim); text-align: center; margin-top: 20px;">
+            ⚡ One-click verification — No OTP required<br>
+            Make sure Truecaller app is installed on your phone
+        </p>
+        
+        <span class="modal-cancel" onclick="closeTruecallerModal()">✕ Cancel</span>
+    </div>
+</div>
+
 <!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
 <div class="modal" id="resetModal">
   <div class="modal-box">
@@ -575,13 +612,20 @@ async function checkVerification() {
 
   const user = auth.currentUser;
   if (user) {
-    await user.reload(); // Refresh the user's token state from Firebase
+    await user.reload();
     if (user.emailVerified) {
-      // Mark as verified in DB
       await db.ref('users/' + user.uid).update({ emailVerified: true });
       
-      toast('Account Verified Successfully! 🎉', 'ok');
-      window.location.replace('dashboard.html');
+      toast('Email Verified Successfully! 🎉', 'ok');
+      
+      // Modal band karo
+      document.getElementById('otpModal').classList.remove('open');
+      
+      // 🔥 Truecaller Modal dikhao
+      openTruecallerModal();
+      
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> I HAVE VERIFIED';
     } else {
       toast('❌ Not verified yet! Check inbox/spam folder.', 'err');
       btn.disabled = false;
@@ -958,6 +1002,113 @@ function togglePass(id, el) {
       .catch(err => console.log('PWA SW Failed: ', err));
     });
   }
+  // ============================================
+// 🔥 TRUECALLER VERIFICATION
+// ============================================
+
+const TRUECALLER_APP_KEY = "ULckr867df128add6429fbf3dc5870b633901";
+const TRUECALLER_BACKEND = "https://cashvibe-truecaller.vercel.app";
+
+function openTruecallerModal() {
+    const modal = document.getElementById('truecallerModal');
+    if (modal) modal.classList.add('open');
+}
+
+function closeTruecallerModal() {
+    const modal = document.getElementById('truecallerModal');
+    if (modal) modal.classList.remove('open');
+}
+
+function skipPhoneVerification() {
+    closeTruecallerModal();
+    toast('You can verify your phone later from profile settings.', 'ok');
+    setTimeout(() => window.location.href = '/dashboard.html', 1500);
+}
+
+function showTruecallerLoader(msg) {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'block';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ' + msg;
+    }
+}
+
+function hideTruecallerLoader() {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'none';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch"></i> Please wait...';
+    }
+}
+
+function generateTruecallerRequestId() {
+    return 'cv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16);
+}
+
+async function startTruecallerVerification() {
+    const user = auth.currentUser;
+    if (!user) {
+        toast('Please login first!', 'err');
+        return;
+    }
+    
+    if (!user.emailVerified) {
+        toast('Please verify your email first!', 'err');
+        return;
+    }
+    
+    closeTruecallerModal();
+    
+    const requestId = generateTruecallerRequestId();
+    sessionStorage.setItem('tc_request_id', requestId);
+    sessionStorage.setItem('tc_user_email', user.email);
+    
+    const deepLink = `truecallersdk://truesdk/web_verify?requestNonce=${requestId}&partnerKey=${TRUECALLER_APP_KEY}&partnerName=CashVibe&lang=hi&loginPrefix=proceed&loginSuffix=verify`;
+    
+    showTruecallerLoader("Opening Truecaller...");
+    window.location.href = deepLink;
+    startTruecallerPolling(requestId);
+}
+
+async function startTruecallerPolling(requestId) {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 15;
+    const INTERVAL = 3000;
+    
+    const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+            const response = await fetch(`${TRUECALLER_BACKEND}/api/verification-status/${requestId}`);
+            const data = await response.json();
+            
+            if (data.verified) {
+                clearInterval(intervalId);
+                hideTruecallerLoader();
+                await linkPhoneToFirebaseUser(requestId);
+                toast('Mobile number verified successfully! 🎉', 'ok');
+                setTimeout(() => window.location.href = '/dashboard.html', 1500);
+            } else if (attempts >= MAX_ATTEMPTS) {
+                clearInterval(intervalId);
+                hideTruecallerLoader();
+                toast('Verification timeout. Please try again.', 'err');
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    }, INTERVAL);
+}
+
+async function linkPhoneToFirebaseUser(requestId) {
+    const userEmail = sessionStorage.getItem('tc_user_email');
+    const response = await fetch(`${TRUECALLER_BACKEND}/api/link-phone-to-user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, userEmail })
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error);
+    return data;
+}
 </script>
 </body>
 </html>
