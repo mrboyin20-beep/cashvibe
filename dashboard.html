@@ -794,6 +794,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--dim);margin-bottom:4px;">Coins → Rupees (20 coins = ₹1)</div>
       <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;color:var(--g1);"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span><span id="bal-w">0</span> <span style="font-size:1rem;color:var(--dim);">= ₹<span id="bal-rupees">0.00</span></span></div>
     </div>
+
+    <!-- ═══════════ PHONE VERIFICATION ALERT (Sirf tab dikhega jab phone verify nahi hai) ═══════════ -->
+<div id="phoneVerifyAlert" style="display: none; margin-bottom: 16px;">
+    <div style="background: linear-gradient(135deg, rgba(245,166,35,0.15), rgba(239,68,68,0.08)); border: 1px solid rgba(245,166,35,0.4); border-radius: 20px; padding: 16px 18px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="width: 40px; height: 40px; background: rgba(245,166,35,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-triangle-exclamation" style="color: #f5a623; font-size: 1.2rem;"></i>
+            </div>
+            <div style="flex: 1;">
+                <div style="font-weight: 800; color: #f5a623;">Phone Number Not Verified</div>
+                <p style="font-size: 0.7rem; color: var(--dim); margin-top: 2px;">Withdrawals are only available after phone verification</p>
+            </div>
+            <button onclick="openPhoneVerification()" style="background: linear-gradient(135deg, #00f5c4, #00c49a); border: none; border-radius: 60px; padding: 8px 20px; color: #000; font-weight: 700; font-size: 0.75rem; cursor: pointer;">
+                <i class="fa-brands fa-truecaller"></i> Verify Now
+            </button>
+        </div>
+    </div>
+</div>
     <div class="card">
       <div class="sec-title" style="font-size:.85rem;margin-bottom:10px;">Select Amount</div>
       <div class="chips">
@@ -1419,6 +1437,7 @@ function updateUI(){
   renderStreak();
   updateAdUI();
   checkReferralReward();
+
  // ══ NEW LIVE REFERRAL TRACKING ══
   db.ref('refer_logs').orderByChild('from').equalTo(curUser.uid).on('value', s => {
     const allRefs = [];
@@ -1532,6 +1551,7 @@ function updateUI(){
       if (avgEl) avgEl.textContent = total > 0 ? '100%' : '—';
     }
   });
+   checkPhoneVerificationStatus();
 }
 
 function getLevel(coins){
@@ -1917,7 +1937,13 @@ function selChip(v,el){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
 }
-async function doWithdraw(){
+async function doWithdraw()
+{ const phoneSnap = await db.ref('users/' + curUser.uid + '/phoneVerified').once('value');
+    if (!phoneSnap.val()) {
+        toast('❌ Please verify your phone number first! Withdrawals are blocked.', 'err');
+        openPhoneVerification();
+        return;
+    }
   const upi = document.getElementById('upi-inp').value.trim();
   if (!selAmt) { toast('Please select an amount!','err'); return; }
   if (!upi) { toast('Please enter your UPI ID!','err'); return; }
@@ -3765,6 +3791,80 @@ function shopRenderHistory() {
       </div>`;
     });
   });
+}
+
+// ============================================
+// 🔥 PHONE VERIFICATION CHECK (Dashboard)
+// ============================================
+
+async function checkPhoneVerificationStatus() {
+    if (!curUser) return;
+    
+    try {
+        const snapshot = await db.ref('users/' + curUser.uid).once('value');
+        const userData = snapshot.val() || {};
+        const phoneVerified = userData.phoneVerified === true;
+        
+        const alertDiv = document.getElementById('phoneVerifyAlert');
+        const withdrawBtn = document.getElementById('btn-withdraw');
+        const withdrawChips = document.querySelectorAll('#pg-withdraw .chip');
+        const withdrawInput = document.getElementById('upi-inp');
+        
+        if (!phoneVerified) {
+            // Alert dikhao
+            if (alertDiv) alertDiv.style.display = 'block';
+            
+            // Withdraw button disable karo
+            if (withdrawBtn) {
+                withdrawBtn.disabled = true;
+                withdrawBtn.style.opacity = '0.5';
+                withdrawBtn.style.cursor = 'not-allowed';
+            }
+            
+            // Chips disable karo
+            withdrawChips.forEach(chip => {
+                chip.style.opacity = '0.5';
+                chip.style.pointerEvents = 'none';
+            });
+            
+            // Input disable karo
+            if (withdrawInput) {
+                withdrawInput.disabled = true;
+                withdrawInput.style.opacity = '0.5';
+            }
+            
+        } else {
+            // Alert hide
+            if (alertDiv) alertDiv.style.display = 'none';
+            
+            // Withdraw button enable
+            if (withdrawBtn) {
+                withdrawBtn.disabled = false;
+                withdrawBtn.style.opacity = '1';
+                withdrawBtn.style.cursor = 'pointer';
+            }
+            
+            // Chips enable
+            withdrawChips.forEach(chip => {
+                chip.style.opacity = '1';
+                chip.style.pointerEvents = 'auto';
+            });
+            
+            // Input enable
+            if (withdrawInput) {
+                withdrawInput.disabled = false;
+                withdrawInput.style.opacity = '1';
+            }
+        }
+    } catch(e) {
+        console.error('Phone verification check error:', e);
+    }
+}
+
+function openPhoneVerification() {
+    // Option 1: Open Truecaller modal (if on same page)
+    // Option 2: Redirect to separate page
+    window.location.href = 'verify-phone.html';
 }
 </script>
 </body>
