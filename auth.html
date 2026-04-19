@@ -192,35 +192,40 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
-<!-- ═══════════ MOBILE VERIFICATION SECTION (Stylish) ═══════════ -->
-<div id="mobileVerificationSection" style="display: none; margin-top: 24px;">
-    <div style="background: rgba(0,245,196,0.03); border: 1px solid rgba(0,245,196,0.15); border-radius: 24px; padding: 24px 20px;">
-        
-        <div style="text-align: center; margin-bottom: 20px;">
-            <div style="width: 50px; height: 50px; background: rgba(0,245,196,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                <i class="fa-solid fa-mobile-screen" style="color: var(--g1); font-size: 1.4rem;"></i>
-            </div>
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: 1px; color: var(--g1);">VERIFY MOBILE NUMBER</div>
-            <p style="font-size: 0.7rem; color: var(--dim); margin-top: 6px;">Complete your account setup</p>
+<!-- ═══════════ TRUECALLER VERIFICATION MODAL (Full Screen Style) ═══════════ -->
+<div class="modal" id="truecallerModal">
+    <div class="modal-box" style="max-width: 400px;">
+        <div style="width: 64px; height: 64px; background: rgba(0,245,196,0.08); border: 1px solid rgba(0,245,196,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.8rem;">
+            <i class="fa-brands fa-truecaller" style="color: var(--g1); font-size: 2rem;"></i>
         </div>
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; margin-bottom: 6px;">Verify Mobile Number</div>
+        <p style="font-size: 0.8rem; color: var(--dim); margin-bottom: 20px; line-height: 1.6;">
+            Complete your account setup by verifying your mobile number
+        </p>
         
-        <!-- 🔥 NEW STYLISH BUTTON - YAHAN PASTE KARO 🔥 -->
-        <button onclick="startTruecallerVerification()" style="width:100%; padding: 18px; background: transparent; border: 2px solid var(--g1); border-radius: 60px; color: var(--g1); font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s ease;">
-            <i class="fa-brands fa-truecaller" style="font-size: 1.3rem;"></i> 
+        <button onclick="startTruecallerVerification()" style="width:100%; padding: 16px; background: linear-gradient(135deg, #00f5c4, #00c49a); border: none; border-radius: 60px; color: #000; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+            <i class="fa-brands fa-truecaller" style="font-size: 1.2rem;"></i> 
             Verify with Truecaller
         </button>
         
-        <p style="font-size: 0.65rem; color: var(--dim); text-align: center; margin-top: 16px;">
-            ⚡ One-click verification — No OTP required<br>
-            Make sure Truecaller app is installed
-        </p>
+        <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
+            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
+            <p style="font-size: 0.65rem; color: var(--dim); font-weight: 600; letter-spacing: 1px;">OR</p>
+            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
+        </div>
         
-        <div style="margin-top: 20px; text-align: center;">
-            <button onclick="skipPhoneVerification()" style="background: transparent; border: none; color: var(--dim); font-size: 0.7rem; cursor: pointer;">
+        <div style="text-align: center;">
+            <button onclick="skipPhoneVerification()" style="background: transparent; border: none; color: var(--dim); font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="fa-solid fa-clock"></i> Skip for now — Verify later
             </button>
         </div>
         
+        <p style="font-size: 0.65rem; color: var(--dim); text-align: center; margin-top: 20px;">
+            ⚡ One-click verification — No OTP required<br>
+            Make sure Truecaller app is installed on your phone
+        </p>
+        
+        <span class="modal-cancel" onclick="closeTruecallerModal()">✕ Cancel</span>
     </div>
 </div>
 
@@ -603,15 +608,11 @@ async function checkVerification() {
       
       toast('Email Verified Successfully! 🎉', 'ok');
       
-      // ✅ Email verify ho gaya — ab mobile verification section dikhao
-      const mobileSection = document.getElementById('mobileVerificationSection');
-      if (mobileSection) {
-          mobileSection.style.display = 'block';
-          mobileSection.scrollIntoView({ behavior: 'smooth' });
-      }
-      
       // Modal band karo
       document.getElementById('otpModal').classList.remove('open');
+      
+      // 🔥 NAYA: Truecaller Modal dikhao
+      openTruecallerModal();
       
       // Button reset karo
       btn.disabled = false;
@@ -626,7 +627,6 @@ async function checkVerification() {
     window.location.reload();
   }
 }
-
 async function resendVerification() {
   const user = auth.currentUser;
   if (user) {
@@ -649,6 +649,30 @@ async function cancelVerification() {
   toast('Logged out.', 'ok');
 }
 
+// ============================================
+// 🔥 TRUECALLER MODAL FUNCTIONS
+// ============================================
+
+function openTruecallerModal() {
+    const modal = document.getElementById('truecallerModal');
+    if (modal) {
+        modal.classList.add('open');
+    }
+}
+
+function closeTruecallerModal() {
+    const modal = document.getElementById('truecallerModal');
+    if (modal) {
+        modal.classList.remove('open');
+    }
+}
+
+// Override startTruecallerVerification to close modal after success
+const originalStartTruecallerVerification = startTruecallerVerification;
+window.startTruecallerVerification = async function() {
+    closeTruecallerModal();
+    return originalStartTruecallerVerification();
+};
 // ══════════════════════════════════════════════
 // 🔐 LOGIN
 // ══════════════════════════════════════════════
@@ -969,6 +993,7 @@ if ('serviceWorker' in navigator) {
 // ⏭️ SKIP PHONE VERIFICATION (Verify later from profile)
 // ============================================
 function skipPhoneVerification() {
+    closeTruecallerModal();
     toast('You can verify your phone later from profile settings.', 'ok');
     setTimeout(() => {
         window.location.href = '/dashboard.html';
@@ -1070,8 +1095,13 @@ async function linkPhoneToFirebaseUser(requestId) {
     });
     const data = await response.json();
     if (!data.success) throw new Error(data.error);
+    
+    // Modal close karo
+    closeTruecallerModal();
+    
     return data;
 }
+
 </script>
 </body>
 </html>
