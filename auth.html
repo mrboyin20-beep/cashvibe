@@ -192,43 +192,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
   </div>
 </div>
 
-<!-- ═══════════ TRUECALLER VERIFICATION MODAL (Full Screen Style) ═══════════ -->
-<div class="modal" id="truecallerModal">
-    <div class="modal-box" style="max-width: 400px;">
-        <div style="width: 64px; height: 64px; background: rgba(0,245,196,0.08); border: 1px solid rgba(0,245,196,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.8rem;">
-            <i class="fa-brands fa-truecaller" style="color: var(--g1); font-size: 2rem;"></i>
-        </div>
-        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; margin-bottom: 6px;">Verify Mobile Number</div>
-        <p style="font-size: 0.8rem; color: var(--dim); margin-bottom: 20px; line-height: 1.6;">
-            Complete your account setup by verifying your mobile number
-        </p>
-        
-        <button onclick="startTruecallerVerification()" style="width:100%; padding: 16px; background: linear-gradient(135deg, #00f5c4, #00c49a); border: none; border-radius: 60px; color: #000; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
-            <i class="fa-brands fa-truecaller" style="font-size: 1.2rem;"></i> 
-            Verify with Truecaller
-        </button>
-        
-        <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
-            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
-            <p style="font-size: 0.65rem; color: var(--dim); font-weight: 600; letter-spacing: 1px;">OR</p>
-            <span style="flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent);"></span>
-        </div>
-        
-        <div style="text-align: center;">
-            <button onclick="skipPhoneVerification()" style="background: transparent; border: none; color: var(--dim); font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-clock"></i> Skip for now — Verify later
-            </button>
-        </div>
-        
-        <p style="font-size: 0.65rem; color: var(--dim); text-align: center; margin-top: 20px;">
-            ⚡ One-click verification — No OTP required<br>
-            Make sure Truecaller app is installed on your phone
-        </p>
-        
-        <span class="modal-cancel" onclick="closeTruecallerModal()">✕ Cancel</span>
-    </div>
-</div>
-
 <!-- ═══════════ RESET PASSWORD MODAL ═══════════ -->
 <div class="modal" id="resetModal">
   <div class="modal-box">
@@ -337,7 +300,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
           <i class="fa-solid fa-ticket icon"></i>
           <input type="text" id="g-refer" placeholder="Referral Code (Optional)" style="text-transform:uppercase;letter-spacing:3px;">
         </div>
-        <button class="auth-btn" id="g-complete-btn" onclick="completeGoogleSignup()">
+        <button class="auth-btn" id="g-complete-btn" onclick="completeGoogleProfile()">
           <i class="fa-solid fa-check-circle"></i> FINISH SIGNUP
         </button>
       </div>
@@ -354,7 +317,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
 
 <script>
 // ══════════════════════════════════════════════
-// 🔥 FIREBASE CONFIG & INIT
+// 🔥 FIREBASE CONFIG & INIT (Var used to prevent initialization errors)
 // ══════════════════════════════════════════════
 var firebaseConfig = {
   apiKey: "AIzaSyDcJUEisvxELb-wmY7lJqFMj4xEiL9LLQg",
@@ -396,11 +359,12 @@ const DEVICE_ID = getDeviceId();
 // ══════════════════════════════════════════════
 // 🔄 AUTO LOGIN CHECK & AUTH OBSERVER
 // ══════════════════════════════════════════════
-let otpVerifyInProgress = false;
+let otpVerifyInProgress = false; // Manual flow marker
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .then(() => {
     const unsub = auth.onAuthStateChanged(user => {
       if (user && !otpVerifyInProgress) {
+        // Observer checking email verified status
         const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
         if (user.emailVerified || isGoogle) {
           unsub(); 
@@ -490,7 +454,7 @@ function showDeviceBlocked(uids) {
 }
 
 // ══════════════════════════════════════════════
-// 📝 SIGNUP
+// 📝 SIGNUP (With Native Firebase Email Verification)
 // ══════════════════════════════════════════════
 async function doSignup() {
   const name  = document.getElementById('reg-name').value.trim();
@@ -506,6 +470,7 @@ async function doSignup() {
 
   setLoading(true);
   try {
+    // 1. DB DUPLICATE CHECK (Phone & Referral)
     let phoneTaken = false, referrerUid = null;
     try {
       const usersSnap = await db.ref('users').once('value');
@@ -525,17 +490,22 @@ async function doSignup() {
       if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
     } catch(e) {}
 
+    // Blocking redirect to ensure smooth DB writes
     otpVerifyInProgress = true;
+
+    // 2. CREATE AUTH USER
     const res = await auth.createUserWithEmailAndPassword(email, pass);
     const user = res.user;
     const uid = user.uid;
 
+    // 3. DEVICE CHECK
     const devCheck = await checkDevice(uid);
     if (!devCheck.allowed) {
       showDeviceBlocked(devCheck.uids);
       return;
     }
 
+    // 4. SETUP USER IN DB
     const now = Date.now();
     const joinBonus = referrerUid ? (cfg.signup_bonus || 0) : 0;
 
@@ -568,10 +538,13 @@ async function doSignup() {
       });
     }
 
+    // 5. UPDATE PROFILE & SEND FIREBASE EMAIL
     await user.updateProfile({ displayName: name });
     await user.sendEmailVerification();
 
     otpVerifyInProgress = false;
+
+    // 6. SHOW VERIFICATION MODAL
     openVerifyModal(email);
     toast('Verification link sent! Check email.', 'ok');
 
@@ -602,21 +575,13 @@ async function checkVerification() {
 
   const user = auth.currentUser;
   if (user) {
-    await user.reload();
+    await user.reload(); // Refresh the user's token state from Firebase
     if (user.emailVerified) {
+      // Mark as verified in DB
       await db.ref('users/' + user.uid).update({ emailVerified: true });
       
-      toast('Email Verified Successfully! 🎉', 'ok');
-      
-      // Modal band karo
-      document.getElementById('otpModal').classList.remove('open');
-      
-      // 🔥 NAYA: Truecaller Modal dikhao
-      openTruecallerModal();
-      
-      // Button reset karo
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> I HAVE VERIFIED';
+      toast('Account Verified Successfully! 🎉', 'ok');
+      window.location.replace('dashboard.html');
     } else {
       toast('❌ Not verified yet! Check inbox/spam folder.', 'err');
       btn.disabled = false;
@@ -627,6 +592,7 @@ async function checkVerification() {
     window.location.reload();
   }
 }
+
 async function resendVerification() {
   const user = auth.currentUser;
   if (user) {
@@ -649,30 +615,7 @@ async function cancelVerification() {
   toast('Logged out.', 'ok');
 }
 
-// ============================================
-// 🔥 TRUECALLER MODAL FUNCTIONS
-// ============================================
 
-function openTruecallerModal() {
-    const modal = document.getElementById('truecallerModal');
-    if (modal) {
-        modal.classList.add('open');
-    }
-}
-
-function closeTruecallerModal() {
-    const modal = document.getElementById('truecallerModal');
-    if (modal) {
-        modal.classList.remove('open');
-    }
-}
-
-// Override startTruecallerVerification to close modal after success
-const originalStartTruecallerVerification = startTruecallerVerification;
-window.startTruecallerVerification = async function() {
-    closeTruecallerModal();
-    return originalStartTruecallerVerification();
-};
 // ══════════════════════════════════════════════
 // 🔐 LOGIN
 // ══════════════════════════════════════════════
@@ -720,7 +663,7 @@ async function doLogin() {
     await registerDevice(uid);
     checkReferralReward(uid);
 
-    otpVerifyInProgress = false;
+    otpVerifyInProgress = false; // Allow manual handling
 
     if (user.emailVerified) {
       toast('Welcome back! 💰', 'ok');
@@ -746,13 +689,14 @@ async function doLogin() {
 }
 
 // ══════════════════════════════════════════════
-// 🌐 GOOGLE LOGIN
+// 🌐 GOOGLE LOGIN (With Profile Completion)
 // ══════════════════════════════════════════════
 let tempGoogleUser = null;
 
 async function doGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   setLoading(true);
+  
   otpVerifyInProgress = true; 
   
   try {
@@ -763,6 +707,7 @@ async function doGoogle() {
     const snap = await db.ref('users/' + uid).once('value');
     
     if (snap.exists()) {
+      // Purana user hai, dashboard par bhejo
       await registerDevice(uid);
       toast('Welcome back! 🎉', 'ok');
       setTimeout(() => {
@@ -770,13 +715,18 @@ async function doGoogle() {
         window.location.replace('dashboard.html');
       }, 800);
     } else {
+      // Naya user hai - Basic Details Form Dikhao
       tempGoogleUser = user;
+      
+      // Google se data le lo
       const googleName = user.displayName || '';
       const googleEmail = user.email || '';
       
+      // Form dikhane se pehle saari chizein hide karo
       document.querySelector('.slides .slide-track').style.display = 'none';
       document.getElementById('toggle').style.display = 'none';
       
+      // Basic Details Form Show Karo
       const formHtml = `
         <div id="google-details-form" style="padding:10px 0;">
           <div style="text-align:center;margin-bottom:20px;">
@@ -807,8 +757,10 @@ async function doGoogle() {
         </div>
       `;
       
+      // Form inject karo
       const slidesDiv = document.querySelector('.slides');
       slidesDiv.innerHTML = formHtml;
+      
       setLoading(false);
       toast('Please complete your profile!', 'ok');
     }
@@ -822,6 +774,9 @@ async function doGoogle() {
   }
 }
 
+// ══════════════════════════════════════════════
+// 📝 COMPLETE GOOGLE PROFILE (Save Data & Bonus)
+// ══════════════════════════════════════════════
 async function completeGoogleSignup() {
   if (!tempGoogleUser) {
     toast('Session expired! Please try again.', 'err');
@@ -849,6 +804,7 @@ async function completeGoogleSignup() {
   try {
     const uid = tempGoogleUser.uid;
 
+    // Mobile number duplicate check
     let phoneTaken = false;
     let referrerUid = null;
     
@@ -868,6 +824,7 @@ async function completeGoogleSignup() {
     
     if (refer && !referrerUid) toast('Referral code not found — continuing without bonus', 'err');
 
+    // Admin Settings load karo
     let cfg = { signup_bonus: 0, refer_reward: 0 };
     const cfgSnap = await db.ref('app_control').once('value');
     if (cfgSnap.exists()) cfg = { ...cfg, ...cfgSnap.val() };
@@ -875,17 +832,24 @@ async function completeGoogleSignup() {
     const joinBonus = referrerUid ? (cfg.signup_bonus || 400) : 0;
     const now = Date.now();
 
+    // DEVICE CHECK
     const devCheck = await checkDevice(uid);
     if (!devCheck.allowed) {
       showDeviceBlocked(devCheck.uids);
       return;
     }
 
+    // USER DATA SAVE - NAME, EMAIL, PHONE SAB SAVE HOGA
     await db.ref('users/' + uid).set({
-      name: name, email: email, mobile: phone,
-      balance: joinBonus, streak: 0, xp: 0,
+      name: name,              // ✅ User ka entered name
+      email: email,            // ✅ Google se auto email
+      mobile: phone,           // ✅ User ka phone number
+      balance: joinBonus,
+      streak: 0, 
+      xp: 0,
       referredBy: referrerUid || 'DIRECT', 
-      status: 'active', emailVerified: true,
+      status: 'active',
+      emailVerified: true,
       deviceId: DEVICE_ID,
       joinDate: new Date().toLocaleDateString('en-IN'),
       joinedAt: now
@@ -893,6 +857,7 @@ async function completeGoogleSignup() {
 
     await registerDevice(uid);
 
+    // Referral log
     if (referrerUid) {
       await db.ref('refer_logs/' + uid).set({
         from: referrerUid,
@@ -904,6 +869,7 @@ async function completeGoogleSignup() {
 
     toast('Account created successfully! 🎉', 'ok');
     
+    // Dashboard par redirect
     setTimeout(() => {
       otpVerifyInProgress = false;
       window.location.replace('dashboard.html');
@@ -917,10 +883,12 @@ async function completeGoogleSignup() {
   }
 }
 
+// ══════════════════════════════════════════════
+// 🎁 REFERRAL REWARD CHECK (Moved to Dashboard)
+// ══════════════════════════════════════════════
 async function checkReferralReward(uid) {
-  // Dashboard handle karega
+  // Purana 2-Day system hata diya gaya hai. Ab Dashboard 100% live track karega!
 }
-
 // ══════════════════════════════════════════════
 // 🔑 RESET PASSWORD
 // ══════════════════════════════════════════════
@@ -959,7 +927,7 @@ async function sendReset() {
   }
 }
 
-// Page load animation
+// Page load animation for auth card
 document.addEventListener('DOMContentLoaded', () => {
   const card = document.querySelector('.auth-card');
   if(card) {
@@ -973,6 +941,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ══════════════════════════════════════════════
+// 👁️ PASSWORD TOGGLE
+// ══════════════════════════════════════════════
 function togglePass(id, el) {
   const inp = document.getElementById(id);
   inp.type = inp.type === 'password' ? 'text' : 'password';
@@ -980,128 +951,13 @@ function togglePass(id, el) {
     ? '<i class="fa-solid fa-eye"></i>'
     : '<i class="fa-solid fa-eye-slash"></i>';
 }
-
-if ('serviceWorker' in navigator) {
+ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
       .then(reg => console.log('PWA SW Registered!'))
       .catch(err => console.log('PWA SW Failed: ', err));
     });
-}
-
-// ============================================
-// ⏭️ SKIP PHONE VERIFICATION (Verify later from profile)
-// ============================================
-function skipPhoneVerification() {
-    closeTruecallerModal();
-    toast('You can verify your phone later from profile settings.', 'ok');
-    setTimeout(() => {
-        window.location.href = '/dashboard.html';
-    }, 1500);
-}
-// ══════════════════════════════════════════════
-// 🔥 TRUECALLER VERIFICATION
-// ══════════════════════════════════════════════
-
-const TRUECALLER_APP_KEY = "ULckr867df128add6429fbf3dc5870b633901";
-const TRUECALLER_BACKEND = "https://cashvibe-truecaller.vercel.app";
-
-function showTruecallerLoader(msg) {
-    const loaderDiv = document.getElementById('loader');
-    if (loaderDiv) {
-        loaderDiv.style.display = 'block';
-        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ' + msg;
-    }
-}
-
-function hideTruecallerLoader() {
-    const loaderDiv = document.getElementById('loader');
-    if (loaderDiv) {
-        loaderDiv.style.display = 'none';
-        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch"></i> Please wait...';
-    }
-}
-
-function generateTruecallerRequestId() {
-    return 'cv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16);
-}
-
-async function startTruecallerVerification() {
-    const user = auth.currentUser;
-    if (!user) {
-        toast('Please login first!', 'err');
-        return;
-    }
-    
-    const userEmail = user.email;
-    if (!user.emailVerified) {
-        toast('Please verify your email first!', 'err');
-        return;
-    }
-    
-    const requestId = generateTruecallerRequestId();
-    sessionStorage.setItem('tc_request_id', requestId);
-    sessionStorage.setItem('tc_user_email', userEmail);
-    
-    const deepLink = `truecallersdk://truesdk/web_verify?requestNonce=${requestId}&partnerKey=${TRUECALLER_APP_KEY}&partnerName=CashVibe&lang=hi&loginPrefix=proceed&loginSuffix=verify`;
-    
-    showTruecallerLoader("Opening Truecaller...");
-    window.location.href = deepLink;
-    startTruecallerPolling(requestId);
-}
-
-async function startTruecallerPolling(requestId) {
-    let attempts = 0;
-    const MAX_ATTEMPTS = 15;
-    const INTERVAL = 3000;
-    
-    const intervalId = setInterval(async () => {
-        attempts++;
-        
-        try {
-            const response = await fetch(`${TRUECALLER_BACKEND}/api/verification-status/${requestId}`);
-            const data = await response.json();
-            
-            if (data.verified) {
-                clearInterval(intervalId);
-                hideTruecallerLoader();
-                await linkPhoneToFirebaseUser(requestId);
-                toast('Mobile number verified successfully! 🎉', 'ok');
-                setTimeout(() => {
-                    window.location.href = '/dashboard.html';
-                }, 1500);
-            } else if (attempts >= MAX_ATTEMPTS) {
-                clearInterval(intervalId);
-                hideTruecallerLoader();
-                toast('Verification timeout. Please try again.', 'err');
-            }
-        } catch (error) {
-            console.error('Polling error:', error);
-            if (attempts >= MAX_ATTEMPTS) {
-                clearInterval(intervalId);
-                hideTruecallerLoader();
-                toast('Verification failed. Please try again.', 'err');
-            }
-        }
-    }, INTERVAL);
-}
-
-async function linkPhoneToFirebaseUser(requestId) {
-    const userEmail = sessionStorage.getItem('tc_user_email');
-    const response = await fetch(`${TRUECALLER_BACKEND}/api/link-phone-to-user`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId, userEmail })
-    });
-    const data = await response.json();
-    if (!data.success) throw new Error(data.error);
-    
-    // Modal close karo
-    closeTruecallerModal();
-    
-    return data;
-}
-
+  }
 </script>
 </body>
 </html>
