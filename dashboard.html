@@ -786,6 +786,39 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
+  <!-- ═══════════ KYC VERIFICATION SECTION ═══════════ -->
+<div id="kycSection" style="margin-bottom: 20px;">
+    <div class="sec-title">KYC Verification <small>Required for withdrawal</small></div>
+    <div id="kycStatusCard" class="card" style="padding: 20px;">
+        <!-- Dynamic content JS se fill hoga -->
+    </div>
+    <div id="kycForm" style="display: none;">
+        <div class="card">
+            <div class="inp-wrap">
+                <i class="fa-solid fa-user icon"></i>
+                <input type="text" id="kycFullName" placeholder="Full Name (as per Aadhar)">
+            </div>
+            <div class="inp-wrap">
+                <i class="fa-solid fa-id-card icon"></i>
+                <input type="text" id="kycAadhar" placeholder="Aadhar Number (12 digits)" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            </div>
+            <div class="inp-wrap">
+                <i class="fa-solid fa-file-invoice icon"></i>
+                <input type="text" id="kycPan" placeholder="PAN Number (10 characters)" maxlength="10" style="text-transform:uppercase;">
+            </div>
+            <div style="border: 2px dashed rgba(0,245,196,0.25); border-radius: 18px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 16px;" id="kycUploadZone" onclick="document.getElementById('kycSelfie').click()">
+                <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
+                <div style="font-size: 0.75rem; color: var(--dim);">Tap to upload selfie with Aadhar/PAN card</div>
+                <input type="file" id="kycSelfie" accept="image/*" style="display: none;" onchange="previewSelfie(this)">
+                <div id="selfiePreview" style="display: none; margin-top: 12px;">
+                    <img id="selfiePreviewImg" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 12px;">
+                </div>
+            </div>
+            <button class="btn-main" onclick="submitKYC()">Submit KYC for Verification</button>
+        </div>
+    </div>
+</div>
+
     <!-- WITHDRAW -->
   <div id="pg-withdraw" class="page">
     <div class="sec-title">Cash Out 💸</div>
@@ -1552,6 +1585,7 @@ function updateUI(){
     }
   });
    checkPhoneVerificationStatus();
+       checkKYCStatus();
 }
 
 function getLevel(coins){
@@ -1942,6 +1976,13 @@ async function doWithdraw()
     if (!phoneSnap.val()) {
         toast('❌ Please verify your phone number first! Withdrawals are blocked.', 'err');
         openPhoneVerification();
+        return;
+    }
+        // 🔥 KYC CHECK
+    const kycSnap = await db.ref('users/' + curUser.uid + '/kyc/status').once('value');
+    if (kycSnap.val() !== 'approved') {
+        toast('❌ Please complete KYC verification first!', 'err');
+        document.getElementById('kycSection').scrollIntoView({ behavior: 'smooth' });
         return;
     }
   const upi = document.getElementById('upi-inp').value.trim();
@@ -3865,6 +3906,142 @@ function openPhoneVerification() {
     // Option 1: Open Truecaller modal (if on same page)
     // Option 2: Redirect to separate page
     window.location.href = 'verify-phone.html';
+}
+
+// ============================================
+// 🔐 KYC SYSTEM
+// ============================================
+
+let kycSelfieBase64 = null;
+
+async function checkKYCStatus() {
+    if (!curUser) return;
+    
+    const kycSnap = await db.ref('users/' + curUser.uid + '/kyc').once('value');
+    const kyc = kycSnap.val();
+    const statusCard = document.getElementById('kycStatusCard');
+    const kycForm = document.getElementById('kycForm');
+    const withdrawBtn = document.getElementById('btn-withdraw');
+    
+    if (!kyc || kyc.status === 'pending') {
+        statusCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="width: 40px; height: 40px; background: rgba(245,166,35,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-clock" style="color: #f5a623;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; color: #f5a623;">KYC Not Submitted</div>
+                    <p style="font-size: 0.7rem; color: var(--dim);">Please complete KYC to enable withdrawals</p>
+                </div>
+                <button onclick="showKYCForm()" class="btn-main" style="width: auto; padding: 10px 20px;">Submit KYC</button>
+            </div>
+        `;
+        kycForm.style.display = 'none';
+        if (withdrawBtn) withdrawBtn.disabled = true;
+        
+    } else if (kyc.status === 'approved') {
+        statusCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; background: rgba(0,245,196,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-circle-check" style="color: var(--g1);"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; color: var(--g1);">KYC Verified ✅</div>
+                    <p style="font-size: 0.7rem; color: var(--dim);">Your KYC is approved. You can withdraw now!</p>
+                </div>
+            </div>
+        `;
+        kycForm.style.display = 'none';
+        if (withdrawBtn) withdrawBtn.disabled = false;
+        
+    } else if (kyc.status === 'rejected') {
+        statusCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="width: 40px; height: 40px; background: rgba(239,68,68,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; color: var(--danger);">KYC Rejected</div>
+                    <p style="font-size: 0.7rem; color: var(--dim);">Reason: ${kyc.rejectReason || 'Invalid documents'}</p>
+                </div>
+                <button onclick="showKYCForm()" class="btn-main" style="width: auto; padding: 10px 20px;">Resubmit KYC</button>
+            </div>
+        `;
+        kycForm.style.display = 'none';
+        if (withdrawBtn) withdrawBtn.disabled = true;
+    }
+}
+
+function showKYCForm() {
+    document.getElementById('kycForm').style.display = 'block';
+    document.getElementById('kycStatusCard').style.display = 'none';
+}
+
+function previewSelfie(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('selfiePreviewImg').src = e.target.result;
+            document.getElementById('selfiePreview').style.display = 'block';
+            kycSelfieBase64 = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function submitKYC() {
+    const fullName = document.getElementById('kycFullName').value.trim();
+    const aadhar = document.getElementById('kycAadhar').value.trim();
+    const pan = document.getElementById('kycPan').value.trim().toUpperCase();
+    
+    if (!fullName || fullName.length < 3) {
+        toast('Please enter your full name!', 'err');
+        return;
+    }
+    if (!aadhar || aadhar.length !== 12 || !/^\d+$/.test(aadhar)) {
+        toast('Enter valid 12-digit Aadhar number!', 'err');
+        return;
+    }
+    if (!pan || pan.length !== 10 || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+        toast('Enter valid PAN number (e.g., ABCDE1234F)!', 'err');
+        return;
+    }
+    if (!kycSelfieBase64) {
+        toast('Please upload selfie with ID!', 'err');
+        return;
+    }
+    
+    showLoader("Submitting KYC...");
+    
+    try {
+        await db.ref('users/' + curUser.uid + '/kyc').set({
+            fullName: fullName,
+            aadharNumber: aadhar,
+            panNumber: pan,
+            selfieUrl: kycSelfieBase64,
+            status: 'pending',
+            submittedAt: Date.now()
+        });
+        
+        await db.ref('admin_notifications').push({
+            type: 'kyc_pending',
+            uid: curUser.uid,
+            userName: fullName,
+            timestamp: Date.now(),
+            read: false
+        });
+        
+        hideLoader();
+        toast('KYC submitted! Admin will review within 24-48 hours.', 'ok');
+        
+        document.getElementById('kycForm').style.display = 'none';
+        document.getElementById('kycStatusCard').style.display = 'block';
+        checkKYCStatus();
+        
+    } catch(error) {
+        hideLoader();
+        toast('Error: ' + error.message, 'err');
+    }
 }
 </script>
 </body>

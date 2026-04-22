@@ -357,6 +357,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="nb" onclick="gp('pg-redeem',this);loadRedeem()"><i class="fa-solid fa-ticket"></i> Redeem Codes</button>
   <div class="sb-sec">Shopping</div>
 <button class="nb" onclick="gp('pg-shop',this);loadShopSubmissions()"><i class="fa-solid fa-bag-shopping"></i> Shopping Control <span class="nb-cnt" id="shop-pend-cnt">0</span></button>
+  <button class="nb" onclick="gp('pg-kyc',this);loadKYCAdmin()"><i class="fa-solid fa-shield-halved"></i> KYC Verification <span class="nb-cnt" id="kyc-pend-cnt">0</span></button>
   <button class="nb" onclick="gp('pg-game',this);loadGameAdmin()" style="background:rgba(99,102,241,.08);color:#a5b4fc;"><i class="fa-solid fa-gamepad"></i> Game Arena</button>
   <div class="sb-bottom">
     <button class="logout-btn" onclick="doLogout()"><i class="fa-solid fa-power-off"></i> Logout</button>
@@ -695,6 +696,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
+    <!-- ═══════════ KYC ADMIN PAGE ═══════════ -->
+  <div id="pg-kyc" class="page">
+    <div class="pg-hdr">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div><div class="pg-title">🔐 KYC Verification</div><div class="pg-sub">Verify user identity documents</div></div>
+        <div class="stats-grid" style="width:auto;gap:10px;margin:0;">
+          <div class="stat" style="padding:8px 16px;"><div class="stat-num" id="kyc-stat-pend" style="font-size:1.2rem;">0</div><div class="stat-lbl">Pending</div></div>
+          <div class="stat" style="padding:8px 16px;"><div class="stat-num" id="kyc-stat-approved" style="font-size:1.2rem;">0</div><div class="stat-lbl">Approved</div></div>
+          <div class="stat" style="padding:8px 16px;"><div class="stat-num" id="kyc-stat-rejected" style="font-size:1.2rem;">0</div><div class="stat-lbl">Rejected</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="search-bar">
+      <input class="sinp" id="kyc-search" placeholder="🔍 Search by name, email, UID, Aadhar, PAN..." oninput="filterKYCAdmin()">
+      <button class="filt-btn active" onclick="setKYCFilter('pending',this)">⏳ Pending</button>
+      <button class="filt-btn" onclick="setKYCFilter('approved',this)">✅ Approved</button>
+      <button class="filt-btn" onclick="setKYCFilter('rejected',this)">❌ Rejected</button>
+      <button class="filt-btn" onclick="setKYCFilter('all',this)">All</button>
+    </div>
+
+    <!-- KYC Cards Container -->
+    <div id="kyc-cards-container" class="card" style="padding:0;overflow:hidden;">
+      <div id="kyc-list" style="padding:16px;">
+        <p style="color:var(--dim);text-align:center;padding:30px;">Loading KYC requests...</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ═══ GAME ARENA CONTROL ═══ -->
   <div id="pg-game" class="page">
@@ -2926,6 +2956,282 @@ async function saveNewPlatform() {
 async function deletePlatform(id) {
   if(!confirm('Delete "' + id + '" platform?')) return;
   try { await db.ref('shop_platforms/' + id).remove(); toast('🗑️ Platform deleted!', 'warn'); openShopPlatformSettings(); } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+// ============================================
+// 🔐 KYC ADMIN FUNCTIONS
+// ============================================
+
+let allKYCData = [];
+let kycFilter = 'pending';
+
+function loadKYCAdmin() {
+  const container = document.getElementById('kyc-list');
+  if(container) container.innerHTML = '<p style="color:var(--dim);text-align:center;padding:30px;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading KYC requests...</p>';
+  loadAllKYCData();
+}
+
+async function loadAllKYCData() {
+  const usersSnap = await db.ref('users').once('value');
+  allKYCData = [];
+  
+  usersSnap.forEach(userSnap => {
+    const user = userSnap.val();
+    const uid = userSnap.key;
+    const kyc = user.kyc;
+    
+    if (kyc && (kyc.fullName || kyc.aadharNumber)) {
+      allKYCData.push({
+        uid: uid,
+        name: user.name || 'Unknown',
+        email: user.email || '',
+        mobile: user.mobile || '',
+        location: user.location || {},
+        kyc: kyc
+      });
+    }
+  });
+  
+  updateKYCStats();
+  renderKYCList();
+}
+
+function updateKYCStats() {
+  const pending = allKYCData.filter(k => k.kyc.status === 'pending').length;
+  const approved = allKYCData.filter(k => k.kyc.status === 'approved').length;
+  const rejected = allKYCData.filter(k => k.kyc.status === 'rejected').length;
+  
+  const pEl = document.getElementById('kyc-stat-pend');
+  const aEl = document.getElementById('kyc-stat-approved');
+  const rEl = document.getElementById('kyc-stat-rejected');
+  const cntEl = document.getElementById('kyc-pend-cnt');
+  
+  if(pEl) pEl.textContent = pending;
+  if(aEl) aEl.textContent = approved;
+  if(rEl) rEl.textContent = rejected;
+  if(cntEl) cntEl.textContent = pending;
+}
+
+function setKYCFilter(filter, el) {
+  kycFilter = filter;
+  document.querySelectorAll('#pg-kyc .filt-btn').forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderKYCList();
+}
+
+function filterKYCAdmin() {
+  renderKYCList();
+}
+
+function renderKYCList() {
+  const container = document.getElementById('kyc-list');
+  if(!container) return;
+  
+  const search = (document.getElementById('kyc-search')?.value || '').toLowerCase();
+  let list = [...allKYCData];
+  
+  if(kycFilter !== 'all') {
+    list = list.filter(k => k.kyc.status === kycFilter);
+  }
+  
+  if(search) {
+    list = list.filter(k =>
+      (k.name || '').toLowerCase().includes(search) ||
+      (k.email || '').toLowerCase().includes(search) ||
+      (k.uid || '').toLowerCase().includes(search) ||
+      (k.kyc.aadharNumber || '').includes(search) ||
+      (k.kyc.panNumber || '').toLowerCase().includes(search)
+    );
+  }
+  
+  if(list.length === 0) {
+    container.innerHTML = '<p style="color:var(--dim);text-align:center;padding:30px;">No KYC requests found.</p>';
+    return;
+  }
+  
+  container.innerHTML = '';
+  list.forEach(k => {
+    const kyc = k.kyc;
+    const statusClass = kyc.status === 'approved' ? 'b-ok' : (kyc.status === 'rejected' ? 'b-block' : 'b-pend');
+    const statusText = kyc.status === 'approved' ? '✅ Approved' : (kyc.status === 'rejected' ? '❌ Rejected' : '⏳ Pending');
+    const submittedDate = kyc.submittedAt ? new Date(kyc.submittedAt).toLocaleString('en-IN') : '—';
+    const approvedDate = kyc.approvedAt ? new Date(kyc.approvedAt).toLocaleString('en-IN') : '—';
+    const flag = k.location?.flag || getFlagFromCode(k.location?.countryCode) || '🌍';
+    const country = k.location?.country || 'Unknown';
+    
+    container.innerHTML += `
+      <div class="kyc-card" id="kyc-card-${k.uid}" style="background:var(--s2);border-radius:16px;padding:18px;margin-bottom:16px;border:1px solid var(--border);">
+        <div class="kyc-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:15px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="kyc-avatar" style="width:48px;height:48px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#000;">${(k.name.charAt(0) || 'U').toUpperCase()}</div>
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">${escapeHtml(k.name)}</div>
+              <div style="font-size:0.65rem;color:var(--dim);">${k.email || 'No email'}</div>
+              <div style="font-size:0.6rem;color:var(--g1);font-family:monospace;margin-top:2px;">UID: ${k.uid.substring(0,12)}...</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:0.8rem;">${flag} ${country}</span>
+            <span class="badge ${statusClass}">${statusText}</span>
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Full Name</div>
+            <div style="font-size:0.85rem;font-weight:600;">${escapeHtml(kyc.fullName)}</div>
+          </div>
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Aadhar Number</div>
+            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${maskAadhar(kyc.aadharNumber)}</div>
+          </div>
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">PAN Number</div>
+            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${kyc.panNumber || 'N/A'}</div>
+          </div>
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Mobile</div>
+            <div style="font-size:0.85rem;font-weight:600;">${k.mobile || 'Not provided'}</div>
+          </div>
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Submitted On</div>
+            <div style="font-size:0.75rem;">${submittedDate}</div>
+          </div>
+          ${kyc.status === 'approved' ? `<div style="background:var(--s1);border-radius:12px;padding:12px;"><div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Approved On</div><div style="font-size:0.75rem;">${approvedDate}</div></div>` : ''}
+          ${kyc.status === 'rejected' && kyc.rejectReason ? `<div style="background:var(--s1);border-radius:12px;padding:12px;"><div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Rejection Reason</div><div style="font-size:0.75rem;color:var(--danger);">${escapeHtml(kyc.rejectReason)}</div></div>` : ''}
+        </div>
+        
+        <div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:16px;">
+          <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Selfie with ID</div>
+          <img src="${kyc.selfieUrl}" alt="Selfie" style="max-width:200px;max-height:180px;border-radius:12px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">
+        </div>
+        
+        ${kyc.status === 'pending' ? `
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn btn-approve" style="background:rgba(0,245,196,0.15);border:1px solid rgba(0,245,196,0.3);border-radius:10px;padding:10px 24px;color:#00f5c4;cursor:pointer;font-weight:600;" onclick="approveKYC('${k.uid}')">
+            <i class="fa-solid fa-check-circle"></i> Approve KYC
+          </button>
+          <button class="btn btn-reject" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 24px;color:#ef4444;cursor:pointer;font-weight:600;" onclick="rejectKYC('${k.uid}')">
+            <i class="fa-solid fa-times-circle"></i> Reject KYC
+          </button>
+          <button class="btn" style="background:rgba(123,94,167,0.15);border:1px solid rgba(123,94,167,0.3);border-radius:10px;padding:10px 20px;color:#b88fff;cursor:pointer;" onclick="viewUserFull('${k.uid}')">
+            <i class="fa-solid fa-eye"></i> View Details
+          </button>
+        </div>
+        ` : `
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          ${kyc.status !== 'approved' ? `<button class="btn" style="background:rgba(0,245,196,0.15);border:1px solid rgba(0,245,196,0.3);border-radius:10px;padding:8px 20px;color:#00f5c4;cursor:pointer;" onclick="revertKYC('${k.uid}')">↩️ Revert to Pending</button>` : ''}
+          <button class="btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px 20px;color:#ef4444;cursor:pointer;" onclick="deleteKYC('${k.uid}')">🗑️ Delete KYC Data</button>
+        </div>
+        `}
+      </div>
+    `;
+  });
+}
+
+async function approveKYC(uid) {
+  if(!confirm(`Approve KYC for this user? User will be able to withdraw funds.`)) return;
+  try {
+    await db.ref('users/' + uid + '/kyc').update({
+      status: 'approved',
+      approvedAt: Date.now(),
+      approvedBy: 'admin'
+    });
+    
+    await db.ref('user_notifications/' + uid).push({
+      title: 'KYC Approved ✅',
+      message: 'Congratulations! Your KYC has been approved. You can now withdraw funds from your wallet.',
+      type: 'reward',
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    toast('✅ KYC Approved! User can now withdraw.', 'ok');
+    loadAllKYCData();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  }
+}
+
+async function rejectKYC(uid) {
+  const reason = prompt('Enter rejection reason (will be shown to user):');
+  if(!reason) return;
+  
+  if(!confirm(`Reject KYC for this user? Reason: ${reason}`)) return;
+  try {
+    await db.ref('users/' + uid + '/kyc').update({
+      status: 'rejected',
+      rejectReason: reason,
+      rejectedAt: Date.now(),
+      rejectedBy: 'admin'
+    });
+    
+    await db.ref('user_notifications/' + uid).push({
+      title: 'KYC Rejected ❌',
+      message: `Your KYC verification was rejected. Reason: ${reason}. Please resubmit with correct documents.`,
+      type: 'alert',
+      timestamp: Date.now(),
+      read: false
+    });
+    
+    toast('❌ KYC Rejected!', 'warn');
+    loadAllKYCData();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  }
+}
+
+async function revertKYC(uid) {
+  if(!confirm('Revert KYC status to Pending? User will need to be re-verified.')) return;
+  try {
+    await db.ref('users/' + uid + '/kyc').update({
+      status: 'pending',
+      approvedAt: null,
+      rejectReason: null
+    });
+    toast('↩️ KYC reverted to Pending', 'ok');
+    loadAllKYCData();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  }
+}
+
+async function deleteKYC(uid) {
+  if(!confirm('⚠️ Permanently delete KYC data for this user? This action cannot be undone.')) return;
+  try {
+    await db.ref('users/' + uid + '/kyc').remove();
+    toast('🗑️ KYC data deleted!', 'warn');
+    loadAllKYCData();
+  } catch(e) {
+    toast('Error: ' + e.message, 'err');
+  }
+}
+
+function viewUserFull(uid) {
+  const user = allKYCData.find(k => k.uid === uid);
+  if(!user) return;
+  const kyc = user.kyc;
+  alert(`📋 USER DETAILS\n\nName: ${user.name}\nEmail: ${user.email}\nMobile: ${user.mobile || 'Not provided'}\nUID: ${uid}\nCountry: ${user.location?.country || 'Unknown'}\n\n📄 KYC DETAILS\nFull Name: ${kyc.fullName}\nAadhar: ${maskAadhar(kyc.aadharNumber)}\nPAN: ${kyc.panNumber || 'N/A'}\nStatus: ${kyc.status}\nSubmitted: ${kyc.submittedAt ? new Date(kyc.submittedAt).toLocaleString() : 'Unknown'}`);
+}
+
+function maskAadhar(aadhar) {
+  if(!aadhar) return 'N/A';
+  return 'XXXX-XXXX-' + aadhar.slice(-4);
+}
+
+function getFlagFromCode(code) {
+  if(!code) return '🌍';
+  const flags = { 'IN':'🇮🇳', 'US':'🇺🇸', 'GB':'🇬🇧', 'CA':'🇨🇦', 'AU':'🇦🇺', 'AE':'🇦🇪', 'SG':'🇸🇬', 'MY':'🇲🇾', 'ID':'🇮🇩', 'TH':'🇹🇭', 'VN':'🇻🇳', 'PH':'🇵🇭', 'PK':'🇵🇰', 'BD':'🇧🇩', 'LK':'🇱🇰', 'NP':'🇳🇵', 'SA':'🇸🇦', 'QA':'🇶🇦', 'KW':'🇰🇼', 'OM':'🇴🇲', 'BH':'🇧🇭', 'JO':'🇯🇴', 'EG':'🇪🇬', 'TR':'🇹🇷', 'RU':'🇷🇺', 'CN':'🇨🇳', 'JP':'🇯🇵', 'KR':'🇰🇷', 'DE':'🇩🇪', 'FR':'🇫🇷', 'IT':'🇮🇹', 'ES':'🇪🇸', 'NL':'🇳🇱', 'SE':'🇸🇪', 'NO':'🇳🇴', 'DK':'🇩🇰', 'FI':'🇫🇮', 'CH':'🇨🇭', 'AT':'🇦🇹', 'BE':'🇧🇪', 'PT':'🇵🇹', 'GR':'🇬🇷', 'PL':'🇵🇱', 'CZ':'🇨🇿', 'HU':'🇭🇺', 'RO':'🇷🇴', 'BG':'🇧🇬', 'HR':'🇭🇷', 'RS':'🇷🇸', 'ZA':'🇿🇦', 'NG':'🇳🇬', 'KE':'🇰🇪' };
+  return flags[code.toUpperCase()] || '🌍';
+}
+
+function escapeHtml(str) {
+  if(!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if(m === '&') return '&amp;';
+    if(m === '<') return '&lt;';
+    if(m === '>') return '&gt;';
+    return m;
+  });
 }
 </script>
 </body>
