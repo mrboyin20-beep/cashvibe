@@ -786,8 +786,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
-   <!-- ═══════════ KYC VERIFICATION SECTION (Stylish Modal) ═══════════ -->
-  <div id="kycSection" style="margin-bottom: 20px;">
+
+    <!-- WITHDRAW -->
+  <div id="pg-withdraw" class="page">
+    <div class="sec-title">Cash Out 💸</div>
+    <div class="card" style="background:linear-gradient(135deg,#070b1a,#0d0a20);border-color:rgba(0,245,196,.12);margin-bottom:14px;">
+      <div style="font-size:.62rem;color:var(--dim);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Available Balance</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--dim);margin-bottom:4px;">Coins → Rupees (20 coins = ₹1)</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;color:var(--g1);"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span><span id="bal-w">0</span> <span style="font-size:1rem;color:var(--dim);">= ₹<span id="bal-rupees">0.00</span></span></div>
+    </div>
+
+       <!-- ═══════════ KYC VERIFICATION SECTION ═══════════ -->
+   <div id="kycSection" style="margin-bottom: 20px;">
     <div class="sec-title">KYC Verification <small>Required for withdrawal</small></div>
     
     <!-- KYC Status Card -->
@@ -960,15 +970,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       </div>
     </div>
   </div>
-
-    <!-- WITHDRAW -->
-  <div id="pg-withdraw" class="page">
-    <div class="sec-title">Cash Out 💸</div>
-    <div class="card" style="background:linear-gradient(135deg,#070b1a,#0d0a20);border-color:rgba(0,245,196,.12);margin-bottom:14px;">
-      <div style="font-size:.62rem;color:var(--dim);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;">Available Balance</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--dim);margin-bottom:4px;">Coins → Rupees (20 coins = ₹1)</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:2px;color:var(--g1);"><span class="cv-coin"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="cg1" cx="38%" cy="35%" r="65%"><stop offset="0%" stop-color="#FFE066"/><stop offset="45%" stop-color="#FFB800"/><stop offset="100%" stop-color="#CC8800"/></radialGradient></defs><ellipse cx="12" cy="22" rx="7" ry="1.5" fill="rgba(0,0,0,0.18)"/><circle cx="12" cy="11.5" r="9.5" fill="url(#cg1)"/><circle cx="12" cy="11.5" r="9.5" fill="none" stroke="#CC8800" stroke-width="0.8"/><circle cx="12" cy="11.5" r="7.8" fill="none" stroke="#FFE066" stroke-width="0.5" opacity="0.7"/><ellipse cx="9.5" cy="8" rx="3" ry="1.8" fill="white" opacity="0.22" transform="rotate(-30 9.5 8)"/><text x="12" y="15.5" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="9.5" fill="#7A4800" opacity="0.85">₹</text></svg></span><span id="bal-w">0</span> <span style="font-size:1rem;color:var(--dim);">= ₹<span id="bal-rupees">0.00</span></span></div>
-    </div>
 
     <!-- ═══════════ PHONE VERIFICATION ALERT (Sirf tab dikhega jab phone verify nahi hai) ═══════════ -->
 <div id="phoneVerifyAlert" style="display: none; margin-bottom: 16px;">
@@ -4316,7 +4317,8 @@ async function submitKYC() {
         return;
     }
     
-    showLoader("Submitting KYC...");
+    // Show loading using existing toast
+    toast('Submitting KYC... Please wait.', 'ok');
     
     try {
         await db.ref('users/' + curUser.uid + '/kyc').set({
@@ -4331,17 +4333,19 @@ async function submitKYC() {
             submittedAt: Date.now()
         });
         
-        await db.ref('admin_notifications').push({
-            type: 'kyc_pending',
-            uid: curUser.uid,
-            userName: fullName,
-            timestamp: Date.now(),
-            read: false
-        });
+        // Send notification to admin (optional)
+        try {
+            await db.ref('admin_notifications').push({
+                type: 'kyc_pending',
+                uid: curUser.uid,
+                userName: fullName,
+                timestamp: Date.now(),
+                read: false
+            });
+        } catch(e) { console.log('Admin notif error:', e); }
         
-        hideLoader();
+        toast('✅ KYC submitted successfully! Admin will review within 24-48 hours.', 'ok');
         closeKYCModal();
-        toast('KYC submitted! Admin will review within 24-48 hours.', 'ok');
         
         // Reset form data
         kycAadharFrontBase64 = null;
@@ -4352,8 +4356,27 @@ async function submitKYC() {
         checkKYCStatus();
         
     } catch(error) {
-        hideLoader();
+        console.error('KYC submit error:', error);
         toast('Error: ' + error.message, 'err');
+    }
+}
+// ============================================
+// ⏳ LOADER FUNCTIONS
+// ============================================
+
+function showLoader(msg) {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'block';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> ' + msg;
+    }
+}
+
+function hideLoader() {
+    const loaderDiv = document.getElementById('loader');
+    if (loaderDiv) {
+        loaderDiv.style.display = 'none';
+        loaderDiv.innerHTML = '<i class="fa-solid fa-circle-notch"></i> Please wait...';
     }
 }
 </script>
