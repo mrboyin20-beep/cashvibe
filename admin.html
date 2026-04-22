@@ -3039,7 +3039,8 @@ function renderKYCList() {
       (k.email || '').toLowerCase().includes(search) ||
       (k.uid || '').toLowerCase().includes(search) ||
       (k.kyc.aadharNumber || '').includes(search) ||
-      (k.kyc.panNumber || '').toLowerCase().includes(search)
+      (k.kyc.panNumber || '').toLowerCase().includes(search) ||
+      (k.kyc.fullName || '').toLowerCase().includes(search)
     );
   }
   
@@ -3058,8 +3059,19 @@ function renderKYCList() {
     const flag = k.location?.flag || getFlagFromCode(k.location?.countryCode) || '🌍';
     const country = k.location?.country || 'Unknown';
     
+    // Get all KYC images and data
+    const aadharFrontImg = kyc.aadharFront || '';
+    const aadharBackImg = kyc.aadharBack || '';
+    const panCardImg = kyc.panImage || '';
+    const selfieImg = kyc.selfieUrl || '';
+    const dob = kyc.dateOfBirth || 'Not provided';
+    const fullName = kyc.fullName || k.name || 'Unknown';
+    const aadharNum = kyc.aadharNumber || 'Not provided';
+    const panNum = kyc.panNumber || 'Not provided';
+    
     container.innerHTML += `
       <div class="kyc-card" id="kyc-card-${k.uid}" style="background:var(--s2);border-radius:16px;padding:18px;margin-bottom:16px;border:1px solid var(--border);">
+        <!-- Header -->
         <div class="kyc-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:15px;">
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="kyc-avatar" style="width:48px;height:48px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#000;">${(k.name.charAt(0) || 'U').toUpperCase()}</div>
@@ -3075,18 +3087,23 @@ function renderKYCList() {
           </div>
         </div>
         
+        <!-- Basic Info Grid -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px;">
           <div style="background:var(--s1);border-radius:12px;padding:12px;">
             <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Full Name</div>
-            <div style="font-size:0.85rem;font-weight:600;">${escapeHtml(kyc.fullName)}</div>
+            <div style="font-size:0.85rem;font-weight:600;">${escapeHtml(fullName)}</div>
+          </div>
+          <div style="background:var(--s1);border-radius:12px;padding:12px;">
+            <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Date of Birth</div>
+            <div style="font-size:0.85rem;font-weight:600;">${dob}</div>
           </div>
           <div style="background:var(--s1);border-radius:12px;padding:12px;">
             <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Aadhar Number</div>
-            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${maskAadhar(kyc.aadharNumber)}</div>
+            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${maskAadhar(aadharNum)}</div>
           </div>
           <div style="background:var(--s1);border-radius:12px;padding:12px;">
             <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">PAN Number</div>
-            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${kyc.panNumber || 'N/A'}</div>
+            <div style="font-size:0.85rem;font-weight:600;letter-spacing:2px;">${panNum}</div>
           </div>
           <div style="background:var(--s1);border-radius:12px;padding:12px;">
             <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Mobile</div>
@@ -3100,13 +3117,36 @@ function renderKYCList() {
           ${kyc.status === 'rejected' && kyc.rejectReason ? `<div style="background:var(--s1);border-radius:12px;padding:12px;"><div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;">Rejection Reason</div><div style="font-size:0.75rem;color:var(--danger);">${escapeHtml(kyc.rejectReason)}</div></div>` : ''}
         </div>
         
-        <div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:16px;">
-          <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Selfie with ID</div>
-          <img src="${kyc.selfieUrl}" alt="Selfie" style="max-width:200px;max-height:180px;border-radius:12px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">
+        <!-- Aadhar Card Images (Front & Back) -->
+        <div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Aadhar Card</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <div style="font-size:0.65rem;color:var(--g1);margin-bottom:4px;">Front Side</div>
+              ${aadharFrontImg ? `<img src="${aadharFrontImg}" alt="Aadhar Front" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">` : '<div style="background:var(--s2);border-radius:8px;padding:20px;text-align:center;color:var(--dim);font-size:0.7rem;">Not uploaded</div>'}
+            </div>
+            <div>
+              <div style="font-size:0.65rem;color:var(--g1);margin-bottom:4px;">Back Side</div>
+              ${aadharBackImg ? `<img src="${aadharBackImg}" alt="Aadhar Back" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">` : '<div style="background:var(--s2);border-radius:8px;padding:20px;text-align:center;color:var(--dim);font-size:0.7rem;">Not uploaded</div>'}
+            </div>
+          </div>
         </div>
         
+        <!-- PAN Card Image -->
+        <div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">PAN Card</div>
+          ${panCardImg ? `<img src="${panCardImg}" alt="PAN Card" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">` : '<div style="background:var(--s2);border-radius:8px;padding:20px;text-align:center;color:var(--dim);font-size:0.7rem;">Not uploaded</div>'}
+        </div>
+        
+        <!-- Selfie with ID -->
+        <div style="background:var(--s1);border-radius:12px;padding:12px;margin-bottom:16px;">
+          <div style="font-size:0.6rem;color:var(--dim);text-transform:uppercase;margin-bottom:8px;">Selfie with ID</div>
+          ${selfieImg ? `<img src="${selfieImg}" alt="Selfie" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src)">` : '<div style="background:var(--s2);border-radius:8px;padding:20px;text-align:center;color:var(--dim);font-size:0.7rem;">Not uploaded</div>'}
+        </div>
+        
+        <!-- Action Buttons -->
         ${kyc.status === 'pending' ? `
-        <div style="display:flex;gap:12px;margin-top:8px;">
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
           <button class="btn btn-approve" style="background:rgba(0,245,196,0.15);border:1px solid rgba(0,245,196,0.3);border-radius:10px;padding:10px 24px;color:#00f5c4;cursor:pointer;font-weight:600;" onclick="approveKYC('${k.uid}')">
             <i class="fa-solid fa-check-circle"></i> Approve KYC
           </button>
@@ -3118,7 +3158,7 @@ function renderKYCList() {
           </button>
         </div>
         ` : `
-        <div style="display:flex;gap:12px;margin-top:8px;">
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
           ${kyc.status !== 'approved' ? `<button class="btn" style="background:rgba(0,245,196,0.15);border:1px solid rgba(0,245,196,0.3);border-radius:10px;padding:8px 20px;color:#00f5c4;cursor:pointer;" onclick="revertKYC('${k.uid}')">↩️ Revert to Pending</button>` : ''}
           <button class="btn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:8px 20px;color:#ef4444;cursor:pointer;" onclick="deleteKYC('${k.uid}')">🗑️ Delete KYC Data</button>
         </div>
@@ -3127,7 +3167,6 @@ function renderKYCList() {
     `;
   });
 }
-
 async function approveKYC(uid) {
   if(!confirm(`Approve KYC for this user? User will be able to withdraw funds.`)) return;
   try {
