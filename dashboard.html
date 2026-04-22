@@ -786,38 +786,180 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     </div>
   </div>
 
-  <!-- ═══════════ KYC VERIFICATION SECTION ═══════════ -->
-<div id="kycSection" style="margin-bottom: 20px;">
+   <!-- ═══════════ KYC VERIFICATION SECTION (Stylish Modal) ═══════════ -->
+  <div id="kycSection" style="margin-bottom: 20px;">
     <div class="sec-title">KYC Verification <small>Required for withdrawal</small></div>
+    
+    <!-- KYC Status Card -->
     <div id="kycStatusCard" class="card" style="padding: 20px;">
-        <!-- Dynamic content JS se fill hoga -->
+      <!-- Dynamic content JS se fill hoga -->
     </div>
-    <div id="kycForm" style="display: none;">
-        <div class="card">
-            <div class="inp-wrap">
-                <i class="fa-solid fa-user icon"></i>
-                <input type="text" id="kycFullName" placeholder="Full Name (as per Aadhar)">
-            </div>
-            <div class="inp-wrap">
-                <i class="fa-solid fa-id-card icon"></i>
-                <input type="text" id="kycAadhar" placeholder="Aadhar Number (12 digits)" maxlength="12" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            </div>
-            <div class="inp-wrap">
-                <i class="fa-solid fa-file-invoice icon"></i>
-                <input type="text" id="kycPan" placeholder="PAN Number (10 characters)" maxlength="10" style="text-transform:uppercase;">
-            </div>
-            <div style="border: 2px dashed rgba(0,245,196,0.25); border-radius: 18px; padding: 20px; text-align: center; cursor: pointer; margin-bottom: 16px;" id="kycUploadZone" onclick="document.getElementById('kycSelfie').click()">
-                <div style="font-size: 2rem; margin-bottom: 8px;">📸</div>
-                <div style="font-size: 0.75rem; color: var(--dim);">Tap to upload selfie with Aadhar/PAN card</div>
-                <input type="file" id="kycSelfie" accept="image/*" style="display: none;" onchange="previewSelfie(this)">
-                <div id="selfiePreview" style="display: none; margin-top: 12px;">
-                    <img id="selfiePreviewImg" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 12px;">
-                </div>
-            </div>
-            <button class="btn-main" onclick="submitKYC()">Submit KYC for Verification</button>
+  </div>
+
+  <!-- KYC MODAL (Full Screen Stylish) -->
+  <div class="modal" id="kycModal">
+    <div class="modal-box" style="max-width: 520px; padding: 0; overflow: hidden;">
+      <div style="background: linear-gradient(135deg, #00f5c4, #00c49a); padding: 20px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: rgba(0,0,0,0.15); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+          <i class="fa-solid fa-shield-halved" style="font-size: 1.8rem; color: #000;"></i>
         </div>
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: #000;">KYC Verification</div>
+        <p style="font-size: 0.7rem; color: rgba(0,0,0,0.7); margin-top: 4px;">Verify your identity to enable withdrawals</p>
+      </div>
+      
+      <div style="padding: 24px;">
+        <!-- Progress Steps -->
+        <div style="display: flex; justify-content: space-between; margin-bottom: 24px; position: relative;">
+          <div style="position: absolute; top: 14px; left: 10%; right: 10%; height: 2px; background: var(--border); z-index: 0;"></div>
+          <div class="kyc-step" data-step="1" style="z-index: 1; text-align: center; flex: 1;">
+            <div style="width: 32px; height: 32px; background: var(--g1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #000; font-weight: 800; font-size: 0.8rem;">1</div>
+            <div style="font-size: 0.6rem; color: var(--dim); margin-top: 5px;">Basic Info</div>
+          </div>
+          <div class="kyc-step" data-step="2" style="z-index: 1; text-align: center; flex: 1;">
+            <div style="width: 32px; height: 32px; background: var(--s2); border: 2px solid var(--border); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--dim); font-weight: 800; font-size: 0.8rem;">2</div>
+            <div style="font-size: 0.6rem; color: var(--dim); margin-top: 5px;">ID Proof</div>
+          </div>
+          <div class="kyc-step" data-step="3" style="z-index: 1; text-align: center; flex: 1;">
+            <div style="width: 32px; height: 32px; background: var(--s2); border: 2px solid var(--border); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--dim); font-weight: 800; font-size: 0.8rem;">3</div>
+            <div style="font-size: 0.6rem; color: var(--dim); margin-top: 5px;">Selfie</div>
+          </div>
+          <div class="kyc-step" data-step="4" style="z-index: 1; text-align: center; flex: 1;">
+            <div style="width: 32px; height: 32px; background: var(--s2); border: 2px solid var(--border); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--dim); font-weight: 800; font-size: 0.8rem;">4</div>
+            <div style="font-size: 0.6rem; color: var(--dim); margin-top: 5px;">Review</div>
+          </div>
+        </div>
+
+        <!-- STEP 1: Basic Info -->
+        <div id="kycStep1" class="kyc-step-content">
+          <div class="inp-wrap" style="margin-bottom: 16px;">
+            <i class="fa-solid fa-user icon"></i>
+            <input type="text" id="kycFullName" placeholder="Full Name (as per Aadhar)">
+          </div>
+          <div class="inp-wrap" style="margin-bottom: 16px;">
+            <i class="fa-solid fa-calendar icon"></i>
+            <input type="date" id="kycDob" placeholder="Date of Birth">
+          </div>
+          <button class="btn-main" onclick="kycNextStep(2)">Continue →</button>
+        </div>
+
+        <!-- STEP 2: ID Proof (Aadhar Front + Back + PAN) -->
+        <div id="kycStep2" style="display: none;">
+          <div style="background: var(--s2); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <i class="fa-solid fa-id-card" style="color: var(--g1); font-size: 1.2rem;"></i>
+              <div style="font-weight: 700; font-size: 0.85rem;">Aadhar Card (Front & Back)</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <div style="font-size: 0.65rem; color: var(--dim); margin-bottom: 6px;">Front Side</div>
+                <div class="kyc-upload-box" onclick="document.getElementById('kycAadharFront').click()" style="border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: var(--s1);">
+                  <i class="fa-solid fa-cloud-upload-alt" style="font-size: 1.2rem; color: var(--g1);"></i>
+                  <div style="font-size: 0.65rem; color: var(--dim); margin-top: 4px;">Upload Front</div>
+                  <input type="file" id="kycAadharFront" accept="image/*" style="display: none;" onchange="previewKYCImage(this, 'aadharFrontPreview')">
+                  <img id="aadharFrontPreview" style="display: none; width: 100%; max-height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px;">
+                </div>
+              </div>
+              <div>
+                <div style="font-size: 0.65rem; color: var(--dim); margin-bottom: 6px;">Back Side</div>
+                <div class="kyc-upload-box" onclick="document.getElementById('kycAadharBack').click()" style="border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: var(--s1);">
+                  <i class="fa-solid fa-cloud-upload-alt" style="font-size: 1.2rem; color: var(--g1);"></i>
+                  <div style="font-size: 0.65rem; color: var(--dim); margin-top: 4px;">Upload Back</div>
+                  <input type="file" id="kycAadharBack" accept="image/*" style="display: none;" onchange="previewKYCImage(this, 'aadharBackPreview')">
+                  <img id="aadharBackPreview" style="display: none; width: 100%; max-height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px;">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="background: var(--s2); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <i class="fa-solid fa-file-invoice" style="color: var(--g3); font-size: 1.2rem;"></i>
+              <div style="font-weight: 700; font-size: 0.85rem;">PAN Card</div>
+            </div>
+            <div class="kyc-upload-box" onclick="document.getElementById('kycPanImage').click()" style="border: 2px dashed var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer; background: var(--s1);">
+              <i class="fa-solid fa-cloud-upload-alt" style="font-size: 1.2rem; color: var(--g3);"></i>
+              <div style="font-size: 0.65rem; color: var(--dim); margin-top: 4px;">Upload PAN Card</div>
+              <input type="file" id="kycPanImage" accept="image/*" style="display: none;" onchange="previewKYCImage(this, 'panPreview')">
+              <img id="panPreview" style="display: none; width: 100%; max-height: 80px; object-fit: cover; border-radius: 8px; margin-top: 8px;">
+            </div>
+            <div class="inp-wrap" style="margin-top: 12px;">
+              <i class="fa-solid fa-file-invoice icon"></i>
+              <input type="text" id="kycPanNumber" placeholder="PAN Number (e.g., ABCDE1234F)" maxlength="10" style="text-transform: uppercase;">
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 12px;">
+            <button class="btn-secondary" onclick="kycPrevStep(1)" style="flex: 1; background: var(--s2); border: 1px solid var(--border);">← Back</button>
+            <button class="btn-main" onclick="kycNextStep(3)" style="flex: 1;">Continue →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: Selfie with ID -->
+        <div id="kycStep3" style="display: none;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="width: 80px; height: 80px; background: rgba(0,245,196,0.1); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+              <i class="fa-solid fa-camera" style="font-size: 2rem; color: var(--g1);"></i>
+            </div>
+            <div style="font-weight: 700; font-size: 1rem;">Take a Selfie</div>
+            <p style="font-size: 0.7rem; color: var(--dim); margin-top: 4px;">Hold your Aadhar/PAN card next to your face</p>
+          </div>
+          
+          <div class="kyc-upload-box" onclick="document.getElementById('kycSelfie').click()" style="border: 2px dashed var(--g1); border-radius: 20px; padding: 24px; text-align: center; cursor: pointer; background: rgba(0,245,196,0.05);">
+            <i class="fa-solid fa-user-astronaut" style="font-size: 2.5rem; color: var(--g1);"></i>
+            <div style="font-size: 0.8rem; font-weight: 700; margin-top: 8px;">Tap to Take Selfie</div>
+            <div style="font-size: 0.65rem; color: var(--dim); margin-top: 4px;">Upload a clear selfie with your ID card</div>
+            <input type="file" id="kycSelfie" accept="image/*" style="display: none;" onchange="previewKYCImage(this, 'selfiePreview')">
+            <img id="selfiePreview" style="display: none; width: 100%; max-height: 150px; object-fit: cover; border-radius: 12px; margin-top: 12px;">
+          </div>
+          
+          <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button class="btn-secondary" onclick="kycPrevStep(2)" style="flex: 1; background: var(--s2); border: 1px solid var(--border);">← Back</button>
+            <button class="btn-main" onclick="kycNextStep(4)" style="flex: 1;">Review & Submit →</button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Review & Submit -->
+        <div id="kycStep4" style="display: none;">
+          <div style="background: var(--s2); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <i class="fa-solid fa-user" style="color: var(--g1);"></i>
+              <span style="font-weight: 700;">Basic Information</span>
+            </div>
+            <div style="font-size: 0.8rem;" id="reviewName">-</div>
+            <div style="font-size: 0.7rem; color: var(--dim);" id="reviewDob">-</div>
+          </div>
+          
+          <div style="background: var(--s2); border-radius: 16px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <i class="fa-solid fa-id-card" style="color: var(--g1);"></i>
+              <span style="font-weight: 700;">ID Proofs</span>
+            </div>
+            <div style="font-size: 0.75rem;"><span style="color: var(--dim);">Aadhar Front:</span> <span id="reviewAadharFront">Not uploaded</span></div>
+            <div style="font-size: 0.75rem; margin-top: 4px;"><span style="color: var(--dim);">Aadhar Back:</span> <span id="reviewAadharBack">Not uploaded</span></div>
+            <div style="font-size: 0.75rem; margin-top: 4px;"><span style="color: var(--dim);">PAN Card:</span> <span id="reviewPan">Not uploaded</span></div>
+            <div style="font-size: 0.75rem; margin-top: 4px;"><span style="color: var(--dim);">PAN Number:</span> <span id="reviewPanNumber">-</span></div>
+          </div>
+          
+          <div style="background: var(--s2); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+              <i class="fa-solid fa-camera" style="color: var(--g1);"></i>
+              <span style="font-weight: 700;">Selfie</span>
+            </div>
+            <div id="reviewSelfieContainer" style="text-align: center;">
+              <span style="font-size: 0.75rem; color: var(--dim);">Not uploaded</span>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 12px;">
+            <button class="btn-secondary" onclick="kycPrevStep(3)" style="flex: 1; background: var(--s2); border: 1px solid var(--border);">← Back</button>
+            <button class="btn-main" onclick="submitKYC()" style="flex: 1;">SUBMIT KYC</button>
+          </div>
+        </div>
+        
+        <span class="modal-cancel" onclick="closeKYCModal()" style="display: block; text-align: center; margin-top: 20px;">Cancel</span>
+      </div>
     </div>
-</div>
+  </div>
 
     <!-- WITHDRAW -->
   <div id="pg-withdraw" class="page">
@@ -3973,41 +4115,204 @@ async function checkKYCStatus() {
 }
 
 function showKYCForm() {
-    document.getElementById('kycForm').style.display = 'block';
-    document.getElementById('kycStatusCard').style.display = 'none';
+    // Reset form
+    document.getElementById('kycFullName').value = '';
+    document.getElementById('kycDob').value = '';
+    document.getElementById('kycPanNumber').value = '';
+    
+    // Reset images
+    kycAadharFrontBase64 = null;
+    kycAadharBackBase64 = null;
+    kycPanImageBase64 = null;
+    kycSelfieBase64 = null;
+    
+    // Reset previews
+    const previews = ['aadharFrontPreview', 'aadharBackPreview', 'panPreview', 'selfiePreview'];
+    previews.forEach(id => {
+        const img = document.getElementById(id);
+        if(img) { img.style.display = 'none'; img.src = ''; }
+    });
+    
+    // Reset review
+    document.getElementById('reviewName').innerHTML = '-';
+    document.getElementById('reviewDob').innerHTML = '-';
+    document.getElementById('reviewAadharFront').innerHTML = 'Not uploaded';
+    document.getElementById('reviewAadharBack').innerHTML = 'Not uploaded';
+    document.getElementById('reviewPan').innerHTML = 'Not uploaded';
+    document.getElementById('reviewPanNumber').innerHTML = '-';
+    document.getElementById('reviewSelfieContainer').innerHTML = '<span style="font-size: 0.75rem; color: var(--dim);">Not uploaded</span>';
+    
+    // Reset to step 1
+    currentKycStep = 1;
+    updateKycSteps();
+    
+    openModal('kycModal');
 }
 
-function previewSelfie(input) {
-    if (input.files && input.files[0]) {
+// KYC Modal Navigation
+let currentKycStep = 1;
+let kycAadharFrontBase64 = null;
+let kycAadharBackBase64 = null;
+let kycPanImageBase64 = null;
+
+function updateKycSteps() {
+    // Update step indicators
+    for(let i = 1; i <= 4; i++) {
+        const stepDiv = document.querySelector(`.kyc-step[data-step="${i}"] > div:first-child`);
+        if(i < currentKycStep) {
+            stepDiv.style.background = 'var(--g1)';
+            stepDiv.style.border = 'none';
+            stepDiv.style.color = '#000';
+        } else if(i === currentKycStep) {
+            stepDiv.style.background = 'var(--g1)';
+            stepDiv.style.border = 'none';
+            stepDiv.style.color = '#000';
+        } else {
+            stepDiv.style.background = 'var(--s2)';
+            stepDiv.style.border = '2px solid var(--border)';
+            stepDiv.style.color = 'var(--dim)';
+        }
+    }
+    
+    // Show/hide content
+    document.getElementById('kycStep1').style.display = currentKycStep === 1 ? 'block' : 'none';
+    document.getElementById('kycStep2').style.display = currentKycStep === 2 ? 'block' : 'none';
+    document.getElementById('kycStep3').style.display = currentKycStep === 3 ? 'block' : 'none';
+    document.getElementById('kycStep4').style.display = currentKycStep === 4 ? 'block' : 'none';
+    
+    // If step 4, populate review
+    if(currentKycStep === 4) {
+        document.getElementById('reviewName').innerHTML = document.getElementById('kycFullName').value || '-';
+        document.getElementById('reviewDob').innerHTML = document.getElementById('kycDob').value || '-';
+        document.getElementById('reviewAadharFront').innerHTML = kycAadharFrontBase64 ? '✅ Uploaded' : '❌ Not uploaded';
+        document.getElementById('reviewAadharBack').innerHTML = kycAadharBackBase64 ? '✅ Uploaded' : '❌ Not uploaded';
+        document.getElementById('reviewPan').innerHTML = kycPanImageBase64 ? '✅ Uploaded' : '❌ Not uploaded';
+        document.getElementById('reviewPanNumber').innerHTML = document.getElementById('kycPanNumber').value || '-';
+        
+        const selfieContainer = document.getElementById('reviewSelfieContainer');
+        if(kycSelfieBase64) {
+            selfieContainer.innerHTML = '<img src="' + kycSelfieBase64 + '" style="max-width: 100%; max-height: 120px; border-radius: 12px;">';
+        } else {
+            selfieContainer.innerHTML = '<span style="font-size: 0.75rem; color: var(--dim);">Not uploaded</span>';
+        }
+    }
+}
+
+function kycNextStep(step) {
+    // Validation
+    if(step === 2) {
+        const name = document.getElementById('kycFullName').value.trim();
+        const dob = document.getElementById('kycDob').value;
+        if(!name || name.length < 3) {
+            toast('Please enter your full name!', 'err');
+            return;
+        }
+        if(!dob) {
+            toast('Please enter your date of birth!', 'err');
+            return;
+        }
+    }
+    if(step === 3) {
+        if(!kycAadharFrontBase64) {
+            toast('Please upload Aadhar card front side!', 'err');
+            return;
+        }
+        if(!kycAadharBackBase64) {
+            toast('Please upload Aadhar card back side!', 'err');
+            return;
+        }
+        const panNum = document.getElementById('kycPanNumber').value.trim().toUpperCase();
+        if(!panNum || panNum.length !== 10 || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNum)) {
+            toast('Enter valid PAN number (e.g., ABCDE1234F)!', 'err');
+            return;
+        }
+        if(!kycPanImageBase64) {
+            toast('Please upload PAN card image!', 'err');
+            return;
+        }
+    }
+    if(step === 4) {
+        if(!kycSelfieBase64) {
+            toast('Please upload your selfie with ID!', 'err');
+            return;
+        }
+    }
+    
+    currentKycStep = step;
+    updateKycSteps();
+}
+
+function kycPrevStep(step) {
+    currentKycStep = step;
+    updateKycSteps();
+}
+
+function closeKYCModal() {
+    closeModal('kycModal');
+    currentKycStep = 1;
+    updateKycSteps();
+}
+
+function previewKYCImage(input, previewId) {
+    if(input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('selfiePreviewImg').src = e.target.result;
-            document.getElementById('selfiePreview').style.display = 'block';
-            kycSelfieBase64 = e.target.result;
+            const previewImg = document.getElementById(previewId);
+            if(previewImg) {
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+            }
+            
+            // Store base64 based on which file
+            if(previewId === 'aadharFrontPreview') {
+                kycAadharFrontBase64 = e.target.result;
+            } else if(previewId === 'aadharBackPreview') {
+                kycAadharBackBase64 = e.target.result;
+            } else if(previewId === 'panPreview') {
+                kycPanImageBase64 = e.target.result;
+            } else if(previewId === 'selfiePreview') {
+                kycSelfieBase64 = e.target.result;
+            }
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 
+function previewSelfie(input) {
+    previewKYCImage(input, 'selfiePreview');
+}
+
 async function submitKYC() {
     const fullName = document.getElementById('kycFullName').value.trim();
-    const aadhar = document.getElementById('kycAadhar').value.trim();
-    const pan = document.getElementById('kycPan').value.trim().toUpperCase();
+    const dob = document.getElementById('kycDob').value;
+    const panNumber = document.getElementById('kycPanNumber').value.trim().toUpperCase();
     
     if (!fullName || fullName.length < 3) {
         toast('Please enter your full name!', 'err');
         return;
     }
-    if (!aadhar || aadhar.length !== 12 || !/^\d+$/.test(aadhar)) {
-        toast('Enter valid 12-digit Aadhar number!', 'err');
+    if (!dob) {
+        toast('Please enter date of birth!', 'err');
         return;
     }
-    if (!pan || pan.length !== 10 || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
+    if (!kycAadharFrontBase64) {
+        toast('Please upload Aadhar card front side!', 'err');
+        return;
+    }
+    if (!kycAadharBackBase64) {
+        toast('Please upload Aadhar card back side!', 'err');
+        return;
+    }
+    if (!panNumber || panNumber.length !== 10 || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(panNumber)) {
         toast('Enter valid PAN number (e.g., ABCDE1234F)!', 'err');
         return;
     }
+    if (!kycPanImageBase64) {
+        toast('Please upload PAN card image!', 'err');
+        return;
+    }
     if (!kycSelfieBase64) {
-        toast('Please upload selfie with ID!', 'err');
+        toast('Please upload your selfie with ID!', 'err');
         return;
     }
     
@@ -4016,8 +4321,11 @@ async function submitKYC() {
     try {
         await db.ref('users/' + curUser.uid + '/kyc').set({
             fullName: fullName,
-            aadharNumber: aadhar,
-            panNumber: pan,
+            dateOfBirth: dob,
+            aadharFront: kycAadharFrontBase64,
+            aadharBack: kycAadharBackBase64,
+            panImage: kycPanImageBase64,
+            panNumber: panNumber,
             selfieUrl: kycSelfieBase64,
             status: 'pending',
             submittedAt: Date.now()
@@ -4032,10 +4340,15 @@ async function submitKYC() {
         });
         
         hideLoader();
+        closeKYCModal();
         toast('KYC submitted! Admin will review within 24-48 hours.', 'ok');
         
-        document.getElementById('kycForm').style.display = 'none';
-        document.getElementById('kycStatusCard').style.display = 'block';
+        // Reset form data
+        kycAadharFrontBase64 = null;
+        kycAadharBackBase64 = null;
+        kycPanImageBase64 = null;
+        kycSelfieBase64 = null;
+        
         checkKYCStatus();
         
     } catch(error) {
