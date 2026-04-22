@@ -1460,6 +1460,7 @@ auth.onAuthStateChanged(async u => {
       OneSignal.login(u.uid);
     });
   }
+  
   // OTP verify auth.html mein ho chuka hai — yahan check nahi
 
   // Load app_control (maintenance, blocked, support settings)
@@ -1557,6 +1558,10 @@ db.ref('app_control').on('value', s => {
     updateUI();
   });
 
+  // Real-time KYC status listener - UI automatically updates when admin approves/rejects
+db.ref('users/' + u.uid + '/kyc/status').on('value', () => {
+    checkKYCStatus();
+});
   db.ref('settings').on('value', s => {
     const v = s.val()||{};
     adCfg = v.ads||{limit:5,reward:10,link:''};
@@ -4063,78 +4068,103 @@ async function checkKYCStatus() {
     const kycSnap = await db.ref('users/' + curUser.uid + '/kyc').once('value');
     const kyc = kycSnap.val();
     const statusCard = document.getElementById('kycStatusCard');
-    const kycForm = document.getElementById('kycForm');
     const withdrawBtn = document.getElementById('btn-withdraw');
+    const withdrawChips = document.querySelectorAll('#pg-withdraw .chip');
+    const withdrawInput = document.getElementById('upi-inp');
+    
+    // Helper to disable withdrawal controls
+    function disableWithdrawal(disabled = true) {
+        if (withdrawBtn) {
+            withdrawBtn.disabled = disabled;
+            withdrawBtn.style.opacity = disabled ? '0.5' : '1';
+            withdrawBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+        }
+        withdrawChips.forEach(chip => {
+            chip.style.opacity = disabled ? '0.5' : '1';
+            chip.style.pointerEvents = disabled ? 'none' : 'auto';
+        });
+        if (withdrawInput) {
+            withdrawInput.disabled = disabled;
+            withdrawInput.style.opacity = disabled ? '0.5' : '1';
+        }
+    }
     
     if (!kyc || kyc.status === 'pending') {
+        // PENDING STATE - Show processing, disable withdrawal
         statusCard.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <div style="width: 40px; height: 40px; background: rgba(245,166,35,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-clock" style="color: #f5a623;"></i>
+                    <i class="fa-solid fa-hourglass-half" style="color: #f5a623;"></i>
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 700; color: #f5a623;">KYC Not Submitted</div>
-                    <p style="font-size: 0.7rem; color: var(--dim);">Please complete KYC to enable withdrawals</p>
+                    <div style="font-weight: 700; color: #f5a623;">⏳ KYC Pending</div>
+                    <p style="font-size: 0.7rem; color: var(--dim);">Your KYC is under review. Admin will approve within 24-48 hours.</p>
                 </div>
-                <button onclick="showKYCForm()" class="btn-main" style="width: auto; padding: 10px 20px;">Submit KYC</button>
+                <button onclick="showKYCForm()" class="btn-main" style="width: auto; padding: 8px 18px; background: var(--s2); color: var(--g1);">View Status</button>
             </div>
         `;
-        kycForm.style.display = 'none';
-        if (withdrawBtn) withdrawBtn.disabled = true;
+        disableWithdrawal(true);
         
     } else if (kyc.status === 'approved') {
+        // APPROVED STATE - Enable withdrawal
         statusCard.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px;">
                 <div style="width: 40px; height: 40px; background: rgba(0,245,196,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-circle-check" style="color: var(--g1);"></i>
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 700; color: var(--g1);">KYC Verified ✅</div>
+                    <div style="font-weight: 700; color: var(--g1);">✅ KYC Verified</div>
                     <p style="font-size: 0.7rem; color: var(--dim);">Your KYC is approved. You can withdraw now!</p>
                 </div>
             </div>
         `;
-        kycForm.style.display = 'none';
-        if (withdrawBtn) withdrawBtn.disabled = false;
+        disableWithdrawal(false);
         
     } else if (kyc.status === 'rejected') {
+        // REJECTED STATE - Show reason, allow resubmit
+        const rejectReason = kyc.rejectReason || 'Invalid or unclear documents';
         statusCard.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <div style="width: 40px; height: 40px; background: rgba(239,68,68,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                     <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>
                 </div>
                 <div style="flex: 1;">
-                    <div style="font-weight: 700; color: var(--danger);">KYC Rejected</div>
-                    <p style="font-size: 0.7rem; color: var(--dim);">Reason: ${kyc.rejectReason || 'Invalid documents'}</p>
+                    <div style="font-weight: 700; color: var(--danger);">❌ KYC Rejected</div>
+                    <p style="font-size: 0.7rem; color: var(--dim);">Reason: ${rejectReason}</p>
                 </div>
                 <button onclick="showKYCForm()" class="btn-main" style="width: auto; padding: 10px 20px;">Resubmit KYC</button>
             </div>
         `;
-        kycForm.style.display = 'none';
-        if (withdrawBtn) withdrawBtn.disabled = true;
+        disableWithdrawal(true);
     }
 }
 
 function showKYCForm() {
-    // Reset form
+    // Reset form fields
     document.getElementById('kycFullName').value = '';
     document.getElementById('kycDob').value = '';
     document.getElementById('kycPanNumber').value = '';
     
-    // Reset images
+    // Reset stored images
     kycAadharFrontBase64 = null;
     kycAadharBackBase64 = null;
     kycPanImageBase64 = null;
     kycSelfieBase64 = null;
     
-    // Reset previews
+    // Reset preview images
     const previews = ['aadharFrontPreview', 'aadharBackPreview', 'panPreview', 'selfiePreview'];
     previews.forEach(id => {
         const img = document.getElementById(id);
         if(img) { img.style.display = 'none'; img.src = ''; }
     });
     
-    // Reset review
+    // Reset file inputs
+    document.getElementById('kycAadharFront').value = '';
+    document.getElementById('kycAadharBack').value = '';
+    document.getElementById('kycPanImage').value = '';
+    document.getElementById('kycSelfie').value = '';
+    
+    // Reset review section
     document.getElementById('reviewName').innerHTML = '-';
     document.getElementById('reviewDob').innerHTML = '-';
     document.getElementById('reviewAadharFront').innerHTML = 'Not uploaded';
@@ -4264,7 +4294,6 @@ function previewKYCImage(input, previewId) {
                 previewImg.style.display = 'block';
             }
             
-            // Store base64 based on which file
             if(previewId === 'aadharFrontPreview') {
                 kycAadharFrontBase64 = e.target.result;
             } else if(previewId === 'aadharBackPreview') {
@@ -4317,7 +4346,6 @@ async function submitKYC() {
         return;
     }
     
-    // Show loading using existing toast
     toast('Submitting KYC... Please wait.', 'ok');
     
     try {
@@ -4333,7 +4361,7 @@ async function submitKYC() {
             submittedAt: Date.now()
         });
         
-        // Send notification to admin (optional)
+        // Admin notification
         try {
             await db.ref('admin_notifications').push({
                 type: 'kyc_pending',
@@ -4344,16 +4372,17 @@ async function submitKYC() {
             });
         } catch(e) { console.log('Admin notif error:', e); }
         
-        toast('✅ KYC submitted successfully! Admin will review within 24-48 hours.', 'ok');
+        toast('✅ KYC submitted successfully! Pending admin approval.', 'ok');
         closeKYCModal();
         
-        // Reset form data
+        // Reset stored images
         kycAadharFrontBase64 = null;
         kycAadharBackBase64 = null;
         kycPanImageBase64 = null;
         kycSelfieBase64 = null;
         
-        checkKYCStatus();
+        // Immediately update UI to show Pending status (without page reload)
+        await checkKYCStatus();
         
     } catch(error) {
         console.error('KYC submit error:', error);
