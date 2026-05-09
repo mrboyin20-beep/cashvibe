@@ -375,10 +375,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
   <!-- HOME -->
   <div id="pg-home" class="page active">
-    <div id="maint-banner" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:13px 18px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px;">
-      <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.2rem;">🔧</span><span style="font-size:.82rem;font-weight:700;color:var(--danger);">Maintenance Mode is ACTIVE — Users can't access the app right now!</span></div>
-      <button onclick="toggleMaintenance(false)" style="background:var(--success);border:none;padding:7px 16px;border-radius:99px;color:#fff;font-weight:700;font-size:.72rem;cursor:pointer;white-space:nowrap;">Turn OFF</button>
+    <div id="maint-banner" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:14px;padding:13px 18px;margin-bottom:16px;flex-direction:column;gap:8px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:1.2rem;">🔧</span><span style="font-size:.82rem;font-weight:700;color:var(--danger);">Maintenance Mode is ACTIVE — Users can't access the app right now!</span></div>
+    <button onclick="toggleMaintenance(false)" style="background:var(--success);border:none;padding:7px 16px;border-radius:99px;color:#fff;font-weight:700;font-size:.72rem;cursor:pointer;white-space:nowrap;">Turn OFF</button>
+  </div>
+  <!-- ✅ Progress Bar for Dashboard -->
+  <div style="width:100%;margin-top:4px;">
+    <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--dim);margin-bottom:2px;">
+      <span>Update Progress</span>
+      <span id="dash-maint-progress-text">0%</span>
     </div>
+    <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden;">
+      <div id="dash-maint-progress-bar" style="width:0%;height:100%;background:linear-gradient(90deg,var(--g1),var(--g2));border-radius:99px;"></div>
+    </div>
+    <div id="dash-maint-stage" style="font-size:.6rem;color:var(--mid);margin-top:4px;">Initializing...</div>
+  </div>
+</div>
     <div class="pg-hdr"><div class="pg-title">Admin Dashboard</div><div class="pg-sub">Live overview of CashVibe</div></div>
     <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
       <div class="stat"><div class="stat-icon si-g"><i class="fa-solid fa-users"></i></div><div class="stat-num" id="s-users">0</div><div class="stat-lbl">Total Users</div></div>
@@ -659,25 +672,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <button class="fbtn fbtn-p" onclick="saveSupportSettings()">SAVE SUPPORT INFO</button>
     </div>
 
-    <!-- MAINTENANCE MODE -->
-    <div class="card" style="background:rgba(239,68,68,.03);border-color:rgba(239,68,68,.12);">
-      <div class="card-title" style="color:var(--danger);">🔧 Maintenance Mode <span id="maint-status-badge" style="font-size:.6rem;padding:3px 10px;border-radius:99px;background:rgba(16,185,129,.1);color:var(--success);font-family:'DM Sans',sans-serif;letter-spacing:0;">OFF</span></div>
-      <div class="frow">
-        <div>
-          <label class="flabel">Maintenance Message (Users ko dikhega)</label>
-          <textarea class="finp" id="set-maint-msg" rows="3" placeholder="We are upgrading CashVibe to serve you better. Please check back shortly!" style="resize:vertical;"></textarea>
-        </div>
-        <div>
-          <label class="flabel">Access Password (Staff bypass ke liye)</label>
-          <input class="finp" type="text" id="set-maint-pass" placeholder="e.g. staff2024">
-          <div style="font-size:.65rem;color:var(--dim);margin-top:-6px;margin-bottom:8px;">Staff/Admin is password se maintenance screen bypass kar sakte hain</div>
-          <div style="display:flex;gap:8px;flex-direction:column;">
-            <button class="fbtn" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);width:100%;" onclick="toggleMaintenance(true)">🔴 ENABLE MAINTENANCE</button>
-            <button class="fbtn" style="background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.2);width:100%;" onclick="toggleMaintenance(false)">🟢 DISABLE MAINTENANCE</button>
-          </div>
-        </div>
+    <!-- MAINTENANCE MODE WITH PROGRESS -->
+<div class="card" style="background:rgba(239,68,68,.03);border-color:rgba(239,68,68,.12);">
+  <div class="card-title" style="color:var(--danger);">🔧 Maintenance Mode <span id="maint-status-badge" style="font-size:.6rem;padding:3px 10px;border-radius:99px;background:rgba(16,185,129,.1);color:var(--success);font-family:'DM Sans',sans-serif;letter-spacing:0;">OFF</span></div>
+  <div class="frow">
+    <div>
+      <label class="flabel">Maintenance Message (Users ko dikhega)</label>
+      <textarea class="finp" id="set-maint-msg" rows="3" placeholder="We are upgrading CashVibe to serve you better. Please check back shortly!" style="resize:vertical;"></textarea>
+    </div>
+    <div>
+      <label class="flabel">Access Password (Staff bypass ke liye)</label>
+      <input class="finp" type="text" id="set-maint-pass" placeholder="e.g. staff2024">
+      <div style="font-size:.65rem;color:var(--dim);margin-top:-6px;margin-bottom:8px;">Staff/Admin is password se maintenance screen bypass kar sakte hain</div>
+      
+      <!-- ✅ PROGRESS BAR SETTING (NEW) -->
+      <label class="flabel" style="margin-top:8px;">📊 Maintenance Progress (0-100%) <span id="maint-progress-preview" style="font-size:.65rem;color:var(--g1);">0%</span></label>
+      <input type="range" id="set-maint-progress" min="0" max="100" value="0" style="width:100%;margin:8px 0;background:var(--s2);" oninput="document.getElementById('maint-progress-preview').textContent=this.value+'%'">
+      
+      <label class="flabel">Progress Stage Message</label>
+      <input class="finp" type="text" id="set-maint-stage" placeholder="e.g. Updating user database..." value="Starting updates...">
+      <!-- ✅ PROGRESS BAR SETTING END -->
+      
+      <div style="display:flex;gap:8px;flex-direction:column;margin-top:12px;">
+        <button class="fbtn" style="background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2);width:100%;" onclick="toggleMaintenance(true)">🔴 ENABLE MAINTENANCE</button>
+        <button class="fbtn" style="background:rgba(16,185,129,.1);color:var(--success);border:1px solid rgba(16,185,129,.2);width:100%;" onclick="toggleMaintenance(false)">🟢 DISABLE MAINTENANCE</button>
       </div>
     </div>
+  </div>
+</div>
 
     <!-- WITHDRAWAL CONTROL -->
     <div class="card" style="background:rgba(123,94,167,.03);border-color:rgba(123,94,167,.12);margin-top:14px;">
@@ -1160,6 +1182,18 @@ function loadDashboard() {
     const banner = document.getElementById('maint-banner');
     if (banner) banner.style.display = s.val()===true ? 'flex' : 'none';
   });
+  // Update dashboard progress bar
+db.ref('app_control').on('value', s2 => {
+  const ac = s2.val() || {};
+  const dashProgress = document.getElementById('dash-maint-progress-bar');
+  const dashText = document.getElementById('dash-maint-progress-text');
+  const dashStage = document.getElementById('dash-maint-stage');
+  if (dashProgress && ac.maintenance === true) {
+    dashProgress.style.width = (ac.maintenance_progress || 0) + '%';
+    if (dashText) dashText.textContent = (ac.maintenance_progress || 0) + '%';
+    if (dashStage) dashStage.textContent = ac.maintenance_stage || 'Updating...';
+  }
+});
   db.ref('users').once('value', s => {
     const u=s.val()||{}; const ul=Object.values(u);
     const tb=ul.reduce((a,x)=>a+(x.balance||0),0);
@@ -2211,6 +2245,17 @@ function loadSettings() {
       } else {
         badge.textContent='🟢 OFF'; badge.style.background='rgba(16,185,129,.1)'; badge.style.color='var(--success)';
       }
+      // Load maintenance progress into sliders
+const progressEl = document.getElementById('set-maint-progress');
+const stageEl = document.getElementById('set-maint-stage');
+const previewEl = document.getElementById('maint-progress-preview');
+if (progressEl && v.maintenance_progress !== undefined) {
+  progressEl.value = v.maintenance_progress;
+  if (previewEl) previewEl.textContent = v.maintenance_progress + '%';
+}
+if (stageEl && v.maintenance_stage) {
+  stageEl.value = v.maintenance_stage;
+}
     }
     
     // Withdrawal status update
@@ -2291,20 +2336,24 @@ async function saveSupportSettings() {
 async function toggleMaintenance(enable) {
   const msg = document.getElementById('set-maint-msg').value.trim();
   const pass = document.getElementById('set-maint-pass').value.trim();
+  const progress = parseInt(document.getElementById('set-maint-progress').value) || 0;
+  const stage = document.getElementById('set-maint-stage').value.trim() || 'Starting updates...';
+  
   if (enable) {
-    if (!confirm('⚠️ Are you sure? All users will see the maintenance screen!')) return;
+    if (!confirm('⚠️ Are you sure? All users will see the maintenance screen with progress tracker!')) return;
     await db.ref('app_control').update({
       maintenance: true,
       maint_msg: msg || 'We are upgrading CashVibe to serve you better. Please check back shortly!',
+      maintenance_progress: progress,
+      maintenance_stage: stage,
       ...(pass && {maint_pass: pass})
     });
-    toast('🔴 Maintenance mode ENABLED!','warn');
+    toast('🔴 Maintenance mode ENABLED with ' + progress + '% progress!', 'warn');
   } else {
-    await db.ref('app_control').update({maintenance: false});
-    toast('🟢 Maintenance mode DISABLED!','ok');
+    await db.ref('app_control').update({maintenance: false, maintenance_progress: 0, maintenance_stage: ''});
+    toast('🟢 Maintenance mode DISABLED!', 'ok');
   }
 }
-
 async function toggleWithdrawal(enable) {
   if (!enable) {
     if (!confirm('Are you sure? Users will NOT be able to request withdrawals!')) return;
